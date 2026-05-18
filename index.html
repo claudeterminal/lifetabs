@@ -55,8 +55,8 @@
   }
 
   .container {
-    max-width: 1400px; margin: 0 auto;
-    padding: 22px 22px 240px;
+    max-width: 1800px; margin: 0 auto;
+    padding: 22px 28px 240px;
     position: relative; z-index: 1;
   }
 
@@ -68,54 +68,51 @@
     border-bottom: 1px solid var(--rule);
     margin-bottom: 16px;
   }
-  .title-block { display: flex; flex-direction: column; gap: 4px; min-width: 280px; }
-  .titlebar {
-    display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap;
+  .title-row {
+    display: flex; align-items: baseline; gap: 24px;
+    flex-wrap: wrap;
   }
-  h1.page-title {
-    font-family: var(--serif); font-weight: 300;
-    font-size: clamp(40px, 5.5vw, 64px); line-height: 0.95;
-    margin: 0; letter-spacing: -0.03em;
-    outline: none;
-    border-bottom: 1px dashed transparent;
-    transition: border-color 0.15s ease;
+  .now-bar {
+    display: flex; align-items: baseline; gap: 12px;
+    min-width: 0;
   }
-  h1.page-title:hover, h1.page-title:focus { border-bottom-color: var(--rule); }
-  h1.page-title .dot {
-    color: var(--accent); font-weight: 400;
+  .now-bar.overdue { flex: 1 1 0; }
+  .now-bar.current {
+    flex: 0 0 auto;
+    margin-left: auto;
   }
-  .now-task {
+  .bar-label {
     font-family: var(--serif);
-    font-style: normal;
+    font-size: clamp(24px, 3.12vw, 36px);
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    white-space: nowrap;
+  }
+  .now-bar.overdue .bar-label { color: var(--ink-3); }
+  .now-bar.current  .bar-label { color: var(--accent); }
+  .bar-text {
+    font-family: var(--serif);
+    font-size: clamp(24px, 3.12vw, 36px);
+    line-height: 1.1;
     font-weight: 500;
-    font-size: clamp(28px, 4.6vw, 56px);
-    line-height: 0.95;
     letter-spacing: -0.015em;
-    color: var(--accent);
-    cursor: pointer;
-    max-width: min(70vw, 820px);
+    max-width: min(48vw, 760px);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    align-self: baseline;
-    border-bottom: 1px dashed transparent;
-    transition: border-color 0.2s ease;
-    min-height: 1.1em;
+    min-height: 1.15em;
     display: inline-flex;
     align-items: baseline;
   }
-  .now-task:hover { border-bottom-color: var(--accent-soft); }
-  .now-task.idle {
-    color: var(--ink-3);
-    font-weight: 300;
-    border-bottom-color: transparent !important;
-  }
-  .now-task.done {
+  .now-bar.overdue .bar-text { color: var(--ink-2); cursor: pointer; }
+  .now-bar.current  .bar-text { color: var(--accent); cursor: pointer; font-weight: 600; }
+  .bar-text.idle { color: var(--ink-4); font-weight: 400; }
+  .bar-text.done {
     color: var(--daily);
     text-decoration: line-through;
     text-decoration-thickness: 1.5px;
   }
-  .now-task.typing::after {
+  .bar-text.typing::after {
     content: '';
     display: inline-block;
     width: 0.5ch;
@@ -247,9 +244,9 @@
     min-height: 26px;
   }
   .hour-head .h-label {
-    font-family: var(--mono); font-size: 11px;
+    font-family: var(--serif); font-size: 11.5px;
     font-weight: 600; color: var(--ink);
-    letter-spacing: 0.02em;
+    letter-spacing: 0;
     display: inline-flex; align-items: center; gap: 5px;
   }
   .hour-head .h-label::before {
@@ -272,8 +269,8 @@
 
   .slot {
     display: grid;
-    grid-template-columns: 38px 1fr auto auto;
-    align-items: center; gap: 4px;
+    grid-template-columns: 32px 1fr auto auto;
+    align-items: center; gap: 1px;
     padding: 0 6px;
     min-height: 20px;
     border-bottom: 1px solid var(--rule-soft);
@@ -310,11 +307,12 @@
   .slot.fired { background: rgba(63, 95, 58, 0.1); }
 
   .slot .time-label {
-    font-family: var(--mono); font-size: 10px;
+    font-family: var(--serif); font-size: 11px;
     color: var(--ink-3); cursor: pointer;
     user-select: none;
-    letter-spacing: 0.02em;
+    letter-spacing: 0;
     white-space: nowrap;
+    padding-right: 2px;
   }
   .slot.now .time-label { color: var(--accent); font-weight: 600; }
   .slot.done .time-label { color: var(--ink-4); }
@@ -778,10 +776,14 @@
 
   <!-- ───────── HEADER ───────── -->
   <header>
-    <div class="title-block">
-      <div class="titlebar">
-        <h1 class="page-title" id="page-title" contenteditable="true" spellcheck="false">Now<span class="dot">.</span></h1>
-        <div class="now-task idle" id="now-task" title="Click to scroll to current slot">—</div>
+    <div class="title-row">
+      <div class="now-bar overdue">
+        <span class="bar-label">Overdue:</span>
+        <span class="bar-text idle" id="overdue-task">—</span>
+      </div>
+      <div class="now-bar current">
+        <span class="bar-label">Now:</span>
+        <span class="bar-text idle" id="now-task" title="Click to scroll to current slot">—</span>
       </div>
     </div>
     <div class="controls">
@@ -801,14 +803,6 @@
       <input type="file" id="import-file" accept="application/json,.json" style="display:none" />
     </div>
   </header>
-
-  <div class="banner" id="banner">
-    <button class="banner-close" id="banner-close">×</button>
-    <div class="line">Type next to any time — saves automatically.</div>
-    <div class="line">🔒 lock &nbsp;·&nbsp; ↻ daily-repeat &nbsp;·&nbsp; ✓ done</div>
-    <div class="line">Click <strong>Notifications</strong> + <strong>🔊 Voice</strong> once to enable popups + spoken reminders.</div>
-    <div class="line">🧑‍🏫 bottom-left — optional voice coach.</div>
-  </div>
 
   <!-- ───────── 16-HOUR GRID ───────── -->
   <div class="hour-grid" id="hour-grid"></div>
@@ -1438,12 +1432,13 @@
       li.classList.remove('fired');
       // Live update the big "now" display if this is the current slot (no anim, syncs with typing)
       if (k === currentSlotKey()) updateNowTaskDisplay(false);
-      // Debounce save + counters
+      // Debounce save + overdue refresh + counters
       if (typingTimer) clearTimeout(typingTimer);
       typingTimer = setTimeout(() => {
         scheduleSave();
         updateCounters();
         updatePastUndone();
+        updateOverdueDisplay();
       }, 220);
     });
     input.addEventListener('keydown', e => {
@@ -1481,6 +1476,7 @@
       state.tasks[k].done = cb.checked;
       li.classList.toggle('done', cb.checked);
       if (k === currentSlotKey()) updateNowTaskDisplay();
+      updateOverdueDisplay();
       scheduleSave();
       updatePastUndone();
     });
@@ -1506,56 +1502,50 @@
   let lastNowKey = null;
   let lastNowHour = null;
 
-  // Typewriter for the big "Now" task. animate=true plays the full erase→retype
-  // transition AND keeps looping while the same task is showing. animate=false
-  // just snaps the text (used during live editing so the display tracks the
-  // user's keystrokes without competing with them).
-  let nowAnim = null;
-
-  function setNowTask(text, isIdle, isDone, animate) {
-    const el = document.getElementById('now-task');
+  // Typewriter that runs per-element (each element has its own animation state
+  // attached as ._twTimer / ._twState). animate=true loops forever; animate=false
+  // just snaps the text. Used by both the Now bar and the Overdue bar.
+  function setTypewriter(elId, text, isIdle, isDone, animate) {
+    const el = document.getElementById(elId);
     if (!el) return;
-    if (nowAnim) { clearTimeout(nowAnim.timer); nowAnim = null; }
+    if (el._twTimer) { clearTimeout(el._twTimer); el._twTimer = null; }
 
     el.classList.toggle('idle', !!isIdle);
     el.classList.toggle('done', !!isDone);
 
-    // Idle / done / non-animated: just snap, no loop.
     if (!animate || isIdle || isDone) {
       el.textContent = text;
       el.classList.remove('typing');
+      el._twState = null;
       return;
     }
 
-    // Active task: loop forever — type → hold → erase → hold → type …
-    nowAnim = { target: text, buf: el.textContent || '', phase: null };
+    const state = { target: text, buf: el.textContent || '', phase: null };
+    el._twState = state;
     el.classList.add('typing');
 
     function tick() {
-      if (!nowAnim) return;
-      const s = nowAnim;
-      // First-time entry: decide whether to erase or type
-      if (s.phase === null) {
-        s.phase = s.buf.length > 0 ? 'erasing' : 'typing';
+      if (el._twState !== state) return; // replaced or canceled
+      if (state.phase === null) {
+        state.phase = state.buf.length > 0 ? 'erasing' : 'typing';
       }
-      if (s.phase === 'erasing') {
-        if (s.buf.length > 0) {
-          s.buf = s.buf.slice(0, -1);
-          el.textContent = s.buf;
-          s.timer = setTimeout(tick, 14);
+      if (state.phase === 'erasing') {
+        if (state.buf.length > 0) {
+          state.buf = state.buf.slice(0, -1);
+          el.textContent = state.buf;
+          el._twTimer = setTimeout(tick, 14);
         } else {
-          s.phase = 'typing';
-          s.timer = setTimeout(tick, 250);
+          state.phase = 'typing';
+          el._twTimer = setTimeout(tick, 250);
         }
-      } else { // typing
-        if (s.buf.length < s.target.length) {
-          s.buf = s.target.slice(0, s.buf.length + 1);
-          el.textContent = s.buf;
-          s.timer = setTimeout(tick, 32 + Math.random() * 30);
+      } else {
+        if (state.buf.length < state.target.length) {
+          state.buf = state.target.slice(0, state.buf.length + 1);
+          el.textContent = state.buf;
+          el._twTimer = setTimeout(tick, 32 + Math.random() * 30);
         } else {
-          // Full text shown — hold, then loop back into erasing
-          s.phase = 'erasing';
-          s.timer = setTimeout(tick, 3200);
+          state.phase = 'erasing';
+          el._twTimer = setTimeout(tick, 3200);
         }
       }
     }
@@ -1565,13 +1555,33 @@
   function updateNowTaskDisplay(animate) {
     if (animate === undefined) animate = true;
     const k = currentSlotKey();
-    if (!k) { setNowTask('— off hours —', true, false, animate); return; }
+    if (!k) { setTypewriter('now-task', '— off hours —', true, false, animate); return; }
     const t = state.tasks[k];
     if (!t || !t.label || !t.label.trim()) {
-      setNowTask('— free slot —', true, false, animate);
+      setTypewriter('now-task', '— free slot —', true, false, animate);
       return;
     }
-    setNowTask(t.label, false, !!t.done, animate);
+    setTypewriter('now-task', t.label, false, !!t.done, animate);
+  }
+
+  // Most recent past slot that has a label, isn't done, and isn't current.
+  function updateOverdueDisplay(animate) {
+    if (animate === undefined) animate = true;
+    const nowK = currentSlotKey();
+    const cutoff = nowK ? parseInt(nowK, 10) : 2255;
+    let bestKey = null, bestNum = -1;
+    for (const k in state.tasks) {
+      const t = state.tasks[k];
+      if (!t || !t.label || !t.label.trim() || t.done) continue;
+      const n = parseInt(k, 10);
+      if (n >= cutoff) continue;
+      if (n > bestNum) { bestNum = n; bestKey = k; }
+    }
+    if (!bestKey) {
+      setTypewriter('overdue-task', '— nothing —', true, false, animate);
+    } else {
+      setTypewriter('overdue-task', state.tasks[bestKey].label, false, false, animate);
+    }
   }
 
   function updateNowMarker() {
@@ -1587,6 +1597,7 @@
       }
       lastNowKey = nk;
       updateNowTaskDisplay();
+      updateOverdueDisplay();
     }
     // Hour-head marker
     const now = new Date();
@@ -2172,28 +2183,8 @@
   }
 
   // ════════════════════════════════════════════════════════════════════
-  //  HEADER / TITLE / GLOBAL BUTTONS
+  //  HEADER / GLOBAL BUTTONS
   // ════════════════════════════════════════════════════════════════════
-  function setTitleEl() {
-    const el = document.getElementById('page-title');
-    el.innerHTML = escapeHtml(state.title || 'Today') + '<span class="dot">.</span>';
-  }
-  document.getElementById('page-title').addEventListener('focus', () => {
-    snapshot();
-    // Strip the dot for editing
-    const el = document.getElementById('page-title');
-    el.textContent = state.title || 'Today';
-  });
-  document.getElementById('page-title').addEventListener('blur', () => {
-    const el = document.getElementById('page-title');
-    state.title = el.textContent.trim() || 'Today';
-    setTitleEl();
-    scheduleSave();
-  });
-  document.getElementById('page-title').addEventListener('keydown', e => {
-    if (e.key === 'Enter') { e.preventDefault(); e.target.blur(); }
-  });
-
   document.getElementById('undo-btn').addEventListener('click', undo);
 
   document.getElementById('check-all-btn').addEventListener('click', () => {
@@ -2256,6 +2247,7 @@
     renderHourGrid();
     updateCounters();
     updateNowTaskDisplay();
+    updateOverdueDisplay();
     scheduleSave();
     showToast('Example Day', added > 0
       ? `Filled ${added} empty slot${added!==1?'s':''}.`
@@ -2669,19 +2661,9 @@
   });
 
   // ════════════════════════════════════════════════════════════════════
-  //  BANNER
-  // ════════════════════════════════════════════════════════════════════
-  document.getElementById('banner-close').addEventListener('click', () => {
-    document.getElementById('banner').classList.add('hidden');
-    state.bannerDismissed = true;
-    scheduleSave();
-  });
-
-  // ════════════════════════════════════════════════════════════════════
   //  RENDER ALL + INIT
   // ════════════════════════════════════════════════════════════════════
   function renderAll() {
-    setTitleEl();
     renderHourGrid();
     renderMealPlan();
     renderPads();
@@ -2690,11 +2672,27 @@
     updateNowMarker();
     updatePastUndone();
     updateNowTaskDisplay();
-    if (state.bannerDismissed) document.getElementById('banner').classList.add('hidden');
+    updateOverdueDisplay();
   }
 
-  // Click the big "now" display to scroll to the current slot
+  // Click either bar to scroll to its slot
   document.getElementById('now-task').addEventListener('click', () => scrollToNow());
+  document.getElementById('overdue-task').addEventListener('click', () => {
+    // Find latest overdue and scroll to it
+    const nowK = currentSlotKey();
+    const cutoff = nowK ? parseInt(nowK, 10) : 2255;
+    let bestKey = null, bestNum = -1;
+    for (const k in state.tasks) {
+      const t = state.tasks[k];
+      if (!t || !t.label || !t.label.trim() || t.done) continue;
+      const n = parseInt(k, 10);
+      if (n >= cutoff) continue;
+      if (n > bestNum) { bestNum = n; bestKey = k; }
+    }
+    if (!bestKey) return;
+    const row = hourGrid.querySelector(`.slot[data-time="${bestKey}"]`);
+    if (row) row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  });
 
   function scrollToNow() {
     const k = currentSlotKey();
