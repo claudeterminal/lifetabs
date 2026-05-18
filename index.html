@@ -70,18 +70,20 @@
   }
   .title-row {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    align-items: baseline;
+    grid-template-columns: 1.05fr 1fr;
+    align-items: center;
     gap: 24px;
-    min-height: clamp(40px, 4vw, 56px);
-  }
-  .now-bar {
-    display: flex; align-items: baseline; gap: 12px;
-    min-width: 0;
+    height: clamp(50px, 4.6vw, 64px);
     overflow: hidden;
   }
-  .now-bar.overdue { /* column 1 — left half */ }
-  .now-bar.current { /* column 2 — starts at exact horizontal midpoint */ }
+  .now-bar {
+    display: flex; align-items: center; gap: 12px;
+    min-width: 0;
+    overflow: hidden;
+    height: 100%;
+  }
+  .now-bar.overdue { /* column 1 — wider left side */ }
+  .now-bar.current { /* column 2 — starts at 70% across */ }
   .bar-label {
     font-family: var(--serif);
     font-size: clamp(24px, 3.12vw, 36px);
@@ -264,7 +266,7 @@
 
   .slot {
     display: grid;
-    grid-template-columns: 32px 1fr auto auto;
+    grid-template-columns: 38px 1fr auto auto;
     align-items: center; gap: 1px;
     padding: 0 6px;
     min-height: 20px;
@@ -718,27 +720,35 @@
 
   /* ─────────────────────────── TOAST ────────────────────────── */
   .toast-stack {
-    position: fixed; top: 24px; right: 24px;
+    position: fixed; top: 28px; right: 28px;
     z-index: 100; display: flex; flex-direction: column;
-    gap: 10px; max-width: 360px; pointer-events: none;
+    gap: 12px;
+    width: min(560px, 44vw);
+    pointer-events: none;
   }
   .toast {
     background: var(--ink); color: var(--paper);
-    padding: 14px 18px; border-radius: 4px;
-    box-shadow: 0 12px 32px rgba(0,0,0,0.28);
+    padding: 20px 26px; border-radius: 6px;
+    box-shadow: 0 16px 40px rgba(0,0,0,0.32), 0 4px 12px rgba(0,0,0,0.2);
     animation: toast-in 0.32s cubic-bezier(0.2, 0.8, 0.3, 1);
     pointer-events: auto;
-    border-left: 4px solid var(--accent-soft);
+    border-left: 5px solid var(--accent-soft);
   }
   .toast .toast-label {
-    font-family: var(--mono); font-size: 9.5px;
-    letter-spacing: 0.18em; text-transform: uppercase;
-    color: var(--accent-soft); margin-bottom: 4px;
+    font-family: var(--serif); font-size: 11px;
+    letter-spacing: 0.18em; text-transform: uppercase; font-weight: 600;
+    color: var(--accent-soft); margin-bottom: 6px;
   }
-  .toast .toast-body { font-family: var(--serif); font-size: 16px; line-height: 1.3; }
+  .toast .toast-body {
+    font-family: var(--serif); font-size: 22px; line-height: 1.25;
+    font-weight: 500;
+    white-space: normal;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+  }
   .toast .toast-time {
-    font-family: var(--mono); font-size: 10.5px;
-    color: rgba(244,237,224,0.6); margin-top: 6px;
+    font-family: var(--mono); font-size: 12px;
+    color: rgba(244,237,224,0.65); margin-top: 10px;
     letter-spacing: 0.04em;
   }
   @keyframes toast-in {
@@ -2192,9 +2202,7 @@
         added++;
       }
     }
-    SEED_DONE_KEYS.forEach(k => {
-      if (state.tasks[k]) state.tasks[k].done = true;
-    });
+    // NEVER touch user checkbox state here — only fill empty hour notes
     for (const h in SEED_HOUR_NOTES) {
       if (!state.hourNotes[h]) state.hourNotes[h] = SEED_HOUR_NOTES[h];
     }
@@ -2413,6 +2421,34 @@
     });
   }
 
+  // Soft, dull single tone — used for the every-60s gentle pulse.
+  function playSoftChime() {
+    const ctx = ensureAudio(); if (!ctx) return;
+    const now = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.value = 294;             // D4 — low, soft
+    gain.gain.setValueAtTime(0, now);
+    gain.gain.linearRampToValueAtTime(0.05, now + 0.05);   // very quiet
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 1.1);
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.start(now); osc.stop(now + 1.2);
+  }
+
+  // Every 60s, give a soft audio nudge of the current task — only if there's
+  // an active task and we didn't just fire a full reminder.
+  let lastReminderAt = 0;
+  function pulseCurrentTask() {
+    const k = currentSlotKey();
+    if (!k) return;
+    const t = state.tasks[k];
+    if (!t || !t.label || !t.label.trim() || t.done) return;
+    // Skip if the main reminder fired within the last ~30s
+    if (lastReminderAt && Date.now() - lastReminderAt < 30 * 1000) return;
+    playSoftChime();
+  }
+
   // Toast
   function showToast(label, body, timeText) {
     const stack = document.getElementById('toast-stack');
@@ -2437,6 +2473,7 @@
     const mm = parseInt(k.slice(2), 10);
     const timeText = format12(hh, mm);
     t.lastFired = todayStr();
+    lastReminderAt = Date.now();
     scheduleSave();
     if ('Notification' in window && Notification.permission === 'granted') {
       try {
@@ -2671,6 +2708,8 @@
     setInterval(() => { updateNowMarker(); updatePastUndone(); }, 30 * 1000);
     // Check every 5 seconds so 5-min slot transitions never get missed
     setInterval(checkReminders, 5 * 1000);
+    // Soft 60-second pulse — low dull tone for the current active task
+    setInterval(pulseCurrentTask, 60 * 1000);
     setTimeout(checkReminders, 1500);
     // Scroll the current slot into view after first render
     setTimeout(scrollToNow, 350);
