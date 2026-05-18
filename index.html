@@ -86,6 +86,35 @@
     font-style: italic; color: var(--accent); font-weight: 400;
     font-variation-settings: "opsz" 144, "WONK" 1;
   }
+  .now-task {
+    font-family: var(--serif);
+    font-style: italic;
+    font-weight: 400;
+    font-size: clamp(26px, 4.2vw, 48px);
+    line-height: 0.95;
+    letter-spacing: -0.015em;
+    color: var(--accent);
+    cursor: pointer;
+    max-width: min(60vw, 720px);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    align-self: baseline;
+    font-variation-settings: "opsz" 144, "SOFT" 60, "WONK" 1;
+    border-bottom: 1px dashed transparent;
+    transition: border-color 0.2s ease;
+  }
+  .now-task:hover { border-bottom-color: var(--accent-soft); }
+  .now-task.idle {
+    color: var(--ink-3);
+    font-weight: 300;
+    border-bottom-color: transparent !important;
+  }
+  .now-task.done {
+    color: var(--daily);
+    text-decoration: line-through;
+    text-decoration-thickness: 1.5px;
+  }
   .meta-row {
     display: flex; align-items: center; gap: 12px;
     font-family: var(--mono); font-size: 11px;
@@ -740,7 +769,8 @@
   <header>
     <div class="title-block">
       <div class="titlebar">
-        <h1 class="page-title" id="page-title" contenteditable="true" spellcheck="false">Today<span class="dot">.</span></h1>
+        <h1 class="page-title" id="page-title" contenteditable="true" spellcheck="false">Now<span class="dot">.</span></h1>
+        <div class="now-task idle" id="now-task" title="Click to scroll to current slot">—</div>
       </div>
       <div class="meta-row">
         <span id="weekday">—</span>
@@ -763,6 +793,9 @@
       <button class="btn" id="uncheck-all-btn">Uncheck All</button>
       <button class="btn" id="example-btn" title="Fill empty slots with the example day">Example Day</button>
       <button class="btn danger" id="delete-all-btn">Delete Tasks</button>
+      <button class="btn" id="export-btn" title="Download a backup file of everything (tasks, pads, meals, finances)">⤓ Export</button>
+      <button class="btn" id="import-btn" title="Restore from a backup file">⤒ Import</button>
+      <input type="file" id="import-file" accept="application/json,.json" style="display:none" />
     </div>
   </header>
 
@@ -830,7 +863,7 @@
   // ════════════════════════════════════════════════════════════════════
   //  CONSTANTS
   // ════════════════════════════════════════════════════════════════════
-  const STORAGE_KEY = 'daily-flow-state-v3';
+  const STORAGE_KEY = 'daily-flow-state-v4';
   const HOURS = []; // 7..22 (7 AM to 10 PM)
   for (let h = 7; h <= 22; h++) HOURS.push(h);
   const MINUTES = ['00','05','10','15','20','25','30','35','40','45','50','55'];
@@ -854,7 +887,7 @@
     const hourNotes = {};
     HOURS.forEach(h => { hourNotes[h] = ''; });
     return {
-      title: 'Today',
+      title: 'Now',
       tasks,
       hourNotes,
       meal: {
@@ -1128,19 +1161,45 @@
   const UNDO_LIMIT = 25;
   let saveTimer = null;
 
+  // Voice / TTS flags — declared up here so any earlier handler can read them.
+  let voiceUnlocked = false;       // any user gesture flips this on
+  let reminderVoiceMuted = false;  // toggled by the Voice button
+  let coachMuted = false;
+
   // ════════════════════════════════════════════════════════════════════
   //  STORAGE WRAPPER
   // ════════════════════════════════════════════════════════════════════
+  // Dual-backend storage. Tries Claude's window.storage AND localStorage so a
+  // task can survive losing either one. Reads fall back to whichever is alive.
   const storage = {
     async get(key) {
-      try { if (window.storage && window.storage.get) return await window.storage.get(key); }
-      catch (e) { /* not found */ }
+      // Prefer Claude's storage if it has the value
+      try {
+        if (window.storage && window.storage.get) {
+          const r = await window.storage.get(key);
+          if (r && r.value) return r;
+        }
+      } catch (e) {}
+      // Fall back to localStorage (works when the HTML is opened directly)
+      try {
+        const v = localStorage.getItem(key);
+        if (v != null) return { value: v };
+      } catch (e) {}
       return null;
     },
     async set(key, value) {
-      try { if (window.storage && window.storage.set) return await window.storage.set(key, value); }
-      catch (e) { console.warn('Storage set failed:', e); }
-      return null;
+      let ok = false;
+      try {
+        if (window.storage && window.storage.set) {
+          await window.storage.set(key, value);
+          ok = true;
+        }
+      } catch (e) { console.warn('window.storage set failed:', e); }
+      try {
+        localStorage.setItem(key, value);
+        ok = true;
+      } catch (e) { console.warn('localStorage set failed:', e); }
+      return ok ? { value } : null;
     }
   };
 
@@ -1171,6 +1230,12 @@
     if (!state.seeded) {
       applySeedTasks();
       state.seeded = true;
+      scheduleSave();
+    }
+    // One-time migration: rename "Today" → "Now" for prior saves
+    if (state.title === 'Today' && !state.titleMigratedToNow) {
+      state.title = 'Now';
+      state.titleMigratedToNow = true;
       scheduleSave();
     }
   }
@@ -1369,6 +1434,8 @@
       if (v && v.trim()) li.classList.add('has-text');
       else li.classList.remove('has-text');
       li.classList.remove('fired');
+      // Live update the big "now" display if this is the current slot
+      if (k === currentSlotKey()) updateNowTaskDisplay();
       // Debounce save + counters
       if (typingTimer) clearTimeout(typingTimer);
       typingTimer = setTimeout(() => {
@@ -1411,6 +1478,7 @@
       snapshot();
       state.tasks[k].done = cb.checked;
       li.classList.toggle('done', cb.checked);
+      if (k === currentSlotKey()) updateNowTaskDisplay();
       scheduleSave();
       updatePastUndone();
     });
@@ -1435,6 +1503,27 @@
   // ════════════════════════════════════════════════════════════════════
   let lastNowKey = null;
   let lastNowHour = null;
+
+  function updateNowTaskDisplay() {
+    const el = document.getElementById('now-task');
+    if (!el) return;
+    const k = currentSlotKey();
+    if (!k) {
+      el.textContent = '— off hours —';
+      el.classList.add('idle'); el.classList.remove('done');
+      return;
+    }
+    const t = state.tasks[k];
+    if (!t || !t.label || !t.label.trim()) {
+      el.textContent = '— free slot —';
+      el.classList.add('idle'); el.classList.remove('done');
+      return;
+    }
+    el.textContent = t.label;
+    el.classList.remove('idle');
+    el.classList.toggle('done', !!t.done);
+  }
+
   function updateNowMarker() {
     const nk = currentSlotKey();
     if (nk !== lastNowKey) {
@@ -1447,6 +1536,7 @@
         if (curr) curr.classList.add('now');
       }
       lastNowKey = nk;
+      updateNowTaskDisplay();
     }
     // Hour-head marker
     const now = new Date();
@@ -2139,10 +2229,65 @@
     }
     renderHourGrid();
     updateCounters();
+    updateNowTaskDisplay();
     scheduleSave();
     showToast('Example Day', added > 0
       ? `Filled ${added} empty slot${added!==1?'s':''}.`
       : 'All example slots already have tasks.', '');
+  });
+
+  // ── Export: download every bit of state as a JSON file ──
+  document.getElementById('export-btn').addEventListener('click', () => {
+    try {
+      const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      const d = new Date();
+      const stamp = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+      a.href = url;
+      a.download = `daily-flow-${stamp}.json`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      showToast('Exported', `Saved daily-flow-${stamp}.json to your downloads.`, '');
+    } catch (e) {
+      showToast('Export failed', String(e && e.message || e), '');
+    }
+  });
+
+  // ── Import: pick a JSON file, merge into state ──
+  const importFile = document.getElementById('import-file');
+  document.getElementById('import-btn').addEventListener('click', () => importFile.click());
+  importFile.addEventListener('change', async () => {
+    const f = importFile.files && importFile.files[0];
+    if (!f) return;
+    try {
+      const text = await f.text();
+      const parsed = JSON.parse(text);
+      if (!parsed || typeof parsed !== 'object' || !parsed.tasks) {
+        throw new Error('Not a Daily Flow backup file');
+      }
+      if (!confirm(`Replace current state with backup "${f.name}"?\nThis cannot be undone (use Export first if you want a safety copy).`)) {
+        importFile.value = '';
+        return;
+      }
+      snapshot();
+      const def = defaultState();
+      state = { ...def, ...parsed };
+      // Make sure every slot exists
+      HOURS.forEach(h => MINUTES.forEach(m => {
+        const k = hmKey(h, parseInt(m, 10));
+        if (!state.tasks[k]) state.tasks[k] = { label:'', done:false, locked:false, repeat:false, lastFired:null };
+      }));
+      renderAll();
+      scheduleSave();
+      showToast('Imported', `Restored from ${f.name}.`, '');
+    } catch (e) {
+      showToast('Import failed', String(e && e.message || e), '');
+    } finally {
+      importFile.value = '';
+    }
   });
 
   // Keyboard: ⌘Z / Ctrl+Z = undo (when not focused inside editable)
@@ -2349,9 +2494,6 @@
   const coachClose = document.getElementById('coach-close');
   const coachBubble = document.getElementById('coach-bubble-text');
   let coachOpen = false;
-  let coachMuted = false;
-  let voiceUnlocked = false;        // any user gesture flips this on
-  let reminderVoiceMuted = false;   // toggled by the Voice button
   let lastNudgeAt = 0;
   let coachInterval = null;
 
@@ -2490,8 +2632,12 @@
     updateCounters();
     updateNowMarker();
     updatePastUndone();
+    updateNowTaskDisplay();
     if (state.bannerDismissed) document.getElementById('banner').classList.add('hidden');
   }
+
+  // Click the big "now" display to scroll to the current slot
+  document.getElementById('now-task').addEventListener('click', () => scrollToNow());
 
   function scrollToNow() {
     const k = currentSlotKey();
