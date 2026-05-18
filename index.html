@@ -114,19 +114,12 @@
     text-decoration: line-through;
     text-decoration-thickness: 1.5px;
   }
-  .bar-text.typing::after {
-    content: '';
-    display: inline-block;
-    width: 0.5ch;
-    height: 0.95em;
-    background: currentColor;
-    vertical-align: text-bottom;
-    margin-left: 3px;
-    animation: cursor-blink 0.6s steps(2) infinite;
+  .bar-text.flashing {
+    animation: bar-flash 1.4s ease-in-out infinite;
   }
-  @keyframes cursor-blink {
-    0%, 50% { opacity: 1; }
-    50.01%, 100% { opacity: 0; }
+  @keyframes bar-flash {
+    0%, 100% { opacity: 1; }
+    50%      { opacity: 0.42; }
   }
   .meta-row {
     display: flex; align-items: center; gap: 12px;
@@ -1433,7 +1426,7 @@
       else li.classList.remove('has-text');
       li.classList.remove('fired');
       // Live update the big "now" display if this is the current slot (no anim, syncs with typing)
-      if (k === currentSlotKey()) updateNowTaskDisplay(false);
+      if (k === currentSlotKey()) updateNowTaskDisplay();
       // Debounce save + overdue refresh + counters
       if (typingTimer) clearTimeout(typingTimer);
       typingTimer = setTimeout(() => {
@@ -1504,71 +1497,30 @@
   let lastNowKey = null;
   let lastNowHour = null;
 
-  // Typewriter that runs per-element (each element has its own animation state
-  // attached as ._twTimer / ._twState). animate=true loops forever; animate=false
-  // just snaps the text. Used by both the Now bar and the Overdue bar.
-  function setTypewriter(elId, text, isIdle, isDone, animate) {
+  // Sets bar text and flashes it while showing an active task.
+  // (No typewriter — just snap the value and let CSS pulse the opacity.)
+  function setBarText(elId, text, isIdle, isDone) {
     const el = document.getElementById(elId);
     if (!el) return;
-    if (el._twTimer) { clearTimeout(el._twTimer); el._twTimer = null; }
-
+    el.textContent = text;
     el.classList.toggle('idle', !!isIdle);
     el.classList.toggle('done', !!isDone);
-
-    if (!animate || isIdle || isDone) {
-      el.textContent = text;
-      el.classList.remove('typing');
-      el._twState = null;
-      return;
-    }
-
-    const state = { target: text, buf: el.textContent || '', phase: null };
-    el._twState = state;
-    el.classList.add('typing');
-
-    function tick() {
-      if (el._twState !== state) return; // replaced or canceled
-      if (state.phase === null) {
-        state.phase = state.buf.length > 0 ? 'erasing' : 'typing';
-      }
-      if (state.phase === 'erasing') {
-        if (state.buf.length > 0) {
-          state.buf = state.buf.slice(0, -1);
-          el.textContent = state.buf;
-          el._twTimer = setTimeout(tick, 14);
-        } else {
-          state.phase = 'typing';
-          el._twTimer = setTimeout(tick, 250);
-        }
-      } else {
-        if (state.buf.length < state.target.length) {
-          state.buf = state.target.slice(0, state.buf.length + 1);
-          el.textContent = state.buf;
-          el._twTimer = setTimeout(tick, 32 + Math.random() * 30);
-        } else {
-          state.phase = 'erasing';
-          el._twTimer = setTimeout(tick, 3200);
-        }
-      }
-    }
-    tick();
+    if (isIdle || isDone) el.classList.remove('flashing');
+    else el.classList.add('flashing');
   }
 
-  function updateNowTaskDisplay(animate) {
-    if (animate === undefined) animate = true;
+  function updateNowTaskDisplay() {
     const k = currentSlotKey();
-    if (!k) { setTypewriter('now-task', '— off hours —', true, false, animate); return; }
+    if (!k) { setBarText('now-task', '— off hours —', true, false); return; }
     const t = state.tasks[k];
     if (!t || !t.label || !t.label.trim()) {
-      setTypewriter('now-task', '— free slot —', true, false, animate);
+      setBarText('now-task', '— free slot —', true, false);
       return;
     }
-    setTypewriter('now-task', t.label, false, !!t.done, animate);
+    setBarText('now-task', t.label, false, !!t.done);
   }
 
-  // Most recent past slot that has a label, isn't done, and isn't current.
-  function updateOverdueDisplay(animate) {
-    if (animate === undefined) animate = true;
+  function updateOverdueDisplay() {
     const nowK = currentSlotKey();
     const cutoff = nowK ? parseInt(nowK, 10) : 2255;
     let bestKey = null, bestNum = -1;
@@ -1580,9 +1532,9 @@
       if (n > bestNum) { bestNum = n; bestKey = k; }
     }
     if (!bestKey) {
-      setTypewriter('overdue-task', '— nothing —', true, false, animate);
+      setBarText('overdue-task', '— nothing —', true, false);
     } else {
-      setTypewriter('overdue-task', state.tasks[bestKey].label, false, false, animate);
+      setBarText('overdue-task', state.tasks[bestKey].label, false, false);
     }
   }
 
