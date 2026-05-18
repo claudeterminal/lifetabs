@@ -6,7 +6,7 @@
 <title>Daily Flow — A 16-Hour Microplanner</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT,WONK@0,9..144,300..900,0..100,0..1;1,9..144,300..900,0..100,0..1&family=JetBrains+Mono:wght@300..600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300..600&display=swap" rel="stylesheet">
 <style>
   :root {
     --paper:        #f4ede0;
@@ -14,10 +14,10 @@
     --paper-3:      #e4d8b8;
     --rule:         #d4c5a3;
     --rule-soft:    #e4d8b8;
-    --ink:          #1f1814;
-    --ink-2:        #5a4d3a;
-    --ink-3:        #8a7a60;
-    --ink-4:        #b9aa8a;
+    --ink:          #3d3a33;
+    --ink-2:        #6b6253;
+    --ink-3:        #948871;
+    --ink-4:        #bdb19a;
     --accent:       #a8341c;
     --accent-soft:  #d6634a;
     --accent-bg:    #f6d9cf;
@@ -31,8 +31,8 @@
     --tag-green-bg: #d8e2cc;
     --tag-black:    #2a221c;
     --tag-black-bg: #d6cbb0;
-    --serif: "Fraunces", Georgia, serif;
-    --mono:  "JetBrains Mono", "SFMono-Regular", Menlo, monospace;
+    --serif: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --mono:  "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
   }
   * { box-sizing: border-box; }
   html, body {
@@ -76,33 +76,33 @@
     font-family: var(--serif); font-weight: 300;
     font-size: clamp(40px, 5.5vw, 64px); line-height: 0.95;
     margin: 0; letter-spacing: -0.03em;
-    font-variation-settings: "opsz" 144, "SOFT" 30, "WONK" 1;
     outline: none;
     border-bottom: 1px dashed transparent;
     transition: border-color 0.15s ease;
   }
   h1.page-title:hover, h1.page-title:focus { border-bottom-color: var(--rule); }
   h1.page-title .dot {
-    font-style: italic; color: var(--accent); font-weight: 400;
-    font-variation-settings: "opsz" 144, "WONK" 1;
+    color: var(--accent); font-weight: 400;
   }
   .now-task {
     font-family: var(--serif);
-    font-style: italic;
-    font-weight: 400;
-    font-size: clamp(26px, 4.2vw, 48px);
+    font-style: normal;
+    font-weight: 500;
+    font-size: clamp(28px, 4.6vw, 56px);
     line-height: 0.95;
     letter-spacing: -0.015em;
     color: var(--accent);
     cursor: pointer;
-    max-width: min(60vw, 720px);
+    max-width: min(70vw, 820px);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
     align-self: baseline;
-    font-variation-settings: "opsz" 144, "SOFT" 60, "WONK" 1;
     border-bottom: 1px dashed transparent;
     transition: border-color 0.2s ease;
+    min-height: 1.1em;
+    display: inline-flex;
+    align-items: baseline;
   }
   .now-task:hover { border-bottom-color: var(--accent-soft); }
   .now-task.idle {
@@ -114,6 +114,20 @@
     color: var(--daily);
     text-decoration: line-through;
     text-decoration-thickness: 1.5px;
+  }
+  .now-task.typing::after {
+    content: '';
+    display: inline-block;
+    width: 0.5ch;
+    height: 0.95em;
+    background: currentColor;
+    vertical-align: text-bottom;
+    margin-left: 3px;
+    animation: cursor-blink 0.6s steps(2) infinite;
+  }
+  @keyframes cursor-blink {
+    0%, 50% { opacity: 1; }
+    50.01%, 100% { opacity: 0; }
   }
   .meta-row {
     display: flex; align-items: center; gap: 12px;
@@ -158,8 +172,7 @@
   .btn svg { width: 11px; height: 11px; }
 
   .nl-input {
-    font-family: var(--serif); font-style: italic;
-    font-size: 13px; padding: 7px 12px;
+    font-family: var(--serif); font-size: 13px; padding: 7px 12px;
     border: 1px solid var(--rule);
     border-radius: 999px; background: var(--paper);
     color: var(--ink); outline: none;
@@ -172,23 +185,27 @@
   .banner {
     background: rgba(214, 99, 74, 0.07);
     border-left: 3px solid var(--accent);
-    padding: 12px 16px;
+    padding: 12px 40px 12px 16px;
     margin: 6px 0 18px;
     font-family: var(--serif); font-size: 14px;
     line-height: 1.5; color: var(--ink-2);
     border-radius: 2px;
     position: relative;
   }
+  .banner .line { padding: 1px 0; }
   .banner strong { color: var(--ink); font-weight: 600; }
-  .banner em { font-style: italic; color: var(--ink); }
+  .banner em { color: var(--ink); }
   .banner-close {
-    position: absolute; top: 8px; right: 12px;
+    position: absolute; top: 8px; right: 10px;
+    width: 22px; height: 22px;
     cursor: pointer; color: var(--ink-3);
-    font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em;
-    background: none; border: none;
-    text-transform: uppercase;
+    font-family: var(--mono); font-size: 16px;
+    line-height: 1;
+    background: none; border: none; padding: 0;
+    display: inline-flex; align-items: center; justify-content: center;
+    border-radius: 50%;
   }
-  .banner-close:hover { color: var(--accent); }
+  .banner-close:hover { color: var(--accent); background: var(--paper-2); }
   .banner.hidden { display: none; }
 
   /* ─────────────────────────── HOUR GRID ────────────────────────── */
@@ -247,8 +264,7 @@
   .hour-head .h-note {
     flex: 1; min-width: 0;
     background: transparent; border: none; outline: none;
-    font-family: var(--serif); font-style: italic;
-    font-size: 11.5px; color: var(--ink-2);
+    font-family: var(--serif); font-size: 11.5px; color: var(--ink-2);
   }
   .hour-head .h-note::placeholder { color: var(--ink-4); }
 
@@ -256,10 +272,10 @@
 
   .slot {
     display: grid;
-    grid-template-columns: 32px 1fr auto auto;
+    grid-template-columns: 38px 1fr auto auto;
     align-items: center; gap: 4px;
     padding: 0 6px;
-    min-height: 22px;
+    min-height: 20px;
     border-bottom: 1px solid var(--rule-soft);
     transition: background 0.12s ease;
     position: relative;
@@ -313,8 +329,7 @@
   }
   .slot-label::placeholder { color: transparent; }
   .slot:hover .slot-label::placeholder, .slot-label:focus::placeholder {
-    color: var(--ink-4); font-style: italic;
-  }
+    color: var(--ink-4); }
   .slot-label:focus {
     border-bottom: 1px solid var(--ink);
     margin-bottom: -1px;
@@ -373,10 +388,8 @@
   }
   .section-rule .num {
     color: var(--accent);
-    font-style: italic;
     text-transform: none; letter-spacing: 0;
     font-family: var(--serif); font-size: 16px;
-    font-variation-settings: "opsz" 24;
   }
 
   /* ─────────────────────────── MEAL PLAN ────────────────────────── */
@@ -574,7 +587,7 @@
     color: var(--ink-2);
   }
   .finances-head .label { font-weight: 600; color: var(--ink); }
-  .finances-head .hint { font-style: italic; text-transform: none; letter-spacing: 0.04em; }
+  .finances-head .hint { text-transform: none; letter-spacing: 0.04em; }
   .finances-head .hint code {
     background: var(--paper-3); padding: 1px 5px; border-radius: 2px;
     font-family: var(--mono); font-size: 10px;
@@ -620,7 +633,7 @@
     font: inherit; color: inherit;
     padding: 0 8px;
   }
-  table.ss td.formula input { color: var(--daily); font-style: italic; }
+  table.ss td.formula input { color: var(--daily); }
   table.ss td.error input { color: var(--accent); }
   table.ss td:focus-within { background: var(--paper-3); outline: 1px solid var(--ink); outline-offset: -1px; }
 
@@ -746,10 +759,8 @@
 
   /* ─────────────────────────── FOOTNOTE ────────────────────────── */
   .footnote {
-    font-family: var(--serif); font-style: italic;
-    font-size: 12.5px; color: var(--ink-3);
+    font-family: var(--serif); font-size: 12.5px; color: var(--ink-3);
     text-align: center; margin-top: 22px;
-    font-variation-settings: "opsz" 14;
   }
 
   @media (max-width: 720px) {
@@ -772,16 +783,8 @@
         <h1 class="page-title" id="page-title" contenteditable="true" spellcheck="false">Now<span class="dot">.</span></h1>
         <div class="now-task idle" id="now-task" title="Click to scroll to current slot">—</div>
       </div>
-      <div class="meta-row">
-        <span id="weekday">—</span>
-        <span class="pip clock-time" id="clock-time">—:—</span>
-        <span class="pip work" id="work-pip" title="Total work time (slots with 💻 emoji × 5 min)">💻 <span id="work-total">0m</span></span>
-        <span class="pip" id="task-pip">— tasks</span>
-        <span class="pip" id="daily-pip">— daily</span>
-      </div>
     </div>
     <div class="controls">
-      <input type="text" class="nl-input" id="nl-input" placeholder="e.g. 'from 2-5pm work'" title="Type a natural-language command and press Enter" />
       <button class="btn" id="undo-btn" disabled title="Undo last change (⌘Z)">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v6h6"/><path d="M3 13a9 9 0 1 0 3-7.7L3 8"/></svg>
         Undo
@@ -800,12 +803,11 @@
   </header>
 
   <div class="banner" id="banner">
-    <button class="banner-close" id="banner-close">Dismiss</button>
-    <strong>How this works.</strong> Type a task next to any time, or use natural language like
-    <em>"from 9-11am deep work"</em> / <em>"2pm gym"</em>. Lock a slot 🔒 so it survives reorganizing.
-    Mark it daily ↻ so it repeats. When the current time hits a slot with text, you get a notification
-    + chime + on-screen toast. Tap the coach 🧑‍🏫 (bottom-left) to enable voice nudges that ask if
-    you're still on task. Everything saves automatically.
+    <button class="banner-close" id="banner-close">×</button>
+    <div class="line">Type next to any time — saves automatically.</div>
+    <div class="line">🔒 lock &nbsp;·&nbsp; ↻ daily-repeat &nbsp;·&nbsp; ✓ done</div>
+    <div class="line">Click <strong>Notifications</strong> + <strong>🔊 Voice</strong> once to enable popups + spoken reminders.</div>
+    <div class="line">🧑‍🏫 bottom-left — optional voice coach.</div>
   </div>
 
   <!-- ───────── 16-HOUR GRID ───────── -->
@@ -929,18 +931,18 @@
     '0740': 'Cook Stew 🥩 $10',
     '0745': '💊 Serum $5',
     '0750': '🍋 make L glut 3g',
-    '0755': '$50 mS|tM|wA|t…',
+    '0755': '$50 mS|tM|wA|t',
     // ── 8 AM ──
     '0800': '🚽 Urinate',
-    '0805': '💧 Water +150 t25…',
+    '0805': '💧 Water +150 t25',
     '0810': 'burn 50/400 cal',
     '0815': '🍳 Cook Eggs $1',
     '0820': 'Cook tofu $2',
     '0825': 'Shorts, Tshirt',
     '0830': '☀️ Sun',
     '0835': 'meals in containers',
-    '0840': '🛒 Grocery 3x2 🥜…',
-    '0845': '💊 Vitamin C (T) (S…)',
+    '0840': '🛒 Grocery 3x2 🥜',
+    '0845': '💊 Vitamin C (T) (S)',
     '0850': '💊 Vitamin D (M)(F)',
     '0855': '🍅 pom $2/d',
     // ── 9 AM ──
@@ -948,25 +950,25 @@
     '0905': '💧 Water 375ml',
     '0910': 'burn 100/400 cal',
     '0915': 'now what',
-    '0920': 'Bowel (or boi oli…)',
-    '0925': '🍽️ EAT 10 Cranber…',
+    '0920': 'Bowel (or boi oli)',
+    '0925': '🍽️ EAT 10 Cranber',
     '0930': '🍽️ EAT',
     '0935': 'EAT',
     '0940': '⌚ charge watch',
     '0945': '🦷 water floss',
     '0950': 'Do HER 8 VIDEOS!',
-    '0955': 'intellnx sample re…',
+    '0955': 'intellnx sample re',
     // ── 10 AM ──
     '1000': '🚽 Urinate',
     '1005': '💧 Water 500',
     '1010': 'burn 150/400 cal',
     '1015': '💊 zinc carnosine',
-    '1020': 'Return iPad, any…',
+    '1020': 'Return iPad, any',
     '1025': 'housing',
     '1030': 'T Amazon returns',
     '1035': 'cheryl apply jobs',
     '1040': 'get website ready',
-    '1045': '🚮 Take Out Tras…',
+    '1045': '🚮 Take Out Tras',
     '1050': 'wear watch',
     '1055': 'Load Dishes',
     // ── 11 AM ──
@@ -974,13 +976,13 @@
     '1105': '💧 Water 650/2L',
     '1110': 'burn 200/400 cal',
     '1115': 'Orthotics',
-    '1120': '🛒 groceries bel…',
-    '1125': 'One Medical A…',
-    '1130': 'one medical bl…',
-    '1135': '🩺 one medical …',
-    '1140': 'one medical bl…',
+    '1120': '🛒 groceries bel',
+    '1125': 'One Medical A',
+    '1130': 'one medical bl',
+    '1135': '🩺 one medical',
+    '1140': 'one medical bl',
     '1145': '🚽 Urinate',
-    '1150': 'intellnex 2 doct…',
+    '1150': 'intellnex 2 doct',
     '1155': '💊 arcacia fiber',
     // ── 12 PM ──
     '1200': '🚽 Urinate',
@@ -988,12 +990,12 @@
     '1210': 'burn 250/400 cal',
     '1215': 'change bottom',
     '1220': 'self/roller',
-    '1225': '🍪 Zinc Caronsin…',
+    '1225': '🍪 Zinc Caronsin',
     '1230': '💻 work',
     '1235': 'clean living room',
     '1240': '🍽️ EAT',
     '1245': '🍽️ EAT',
-    '1250': '🍽️🍽️ EAT 10 Cra…',
+    '1250': '🍽️🍽️ EAT 10 Cra',
     '1255': 'water floss',
     // ── 1 PM ──
     '1300': '🚽 Urinate',
@@ -1003,7 +1005,7 @@
     '1320': 'type monday plans',
     '1325': 'create 30 questions for men',
     '1330': 'load up all 4 AIs',
-    '1335': 'open heygen and…',
+    '1335': 'open heygen and',
     '1340': 'clean kitchen',
     '1345': '💻 work?',
     '1350': '💻 work',
@@ -1020,29 +1022,29 @@
     '1440': 'call add on IRA?',
     '1445': 'T cheryl new SSN',
     '1450': 'T robinhood joint',
-    '1455': '⏳ T make 1 linebu…',
+    '1455': '⏳ T make 1 linebu',
     // ── 3 PM ──
     '1500': '🚽 Urinate',
     '1505': '💧 Water 1500/2L',
-    '1510': 'burn 400/400 cal…',
+    '1510': 'burn 400/400 cal',
     '1515': 'x06.0.18mg',
     '1520': 'budget?',
     '1525': '1 line of expense',
     '1530': '1 line expense',
-    '1535': 'mov…',
-    '1540': 'cle…',
+    '1535': 'mov',
+    '1540': 'cle',
     '1545': '💧 Water 1350/2L',
     '1550': '🍽️ EAT',
     // ── 4 PM ──
     '1600': '🚽 Urinate',
     '1605': '💧 Water 1650/2L',
-    '1610': '🍽️ Eat 10 Cranber…',
+    '1610': '🍽️ Eat 10 Cranber',
     '1615': 'water floss',
     '1620': '⏳ work',
     '1625': '⏳ work',
     '1630': '⏳ work',
     '1635': '⏳ work',
-    '1640': 'make 2nd olive l…',
+    '1640': 'make 2nd olive l',
     '1645': 'drink it slowly',
     '1650': 'decide on SF apt',
     '1655': '⏳ work',
@@ -1054,7 +1056,7 @@
     '1720': '⏳ work',
     '1725': '⏳ work',
     '1730': '⏳ work',
-    '1735': 'Bacillus coagulan…',
+    '1735': 'Bacillus coagulan',
     '1740': 'make social plans',
     '1745': 'what to do..',
     '1750': 'take out trash',
@@ -1062,41 +1064,41 @@
     // ── 6 PM ──
     '1800': '🚽 Urinate',
     '1805': '💧 Water 1950/2L',
-    '1810': 'T dating app / dist…',
+    '1810': 'T dating app / dist',
     '1815': '🍽️ unload dishes',
-    '1820': 'T MASSAGE or s…',
+    '1820': 'T MASSAGE or s',
     '1825': 'makeup',
     '1830': 'batch cook again',
     '1835': 'do your hair',
-    '1840': '🍽️ EAT Cod/Sal…',
+    '1840': '🍽️ EAT Cod/Sal',
     '1845': '🍽️ EAT',
     '1850': '🍽️ Eat',
-    '1855': '⏳ work, date, o…',
+    '1855': '⏳ work, date, o',
     // ── 7 PM ──
     '1900': '🚽 Urinate',
-    '1905': '⏳ work, date, o…',
-    '1910': '⏳ work, date, o…',
+    '1905': '⏳ work, date, o',
+    '1910': '⏳ work, date, o',
     '1915': 'caption videos',
     '1920': 'music?',
     '1925': 'preschedule videos',
     '1930': '🏠 craigslist',
     '1935': '🏠 zillow',
     '1940': '🏠 apts.com',
-    '1945': '🏠 urbanest 141…',
+    '1945': '🏠 urbanest 141',
     '1950': '🏠 furnished finder',
-    '1955': '⏳ work, date, o…',
+    '1955': '⏳ work, date, o',
     // ── 8 PM ──
     '2000': '🚽 Urinate',
-    '2005': '⏳ work, date, o…',
-    '2010': '⏳ work, date, o…',
-    '2015': '⏳ work, date, o…',
-    '2020': '⏳ work, date, o…',
-    '2025': '⏳ work, date, o…',
+    '2005': '⏳ work, date, o',
+    '2010': '⏳ work, date, o',
+    '2015': '⏳ work, date, o',
+    '2020': '⏳ work, date, o',
+    '2025': '⏳ work, date, o',
     '2030': "leah's voice",
-    '2035': '⏳ work, date, o…',
-    '2040': '⏳ work, date, o…',
-    '2045': '⏳ work, date, o…',
-    '2050': 'fun: solo dance pl…',
+    '2035': '⏳ work, date, o',
+    '2040': '⏳ work, date, o',
+    '2045': '⏳ work, date, o',
+    '2050': 'fun: solo dance pl',
     '2055': 'Sip water 50ml',
     // ── 9 PM ──
     '2100': '🚽 Urinate',
@@ -1105,16 +1107,16 @@
     '2115': '🍽️ EAT',
     '2120': '🍽️ EAT',
     '2125': 'water floss',
-    '2130': 'fun: release spot…',
-    '2155': '🩹 watch right w…',
+    '2130': 'fun: release spot',
+    '2155': '🩹 watch right w',
     // ── 10 PM ──
-    '2200': '🚽 Urinate $0.25…',
+    '2200': '🚽 Urinate $0.25',
     '2205': 'EAT snack $5',
-    '2210': '😴 water floss …',
+    '2210': '😴 water floss',
     '2215': 'remove contacts',
     '2220': '🦷 change top',
-    '2225': '🧴 change bott…',
-    '2230': '😴 phone airpla…',
+    '2225': '🧴 change bott',
+    '2230': '😴 phone airpla',
     '2235': '🦷 floss $0.25',
     '2240': '🪥 brush $0.25',
     '2245': 'laptop off',
@@ -1376,7 +1378,7 @@
     input.type = 'text';
     input.className = 'slot-label';
     input.value = t.label || '';
-    input.placeholder = '…';
+    input.placeholder = '';
     input.autocomplete = 'off';
     input.spellcheck = true;
     input.maxLength = 140;
@@ -1434,8 +1436,8 @@
       if (v && v.trim()) li.classList.add('has-text');
       else li.classList.remove('has-text');
       li.classList.remove('fired');
-      // Live update the big "now" display if this is the current slot
-      if (k === currentSlotKey()) updateNowTaskDisplay();
+      // Live update the big "now" display if this is the current slot (no anim, syncs with typing)
+      if (k === currentSlotKey()) updateNowTaskDisplay(false);
       // Debounce save + counters
       if (typingTimer) clearTimeout(typingTimer);
       typingTimer = setTimeout(() => {
@@ -1504,24 +1506,72 @@
   let lastNowKey = null;
   let lastNowHour = null;
 
-  function updateNowTaskDisplay() {
+  // Typewriter for the big "Now" task. animate=true plays the full erase→retype
+  // transition AND keeps looping while the same task is showing. animate=false
+  // just snaps the text (used during live editing so the display tracks the
+  // user's keystrokes without competing with them).
+  let nowAnim = null;
+
+  function setNowTask(text, isIdle, isDone, animate) {
     const el = document.getElementById('now-task');
     if (!el) return;
-    const k = currentSlotKey();
-    if (!k) {
-      el.textContent = '— off hours —';
-      el.classList.add('idle'); el.classList.remove('done');
+    if (nowAnim) { clearTimeout(nowAnim.timer); nowAnim = null; }
+
+    el.classList.toggle('idle', !!isIdle);
+    el.classList.toggle('done', !!isDone);
+
+    // Idle / done / non-animated: just snap, no loop.
+    if (!animate || isIdle || isDone) {
+      el.textContent = text;
+      el.classList.remove('typing');
       return;
     }
+
+    // Active task: loop forever — type → hold → erase → hold → type …
+    nowAnim = { target: text, buf: el.textContent || '', phase: null };
+    el.classList.add('typing');
+
+    function tick() {
+      if (!nowAnim) return;
+      const s = nowAnim;
+      // First-time entry: decide whether to erase or type
+      if (s.phase === null) {
+        s.phase = s.buf.length > 0 ? 'erasing' : 'typing';
+      }
+      if (s.phase === 'erasing') {
+        if (s.buf.length > 0) {
+          s.buf = s.buf.slice(0, -1);
+          el.textContent = s.buf;
+          s.timer = setTimeout(tick, 14);
+        } else {
+          s.phase = 'typing';
+          s.timer = setTimeout(tick, 250);
+        }
+      } else { // typing
+        if (s.buf.length < s.target.length) {
+          s.buf = s.target.slice(0, s.buf.length + 1);
+          el.textContent = s.buf;
+          s.timer = setTimeout(tick, 32 + Math.random() * 30);
+        } else {
+          // Full text shown — hold, then loop back into erasing
+          s.phase = 'erasing';
+          s.timer = setTimeout(tick, 3200);
+        }
+      }
+    }
+    tick();
+  }
+
+  function updateNowTaskDisplay(animate) {
+    if (animate === undefined) animate = true;
+    const k = currentSlotKey();
+    if (!k) { setNowTask('— off hours —', true, false, animate); return; }
     const t = state.tasks[k];
     if (!t || !t.label || !t.label.trim()) {
-      el.textContent = '— free slot —';
-      el.classList.add('idle'); el.classList.remove('done');
+      setNowTask('— free slot —', true, false, animate);
       return;
     }
-    el.textContent = t.label;
-    el.classList.remove('idle');
-    el.classList.toggle('done', !!t.done);
+    setNowTask(t.label, false, !!t.done, animate);
   }
 
   function updateNowMarker() {
@@ -1580,20 +1630,7 @@
   //  COUNTERS
   // ════════════════════════════════════════════════════════════════════
   function updateCounters() {
-    let total = 0, daily = 0, workSlots = 0;
-    for (const k in state.tasks) {
-      const t = state.tasks[k];
-      if (t && t.label && t.label.trim()) {
-        total++;
-        if (t.repeat) daily++;
-        if (t.label.includes('💻')) workSlots++;
-      }
-    }
-    document.getElementById('task-pip').textContent = `${total} task${total!==1?'s':''}`;
-    document.getElementById('daily-pip').textContent = `${daily} daily`;
-    const mins = workSlots * 5;
-    const wh = Math.floor(mins / 60), wm = mins % 60;
-    document.getElementById('work-total').textContent = wh > 0 ? `${wh}h ${wm}m` : `${wm}m`;
+    // Pips were removed; this is kept as a no-op for callers that still invoke it.
   }
 
   // ════════════════════════════════════════════════════════════════════
@@ -1864,8 +1901,7 @@
   //  FINANCES SPREADSHEET
   // ════════════════════════════════════════════════════════════════════
   const ssTable = document.getElementById('ss-table');
-  function colLetter(i) { return String.fromCharCode(65 + i); } // A,B,C…
-
+  function colLetter(i) { return String.fromCharCode(65 + i); } // A, B, C
   function renderFinances() {
     ssTable.innerHTML = '';
     // Header row
@@ -2134,16 +2170,6 @@
     scheduleSave();
     showToast('Set', `${count} slot${count!==1?'s':''} set to "${label}".`, `${format12(s.h, s.m)} → ${format12(e.h, e.m)}`);
   }
-  document.getElementById('nl-input').addEventListener('keydown', e => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      const v = e.target.value;
-      if (v.trim()) {
-        runNlCommand(v);
-        e.target.value = '';
-      }
-    }
-  });
 
   // ════════════════════════════════════════════════════════════════════
   //  HEADER / TITLE / GLOBAL BUTTONS
@@ -2306,8 +2332,10 @@
   // ════════════════════════════════════════════════════════════════════
   function updateClock() {
     const d = new Date();
-    document.getElementById('clock-time').textContent = format12(d.getHours(), d.getMinutes());
-    document.getElementById('weekday').textContent = d.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' });
+    const ct = document.getElementById('clock-time');
+    if (ct) ct.textContent = format12(d.getHours(), d.getMinutes());
+    const wd = document.getElementById('weekday');
+    if (wd) wd.textContent = d.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' });
   }
 
   // ════════════════════════════════════════════════════════════════════
@@ -2340,11 +2368,18 @@
   permBtn.addEventListener('click', async () => {
     ensureAudio();
     voiceUnlocked = true; // user gesture — unlock TTS for reminders
+    reminderVoiceMuted = false;
+    // Warm the speech engine so getVoices() is populated on first real call
+    try { window.speechSynthesis && window.speechSynthesis.getVoices(); } catch (e) {}
     if (!('Notification' in window)) return;
     try {
       const r = await Notification.requestPermission();
       updatePermBtn();
-      if (r === 'granted') showToast('Reminders Armed', 'Notifications enabled.', '');
+      updateVoiceBtn();
+      if (r === 'granted') {
+        showToast('Reminders Armed', 'Notifications + voice enabled.', '');
+        speakReminder('Reminders on. I will read each task out loud when its time arrives.');
+      }
     } catch (e) {}
   });
   testBtn.addEventListener('click', () => {
@@ -2363,35 +2398,48 @@
     else speakReminder('Voice ready. I will read each task aloud when its time arrives.');
   });
 
-  // Voice toggle
+  // Voice toggle — single click toggles. First click also unlocks TTS.
   const voiceBtn = document.getElementById('voice-btn');
   function updateVoiceBtn() {
-    if (reminderVoiceMuted) {
-      voiceBtn.textContent = '🔇 Voice';
-      voiceBtn.classList.remove('granted');
-    } else {
-      voiceBtn.textContent = '🔊 Voice';
-    }
+    voiceBtn.textContent = reminderVoiceMuted ? '🔇 Voice' : '🔊 Voice';
   }
   voiceBtn.addEventListener('click', () => {
     ensureAudio();
+    // First gesture: unlock + force-unmute regardless of prior state.
     if (!voiceUnlocked) {
       voiceUnlocked = true;
-      // immediate sample so the user hears it on the same gesture
+      reminderVoiceMuted = false;
+      // Warm the engine — getVoices() often returns [] until called once.
+      try { window.speechSynthesis && window.speechSynthesis.getVoices(); } catch (e) {}
       speakReminder('Voice on. Reminders will be read aloud.');
+      showToast('Voice', 'Spoken reminders enabled.', '');
       updateVoiceBtn();
       return;
     }
+    // Subsequent clicks: toggle muted.
     reminderVoiceMuted = !reminderVoiceMuted;
     updateVoiceBtn();
     if (reminderVoiceMuted) {
       try { window.speechSynthesis.cancel(); } catch (e) {}
       showToast('Voice', 'Spoken reminders muted.', '');
     } else {
-      speakReminder('Voice on. Reminders will be read aloud.');
+      speakReminder('Voice back on.');
+      showToast('Voice', 'Spoken reminders enabled.', '');
     }
   });
   updateVoiceBtn();
+
+  // Chrome workaround: speechSynthesis silently pauses after ~15s of idle time.
+  // A periodic resume() keeps it ready to speak when a reminder fires.
+  if ('speechSynthesis' in window) {
+    setInterval(() => {
+      try {
+        if (voiceUnlocked && !reminderVoiceMuted && !window.speechSynthesis.speaking) {
+          window.speechSynthesis.resume();
+        }
+      } catch (e) {}
+    }, 10 * 1000);
+  }
 
   // Audio chime
   let audioCtx = null;
@@ -2545,10 +2593,13 @@
   // Low-level speaker. Used by both coach (with speaking animation) and reminders.
   function speak(text, opts) {
     opts = opts || {};
-    if (!('speechSynthesis' in window)) return;
-    if (!voiceUnlocked) return;
+    if (!('speechSynthesis' in window)) { console.warn('No speechSynthesis'); return; }
+    if (!voiceUnlocked) { console.warn('Voice not unlocked yet'); return; }
+    if (!text) return;
     try {
+      // Defeat Chrome's auto-pause and any stuck-queued state
       window.speechSynthesis.cancel();
+      window.speechSynthesis.resume();
       const u = new SpeechSynthesisUtterance(text);
       u.rate = opts.rate != null ? opts.rate : 1.0;
       u.pitch = opts.pitch != null ? opts.pitch : 1.0;
@@ -2557,13 +2608,19 @@
       const preferred = voices.find(v => /Samantha|Google US English|Jenny|Aria|Natural/i.test(v.name))
                      || voices.find(v => v.lang && v.lang.startsWith('en'));
       if (preferred) u.voice = preferred;
-      if (opts.animateCoach !== false) {
-        u.onstart = () => coachAvatar && coachAvatar.classList.add('speaking');
-        u.onend = () => coachAvatar && coachAvatar.classList.remove('speaking');
-        u.onerror = () => coachAvatar && coachAvatar.classList.remove('speaking');
-      }
+      u.onstart = () => coachAvatar && coachAvatar.classList.add('speaking');
+      u.onend   = () => coachAvatar && coachAvatar.classList.remove('speaking');
+      u.onerror = (e) => {
+        console.warn('TTS error:', e.error);
+        coachAvatar && coachAvatar.classList.remove('speaking');
+      };
       window.speechSynthesis.speak(u);
-    } catch (e) {}
+      // In Chrome, sometimes speak() is queued but doesn't start.
+      // A tiny delayed resume() shoves it through.
+      setTimeout(() => {
+        try { window.speechSynthesis.resume(); } catch (e) {}
+      }, 80);
+    } catch (e) { console.warn('speak() threw:', e); }
   }
 
   // Speech path the coach uses (respects coachMuted)
