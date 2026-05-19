@@ -283,8 +283,8 @@
 
   .slot {
     display: grid;
-    grid-template-columns: 38px 1fr auto auto;
-    align-items: center; gap: 1px;
+    grid-template-columns: 30px 1fr auto auto;
+    align-items: center; gap: 0;
     padding: 0 6px;
     min-height: 20px;
     border-bottom: 1px solid var(--rule-soft);
@@ -326,7 +326,7 @@
     user-select: none;
     letter-spacing: 0;
     white-space: nowrap;
-    padding-right: 2px;
+    padding-right: 0;
   }
   .slot .time-label:active { cursor: grabbing; }
   .slot.dragging { opacity: 0.42; }
@@ -374,7 +374,7 @@
     appearance: none; -webkit-appearance: none;
     width: 18px; height: 18px;
     border: none; background-color: transparent;
-    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><defs><radialGradient id='fA' cx='32%25' cy='26%25' r='82%25'><stop offset='0%25' stop-color='%23fff5b0'/><stop offset='18%25' stop-color='%23ffe04a'/><stop offset='52%25' stop-color='%23e0a808'/><stop offset='82%25' stop-color='%238a5e08'/><stop offset='100%25' stop-color='%233a2602'/></radialGradient><linearGradient id='eA' x1='25%25' y1='10%25' x2='100%25' y2='95%25'><stop offset='0%25' stop-color='%23c48810'/><stop offset='35%25' stop-color='%23a07410'/><stop offset='75%25' stop-color='%235a3d06'/><stop offset='100%25' stop-color='%231f1402'/></linearGradient><radialGradient id='rA' cx='40%25' cy='34%25' r='65%25'><stop offset='0%25' stop-color='%23000000' stop-opacity='0'/><stop offset='82%25' stop-color='%23000000' stop-opacity='0'/><stop offset='100%25' stop-color='%233a2602' stop-opacity='0.5'/></radialGradient></defs><ellipse cx='55' cy='55' rx='44' ry='44.5' fill='url(%23eA)'/><circle cx='50' cy='50' r='44.5' fill='url(%23fA)' stroke='%233a2602' stroke-width='0.6'/><circle cx='50' cy='50' r='39' fill='none' stroke='%238a5e08' stroke-width='2' opacity='0.4'/><circle cx='50' cy='50' r='34' fill='none' stroke='%23623f04' stroke-width='1.5' opacity='0.6'/><circle cx='50' cy='50' r='34' fill='url(%23rA)'/><path d='M 18 32 A 34 34 0 0 1 36 14' fill='none' stroke='%23fff8c0' stroke-width='1.5' opacity='0.45'/><ellipse cx='30' cy='24' rx='13' ry='7' fill='%23ffffff' opacity='0.42'/><ellipse cx='30' cy='24' rx='6' ry='3' fill='%23ffffff' opacity='0.72'/><text x='53' y='71' text-anchor='middle' font-family='Georgia, serif' font-size='56' fill='%233a2602' opacity='0.65' font-weight='900'>$</text><text x='50' y='68' text-anchor='middle' font-family='Georgia, serif' font-size='56' fill='%23fff19a' font-weight='900'>$</text></svg>");
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><defs><radialGradient id='rA' cx='32%25' cy='26%25' r='82%25'><stop offset='0%25' stop-color='%23fff5b0'/><stop offset='28%25' stop-color='%23ffd944'/><stop offset='62%25' stop-color='%23c98a08'/><stop offset='100%25' stop-color='%234e3403'/></radialGradient><linearGradient id='eA' x1='25%25' y1='10%25' x2='100%25' y2='95%25'><stop offset='0%25' stop-color='%23c48810'/><stop offset='35%25' stop-color='%23a07410'/><stop offset='75%25' stop-color='%235a3d06'/><stop offset='100%25' stop-color='%231f1402'/></linearGradient><linearGradient id='fA' x1='0%25' y1='0%25' x2='0%25' y2='100%25'><stop offset='0%25' stop-color='%23e8b418'/><stop offset='100%25' stop-color='%23c08a08'/></linearGradient></defs><ellipse cx='55' cy='55' rx='44' ry='44.5' fill='url(%23eA)'/><circle cx='50' cy='50' r='44.5' fill='url(%23rA)' stroke='%233a2602' stroke-width='0.6'/><circle cx='50' cy='50' r='35' fill='none' stroke='%235a3d06' stroke-width='2' opacity='0.55'/><circle cx='50' cy='50' r='34' fill='url(%23fA)'/><ellipse cx='30' cy='22' rx='14' ry='6' fill='%23ffffff' opacity='0.4'/><text x='53' y='71' text-anchor='middle' font-family='Georgia, serif' font-size='58' fill='%233a2602' opacity='0.65' font-weight='900'>$</text><text x='50' y='68' text-anchor='middle' font-family='Georgia, serif' font-size='58' fill='%23fff19a' font-weight='900'>$</text></svg>");
     background-size: 18px 18px;
     background-position: center;
     background-repeat: no-repeat;
@@ -720,6 +720,70 @@
   .coach-toggle { bottom: 78px !important; }
   .coach-panel { bottom: 78px !important; }
 
+  /* Eye-break popup — pops from the coach */
+  .eye-break-popup {
+    position: fixed;
+    bottom: 86px; left: 96px;
+    z-index: 60;
+    background: var(--paper);
+    border: 2px solid var(--accent);
+    border-radius: 14px;
+    padding: 14px 16px;
+    box-shadow: 0 14px 32px rgba(0,0,0,0.22), 0 4px 10px rgba(0,0,0,0.10);
+    max-width: 330px;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    font-family: var(--serif);
+    animation: eye-break-slide 0.42s cubic-bezier(0.18, 0.86, 0.32, 1);
+  }
+  @keyframes eye-break-slide {
+    from { transform: translateX(-18px) scale(0.92); opacity: 0; }
+    to   { transform: translateX(0) scale(1); opacity: 1; }
+  }
+  .eye-break-popup[hidden] { display: none; }
+  /* Speech-bubble pointer aimed at the coach */
+  .eye-break-popup::before {
+    content: '';
+    position: absolute;
+    left: -11px; bottom: 14px;
+    width: 0; height: 0;
+    border: 11px solid transparent;
+    border-right-color: var(--accent);
+    border-left: 0;
+  }
+  .eye-break-popup::after {
+    content: '';
+    position: absolute;
+    left: -8px; bottom: 16px;
+    width: 0; height: 0;
+    border: 9px solid transparent;
+    border-right-color: var(--paper);
+    border-left: 0;
+  }
+  .eye-break-avatar { font-size: 32px; line-height: 1; flex: 0 0 auto; }
+  .eye-break-content { flex: 1; min-width: 0; }
+  .eye-break-title {
+    font-weight: 700; font-size: 16px;
+    color: var(--accent); margin-bottom: 4px;
+    letter-spacing: -0.005em;
+  }
+  .eye-break-body {
+    font-size: 13.5px; color: var(--ink);
+    line-height: 1.4; margin-bottom: 10px;
+  }
+  .eye-break-body strong { color: var(--accent); font-weight: 700; }
+  .eye-break-close {
+    font-family: var(--serif); font-size: 12px;
+    font-weight: 600;
+    background: var(--ink); color: var(--paper);
+    border: none; padding: 6px 14px;
+    border-radius: 6px; cursor: pointer;
+    letter-spacing: 0.02em;
+    transition: background 0.12s ease;
+  }
+  .eye-break-close:hover { background: var(--accent); }
+
   /* Cash pile — top-right running total, BIG */
   .cash-pile {
     position: fixed;
@@ -758,7 +822,7 @@
     width: 24px; height: 24px;
     z-index: 1000;
     pointer-events: none;
-    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><defs><radialGradient id='fB' cx='32%25' cy='26%25' r='82%25'><stop offset='0%25' stop-color='%23fff5b0'/><stop offset='18%25' stop-color='%23ffe04a'/><stop offset='52%25' stop-color='%23e0a808'/><stop offset='82%25' stop-color='%238a5e08'/><stop offset='100%25' stop-color='%233a2602'/></radialGradient><linearGradient id='eB' x1='25%25' y1='10%25' x2='100%25' y2='95%25'><stop offset='0%25' stop-color='%23c48810'/><stop offset='35%25' stop-color='%23a07410'/><stop offset='75%25' stop-color='%235a3d06'/><stop offset='100%25' stop-color='%231f1402'/></linearGradient><radialGradient id='rB' cx='40%25' cy='34%25' r='65%25'><stop offset='0%25' stop-color='%23000000' stop-opacity='0'/><stop offset='82%25' stop-color='%23000000' stop-opacity='0'/><stop offset='100%25' stop-color='%233a2602' stop-opacity='0.5'/></radialGradient></defs><ellipse cx='55' cy='55' rx='44' ry='44.5' fill='url(%23eB)'/><circle cx='50' cy='50' r='44.5' fill='url(%23fB)' stroke='%233a2602' stroke-width='0.6'/><circle cx='50' cy='50' r='34' fill='none' stroke='%23623f04' stroke-width='1.5' opacity='0.6'/><circle cx='50' cy='50' r='34' fill='url(%23rB)'/><ellipse cx='30' cy='24' rx='13' ry='7' fill='%23ffffff' opacity='0.42'/><ellipse cx='30' cy='24' rx='6' ry='3' fill='%23ffffff' opacity='0.72'/><text x='53' y='71' text-anchor='middle' font-family='Georgia, serif' font-size='56' fill='%233a2602' opacity='0.65' font-weight='900'>$</text><text x='50' y='68' text-anchor='middle' font-family='Georgia, serif' font-size='56' fill='%23fff19a' font-weight='900'>$</text></svg>");
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><defs><radialGradient id='rB' cx='32%25' cy='26%25' r='82%25'><stop offset='0%25' stop-color='%23fff5b0'/><stop offset='28%25' stop-color='%23ffd944'/><stop offset='62%25' stop-color='%23c98a08'/><stop offset='100%25' stop-color='%234e3403'/></radialGradient><linearGradient id='eB' x1='25%25' y1='10%25' x2='100%25' y2='95%25'><stop offset='0%25' stop-color='%23c48810'/><stop offset='35%25' stop-color='%23a07410'/><stop offset='75%25' stop-color='%235a3d06'/><stop offset='100%25' stop-color='%231f1402'/></linearGradient><linearGradient id='fB' x1='0%25' y1='0%25' x2='0%25' y2='100%25'><stop offset='0%25' stop-color='%23e8b418'/><stop offset='100%25' stop-color='%23c08a08'/></linearGradient></defs><ellipse cx='55' cy='55' rx='44' ry='44.5' fill='url(%23eB)'/><circle cx='50' cy='50' r='44.5' fill='url(%23rB)' stroke='%233a2602' stroke-width='0.6'/><circle cx='50' cy='50' r='35' fill='none' stroke='%235a3d06' stroke-width='2' opacity='0.55'/><circle cx='50' cy='50' r='34' fill='url(%23fB)'/><ellipse cx='30' cy='22' rx='14' ry='6' fill='%23ffffff' opacity='0.4'/><text x='53' y='71' text-anchor='middle' font-family='Georgia, serif' font-size='58' fill='%233a2602' opacity='0.65' font-weight='900'>$</text><text x='50' y='68' text-anchor='middle' font-family='Georgia, serif' font-size='58' fill='%23fff19a' font-weight='900'>$</text></svg>");
     background-size: 24px 24px;
     background-position: center;
     background-repeat: no-repeat;
@@ -997,6 +1061,16 @@
 
 <!-- Coach -->
 <button class="coach-toggle" id="coach-toggle" title="Open coach">🧑‍🏫</button>
+
+<!-- Eye-break popup — pops from the coach every 10 min -->
+<div class="eye-break-popup" id="eye-break-popup" hidden>
+  <div class="eye-break-avatar">🧑‍🏫</div>
+  <div class="eye-break-content">
+    <div class="eye-break-title">👀 Eye break!</div>
+    <div class="eye-break-body">Look at something <strong>20 ft away</strong> for <strong>20 seconds</strong>.</div>
+    <button class="eye-break-close" id="eye-break-close">Got it</button>
+  </div>
+</div>
 <div class="coach-panel hidden" id="coach-panel">
   <div class="coach-avatar-wrap">
     <div class="coach-bubble" id="coach-bubble"><span class="now-tag">Now</span><span id="coach-bubble-text">No task right now</span></div>
@@ -2893,6 +2967,28 @@
     playSoftChime();
   }
 
+  // Eye-break popup — pops from the coach every 10 minutes during waking hours
+  const eyeBreakPopup = document.getElementById('eye-break-popup');
+  const eyeBreakCloseBtn = document.getElementById('eye-break-close');
+  function showEyeBreak() {
+    if (!eyeBreakPopup) return;
+    const h = new Date().getHours();
+    if (h < 7 || h > 22) return;  // skip overnight
+    eyeBreakPopup.hidden = false;
+    playSoftChime();
+    clearTimeout(eyeBreakPopup._timer);
+    eyeBreakPopup._timer = setTimeout(hideEyeBreak, 30 * 1000);
+  }
+  function hideEyeBreak() {
+    if (!eyeBreakPopup) return;
+    eyeBreakPopup.hidden = true;
+    clearTimeout(eyeBreakPopup._timer);
+  }
+  if (eyeBreakCloseBtn) eyeBreakCloseBtn.addEventListener('click', hideEyeBreak);
+  if (eyeBreakPopup)    eyeBreakPopup.addEventListener('click', e => {
+    if (e.target === eyeBreakPopup) hideEyeBreak();
+  });
+
   // Toast
   function showToast(label, body, timeText) {
     const stack = document.getElementById('toast-stack');
@@ -3157,6 +3253,8 @@
     setInterval(checkReminders, 5 * 1000);
     // Soft 60-second pulse — low dull tone for the current active task
     setInterval(pulseCurrentTask, 60 * 1000);
+    // Eye break every 10 minutes during waking hours
+    setInterval(showEyeBreak, 10 * 60 * 1000);
     setTimeout(checkReminders, 1500);
     // Scroll the current slot into view after first render
     setTimeout(scrollToNow, 350);
