@@ -233,6 +233,27 @@
     display: flex; flex-direction: column;
     min-width: 0;
   }
+
+  /* "End of workday" marker on the 5 PM column */
+  .hour-col[data-hour="17"] {
+    box-shadow: inset 0 0 0 2px var(--accent);
+    z-index: 1;
+    position: relative;
+  }
+  .hour-col[data-hour="17"]::after {
+    content: '↑ work ends';
+    display: block;
+    flex: 0 0 auto;
+    background: var(--accent);
+    color: var(--paper);
+    padding: 5px 6px;
+    font-family: var(--serif);
+    font-size: 10px;
+    font-weight: 700;
+    text-align: center;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
   .hour-head {
     display: flex; align-items: center; gap: 6px;
     padding: 4px 8px;
@@ -247,11 +268,7 @@
     display: inline-flex; align-items: center; gap: 5px;
   }
   .hour-head .h-label::before {
-    content: ''; display: inline-block;
-    width: 4px; height: 4px;
-    background: var(--accent);
-    border-radius: 50%;
-    transform: translateY(-1px);
+    display: none;
   }
   .hour-head.past .h-label::before { background: var(--ink-4); }
   .hour-head.current .h-label::before { background: var(--accent); animation: pulse 1.6s ease-in-out infinite; }
@@ -349,25 +366,22 @@
 
   .slot input[type="checkbox"] {
     appearance: none; -webkit-appearance: none;
-    width: 13px; height: 13px;
-    border: 1.5px solid var(--ink-3);
-    background: transparent;
-    border-radius: 2px; margin: 0;
+    width: 16px; height: 16px;
+    border: none; background-color: transparent;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><defs><radialGradient id='g' cx='32%25' cy='28%25' r='72%25'><stop offset='0%25' stop-color='%23fff4b8'/><stop offset='35%25' stop-color='%23f5d35c'/><stop offset='75%25' stop-color='%23d4a017'/><stop offset='100%25' stop-color='%239c7414'/></radialGradient></defs><circle cx='12' cy='12' r='10.5' fill='url(%23g)' stroke='%237a5a10' stroke-width='1'/><circle cx='12' cy='12' r='8' fill='none' stroke='%237a5a10' stroke-width='0.5' opacity='0.45'/><ellipse cx='8.5' cy='8' rx='3' ry='2' fill='%23ffffff' opacity='0.55'/><text x='12' y='15.5' text-anchor='middle' font-family='Georgia, serif' font-size='8' fill='%23704e0a' opacity='0.7' font-weight='700'>%241</text></svg>");
+    background-size: 16px 16px;
+    background-position: center;
+    background-repeat: no-repeat;
+    border-radius: 50%;
+    margin: 0;
     cursor: pointer;
     position: relative;
-    transition: all 0.15s ease;
+    transition: filter 0.18s ease, transform 0.15s ease;
+    filter: drop-shadow(0 1px 1.5px rgba(0,0,0,0.25));
   }
-  .slot input[type="checkbox"]:hover { border-color: var(--ink); }
+  .slot input[type="checkbox"]:hover { transform: scale(1.18); }
   .slot input[type="checkbox"]:checked {
-    background: var(--ink); border-color: var(--ink);
-  }
-  .slot input[type="checkbox"]:checked::after {
-    content: ''; position: absolute;
-    left: 3px; top: 0px;
-    width: 4px; height: 8px;
-    border: solid var(--paper);
-    border-width: 0 1.5px 1.5px 0;
-    transform: rotate(45deg);
+    filter: grayscale(0.9) opacity(0.35);
   }
 
   /* ─────────────────────────── SECTION DIVIDERS ────────────────────────── */
@@ -632,6 +646,119 @@
   table.ss td.error input { color: var(--accent); }
   table.ss td:focus-within { background: var(--paper-3); outline: 1px solid var(--ink); outline-offset: -1px; }
 
+  /* 5-minute progress bar for the current slot */
+  .now-progress {
+    height: 3px;
+    background: var(--rule);
+    margin: 4px 0 12px 0;
+    overflow: hidden;
+    border-radius: 1px;
+  }
+  .now-progress-fill {
+    height: 100%;
+    width: 0%;
+    background: var(--accent);
+    transition: width 0.5s linear;
+  }
+
+  /* Sticky "Do this now" bar pinned to bottom of viewport */
+  .quick-now-bar {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    z-index: 40;
+    background: var(--paper);
+    border-top: 1px solid var(--rule);
+    box-shadow: 0 -6px 22px rgba(31, 24, 20, 0.09);
+    padding: 12px 18px;
+    display: flex; align-items: center; gap: 10px;
+    font-family: var(--serif);
+  }
+  .quick-now-arrow {
+    color: var(--accent); font-weight: 700;
+    font-size: 18px; line-height: 1;
+  }
+  .quick-now-label {
+    font-weight: 600; font-size: 14px;
+    color: var(--ink); white-space: nowrap;
+    letter-spacing: -0.005em;
+  }
+  .quick-now-input {
+    flex: 1; min-width: 0;
+    border: 1px solid var(--rule);
+    background: white;
+    padding: 9px 14px;
+    border-radius: 4px;
+    font-family: var(--serif);
+    font-size: 15px;
+    color: var(--ink);
+    outline: none;
+    transition: border-color 0.12s ease;
+  }
+  .quick-now-input:focus { border-color: var(--ink); }
+  .quick-now-input::placeholder { color: var(--ink-3); }
+
+  /* Coach must sit above the sticky bar */
+  .coach-toggle { bottom: 78px !important; }
+  .coach-panel { bottom: 78px !important; }
+
+  /* Cash pile — bottom-right running total */
+  .cash-pile {
+    position: fixed;
+    bottom: 78px; right: 22px;
+    z-index: 45;
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    padding: 8px 14px 8px 12px;
+    border-radius: 100px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--serif);
+    font-weight: 700;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.12);
+    cursor: default;
+    transition: transform 0.18s ease;
+  }
+  .cash-pile.bumped { animation: cash-bump 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); }
+  @keyframes cash-bump {
+    0%   { transform: scale(1); }
+    35%  { transform: scale(1.22); }
+    100% { transform: scale(1); }
+  }
+  .cash-icon { font-size: 18px; line-height: 1; }
+  .cash-total {
+    font-size: 16px;
+    color: #b08410;
+    letter-spacing: -0.01em;
+  }
+
+  /* Flying coin (clone that animates from clicked slot → cash pile) */
+  .flying-coin {
+    position: fixed;
+    width: 22px; height: 22px;
+    z-index: 1000;
+    pointer-events: none;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><defs><radialGradient id='g' cx='32%25' cy='28%25' r='72%25'><stop offset='0%25' stop-color='%23fff4b8'/><stop offset='35%25' stop-color='%23f5d35c'/><stop offset='75%25' stop-color='%23d4a017'/><stop offset='100%25' stop-color='%239c7414'/></radialGradient></defs><circle cx='12' cy='12' r='10.5' fill='url(%23g)' stroke='%237a5a10' stroke-width='1'/><ellipse cx='8.5' cy='8' rx='3' ry='2' fill='%23ffffff' opacity='0.55'/><text x='12' y='15.5' text-anchor='middle' font-family='Georgia, serif' font-size='8' fill='%23704e0a' opacity='0.7' font-weight='700'>%241</text></svg>");
+    background-size: 22px 22px;
+    background-position: center;
+    background-repeat: no-repeat;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+    transition: transform 0.7s cubic-bezier(0.4, 0.0, 0.6, 1.0), opacity 0.7s ease;
+  }
+
+  /* +$1 floater that pops up briefly when coin is collected */
+  .cash-pop {
+    position: fixed;
+    z-index: 1000;
+    pointer-events: none;
+    font-family: var(--serif);
+    font-weight: 700;
+    font-size: 16px;
+    color: #b08410;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.15);
+    transition: transform 0.9s ease-out, opacity 0.9s ease-out;
+  }
+
   /* ─────────────────────────── COACH AVATAR ────────────────────────── */
   .coach-toggle {
     position: fixed; left: 22px; bottom: 22px; z-index: 50;
@@ -791,6 +918,10 @@
         <span class="bar-text idle" id="now-task" title="Click to scroll to current slot">—</span>
       </div>
     </div>
+    <!-- 5-minute progress bar for the current slot -->
+    <div class="now-progress" aria-hidden="true">
+      <div class="now-progress-fill" id="now-progress-fill"></div>
+    </div>
     <div class="controls">
       <button class="btn" id="undo-btn" disabled title="Undo last change (⌘Z)">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v6h6"/><path d="M3 13a9 9 0 1 0 3-7.7L3 8"/></svg>
@@ -856,6 +987,19 @@
 </div>
 
 <div class="toast-stack" id="toast-stack"></div>
+
+<!-- Running cash pile — total $ collected -->
+<div class="cash-pile" id="cash-pile" title="Total earned today">
+  <span class="cash-icon">💰</span>
+  <span class="cash-total">$<span id="cash-total-num">0</span></span>
+</div>
+
+<!-- Sticky "Do this now" input — replaces current slot and pushes unlocked tasks down -->
+<div class="quick-now-bar">
+  <span class="quick-now-arrow">→</span>
+  <span class="quick-now-label">Do this now</span>
+  <input type="text" class="quick-now-input" id="quick-now-input" placeholder="Type a task and press Enter — the rest get pushed down (locked slots stay put)" autocomplete="off" />
+</div>
 
 <script>
 (() => {
@@ -1478,10 +1622,16 @@
 
     cb.addEventListener('change', () => {
       snapshot();
+      const wasDone = state.tasks[k].done;
       state.tasks[k].done = cb.checked;
       li.classList.toggle('done', cb.checked);
+      // Coin collected animation only on unchecked → checked transition with text
+      if (cb.checked && !wasDone && state.tasks[k].label && state.tasks[k].label.trim()) {
+        flyCoinToPile(cb);
+      }
       if (k === currentSlotKey()) updateNowTaskDisplay();
       updateOverdueDisplay();
+      updateCashTotal();
       scheduleSave();
       updatePastUndone();
     });
@@ -2292,6 +2442,96 @@
     if (wd) wd.textContent = d.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' });
   }
 
+  // 5-min progress bar — fills 0% → 100% over the current slot window
+  function updateProgressBar() {
+    const fill = document.getElementById('now-progress-fill');
+    if (!fill) return;
+    const now = new Date();
+    const h = now.getHours();
+    if (h < 7 || h > 22) { fill.style.width = '0%'; return; }
+    const m = now.getMinutes();
+    const s = now.getSeconds();
+    const slotM = Math.floor(m / 5) * 5;
+    const elapsedSec = (m - slotM) * 60 + s;
+    const pct = Math.min(100, (elapsedSec / 300) * 100);
+    fill.style.width = pct.toFixed(1) + '%';
+  }
+
+  // "Do this now" — set the current slot, push everything unlocked down 5-min slots.
+  // Locked slots are skipped (the displaced task hops over them).
+  // Tasks pushed off the end of the day (past 22:55) are dropped (and counted).
+  function pushTaskToNow(label) {
+    const k = currentSlotKey();
+    if (!k) {
+      showToast('Off hours', 'You can only insert tasks between 7:00 AM and 10:55 PM.', '');
+      return;
+    }
+    const clean = label.trim();
+    if (!clean) return;
+
+    snapshot();
+
+    // All slot keys in chronological order
+    const ordered = [];
+    for (let h = 7; h <= 22; h++) {
+      for (let m = 0; m < 60; m += 5) {
+        ordered.push(hmKey(h, m));
+      }
+    }
+    const startIdx = ordered.indexOf(k);
+    if (startIdx < 0) return;
+
+    // If the CURRENT slot is itself locked, refuse — user intentionally locked it
+    if (state.tasks[k] && state.tasks[k].locked) {
+      showToast('Locked', 'The current slot is locked. Unlock it before inserting a new task here.', '');
+      return;
+    }
+
+    // Save what's at the current slot, replace it
+    let displaced = (state.tasks[k] && state.tasks[k].label) || '';
+    state.tasks[k].label = clean;
+    state.tasks[k].done = false;
+    state.tasks[k].lastFired = null;
+
+    let pushed = 0;
+    let dropped = 0;
+    for (let i = startIdx + 1; i < ordered.length && displaced && displaced.trim(); i++) {
+      const key = ordered[i];
+      const t = state.tasks[key];
+      if (!t || t.locked) continue;     // skip locked, keep moving
+      const nextDisplaced = t.label || '';
+      t.label = displaced;
+      t.done = false;
+      t.lastFired = null;
+      displaced = nextDisplaced;
+      pushed++;
+    }
+    if (displaced && displaced.trim()) dropped = 1;
+
+    renderHourGrid();
+    updateCounters();
+    updateNowTaskDisplay();
+    updateOverdueDisplay();
+    scheduleSave();
+
+    const msg = (pushed > 0 ? `Pushed ${pushed} task${pushed!==1?'s':''} down. ` : '')
+              + (dropped ? `1 task fell off the end of the day.` : '');
+    showToast('Now', `"${clean}" is up next.` + (msg ? ' ' + msg : ''), '');
+  }
+
+  // Wire the sticky input
+  const quickNowInput = document.getElementById('quick-now-input');
+  if (quickNowInput) {
+    quickNowInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && e.target.value.trim()) {
+        e.preventDefault();
+        pushTaskToNow(e.target.value);
+        e.target.value = '';
+        e.target.blur();
+      }
+    });
+  }
+
   // ════════════════════════════════════════════════════════════════════
   //  NOTIFICATIONS
   // ════════════════════════════════════════════════════════════════════
@@ -2434,6 +2674,84 @@
     gain.gain.exponentialRampToValueAtTime(0.001, now + 1.1);
     osc.connect(gain); gain.connect(ctx.destination);
     osc.start(now); osc.stop(now + 1.2);
+  }
+
+  // Bright ka-ching for coin collection — ascending triangle-wave ping
+  function playCashSound() {
+    const ctx = ensureAudio(); if (!ctx) return;
+    const now = ctx.currentTime;
+    [
+      { f: 1320, t: 0.00, d: 0.20, g: 0.16 },
+      { f: 1760, t: 0.05, d: 0.28, g: 0.14 },
+      { f: 2640, t: 0.10, d: 0.18, g: 0.10 },
+    ].forEach(({ f, t, d, g }) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.value = f;
+      const start = now + t;
+      gain.gain.setValueAtTime(0, start);
+      gain.gain.linearRampToValueAtTime(g, start + 0.008);
+      gain.gain.exponentialRampToValueAtTime(0.001, start + d);
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.start(start); osc.stop(start + d + 0.05);
+    });
+  }
+
+  // Sum done+labeled tasks ($1 each) into the cash pile
+  function updateCashTotal() {
+    let n = 0;
+    for (const k in state.tasks) {
+      const t = state.tasks[k];
+      if (t && t.done && t.label && t.label.trim()) n++;
+    }
+    const el = document.getElementById('cash-total-num');
+    if (el) el.textContent = n;
+  }
+
+  // Animate a coin flying from `srcEl` → cash pile, with a "+$1" popper
+  function flyCoinToPile(srcEl) {
+    const pile = document.getElementById('cash-pile');
+    if (!pile || !srcEl) return;
+    const s = srcEl.getBoundingClientRect();
+    const p = pile.getBoundingClientRect();
+    const sx = s.left + s.width / 2;
+    const sy = s.top + s.height / 2;
+    const px = p.left + p.width / 2;
+    const py = p.top + p.height / 2;
+
+    const fly = document.createElement('div');
+    fly.className = 'flying-coin';
+    fly.style.left = (sx - 11) + 'px';
+    fly.style.top  = (sy - 11) + 'px';
+    document.body.appendChild(fly);
+
+    const pop = document.createElement('div');
+    pop.className = 'cash-pop';
+    pop.textContent = '+$1';
+    pop.style.left = (sx + 14) + 'px';
+    pop.style.top  = (sy - 8) + 'px';
+    pop.style.opacity = '1';
+    document.body.appendChild(pop);
+
+    void fly.offsetHeight; void pop.offsetHeight;
+
+    fly.style.transform =
+      `translate(${px - sx}px, ${py - sy}px) scale(0.45) rotate(720deg)`;
+    fly.style.opacity = '0.2';
+
+    pop.style.transform = 'translateY(-28px)';
+    pop.style.opacity = '0';
+
+    setTimeout(() => fly.remove(), 760);
+    setTimeout(() => pop.remove(), 960);
+
+    setTimeout(() => {
+      pile.classList.remove('bumped');
+      void pile.offsetHeight;
+      pile.classList.add('bumped');
+      playCashSound();
+    }, 600);
   }
 
   // Every 60s, give a soft audio nudge of the current task — only if there's
@@ -2664,6 +2982,7 @@
     updatePastUndone();
     updateNowTaskDisplay();
     updateOverdueDisplay();
+    updateCashTotal();
   }
 
   // Click either bar to scroll to its slot
@@ -2705,6 +3024,8 @@
     updatePermBtn();
     // Tickers
     setInterval(updateClock, 1000);
+    setInterval(updateProgressBar, 1000);
+    updateProgressBar();
     setInterval(() => { updateNowMarker(); updatePastUndone(); }, 30 * 1000);
     // Check every 5 seconds so 5-min slot transitions never get missed
     setInterval(checkReminders, 5 * 1000);
