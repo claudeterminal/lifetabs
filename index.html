@@ -160,6 +160,14 @@
     color: var(--daily); cursor: default;
   }
   .btn.granted:hover { background: var(--daily-bg); }
+  .btn.big {
+    font-size: 14px;
+    padding: 11px 22px;
+    letter-spacing: 0.12em;
+    border-width: 1.5px;
+    font-weight: 600;
+    margin-left: 4px;
+  }
   .btn.danger:hover { background: var(--accent-bg); border-color: var(--accent); color: var(--accent); }
   .btn:disabled { opacity: 0.45; cursor: not-allowed; }
   .btn:disabled:hover { background: var(--paper); color: var(--ink-2); border-color: var(--rule); }
@@ -300,6 +308,17 @@
   .slot.now {
     background: var(--accent-bg) !important;
     box-shadow: inset 0 0 0 1.5px var(--accent);
+    animation: now-flash 1.4s ease-in-out infinite;
+  }
+  @keyframes now-flash {
+    0%, 100% {
+      background: var(--accent-bg) !important;
+      box-shadow: inset 0 0 0 1.5px var(--accent);
+    }
+    50% {
+      background: rgba(168, 52, 28, 0.20) !important;
+      box-shadow: inset 0 0 0 2.5px var(--accent), 0 0 14px rgba(168, 52, 28, 0.35);
+    }
   }
   .slot.now::before {
     content: 'NOW';
@@ -326,7 +345,8 @@
     user-select: none;
     letter-spacing: 0;
     white-space: nowrap;
-    padding-right: 0;
+    justify-self: end;
+    padding-right: 5px;
   }
   .slot .time-label:active { cursor: grabbing; }
   .slot.dragging { opacity: 0.42; }
@@ -784,10 +804,10 @@
   }
   .eye-break-close:hover { background: var(--accent); }
 
-  /* Cash pile — top-right running total, BIG */
+  /* Cash pile — top-left running total, BIG */
   .cash-pile {
     position: fixed;
-    top: 24px; right: 28px;
+    top: 24px; left: 28px;
     z-index: 45;
     background: var(--paper);
     border: 2px solid var(--rule);
@@ -931,7 +951,7 @@
 
   /* ─────────────────────────── TOAST ────────────────────────── */
   .toast-stack {
-    position: fixed; top: 160px; right: 28px;
+    position: fixed; top: 28px; right: 28px;
     z-index: 100; display: flex; flex-direction: column;
     gap: 12px;
     width: min(560px, 44vw);
@@ -1016,11 +1036,12 @@
       <button class="btn" id="voice-btn" title="Toggle spoken reminders">🔊 Voice</button>
       <button class="btn" id="check-all-btn">Check All</button>
       <button class="btn" id="uncheck-all-btn">Uncheck All</button>
-      <button class="btn" id="example-btn" title="Fill empty slots with the example day">Example Day</button>
       <button class="btn danger" id="delete-all-btn">Delete Tasks</button>
-      <button class="btn" id="export-btn" title="Download a backup file of everything (tasks, pads, meals, finances)">⤓ Export</button>
-      <button class="btn" id="import-btn" title="Restore from a backup file">⤒ Import</button>
+      <button class="btn" id="export-btn" title="Download task names by time slot (safe across site updates)">⤓ Export</button>
+      <button class="btn" id="import-btn" title="Restore task names from a file">⤒ Import</button>
       <input type="file" id="import-file" accept="application/json,.json" style="display:none" />
+      <button class="btn big" id="login-btn">Log in</button>
+      <button class="btn big primary" id="signup-btn">Sign up</button>
     </div>
   </header>
 
@@ -2514,51 +2535,45 @@
     showToast('Cleared', `${count} task${count!==1?'s':''} removed (locked slots kept).`, '');
   });
 
-  document.getElementById('example-btn').addEventListener('click', () => {
-    snapshot();
-    let added = 0;
-    for (const k in SEED_TASK_LABELS) {
-      const t = state.tasks[k];
-      if (t && !t.label && !t.locked) {
-        t.label = SEED_TASK_LABELS[k];
-        added++;
-      }
-    }
-    // NEVER touch user checkbox state here — only fill empty hour notes
-    for (const h in SEED_HOUR_NOTES) {
-      if (!state.hourNotes[h]) state.hourNotes[h] = SEED_HOUR_NOTES[h];
-    }
-    renderHourGrid();
-    updateCounters();
-    updateNowTaskDisplay();
-    updateOverdueDisplay();
-    scheduleSave();
-    showToast('Example Day', added > 0
-      ? `Filled ${added} empty slot${added!==1?'s':''}.`
-      : 'All example slots already have tasks.', '');
-  });
+  // ── Log in / Sign up — opens an info modal explaining state ──
+  function showAuthInfo(mode) {
+    const title = mode === 'signup' ? 'Sign up' : 'Log in';
+    const body =
+      'Cloud sync isn\'t connected in this version yet — your tasks are saved ' +
+      'locally in this browser only (they persist across reloads but not across devices). ' +
+      'Ask Claude to wire this to a free Supabase account and the same email/password ' +
+      'will sync everything across phone + laptop.';
+    showToast(title, body, '');
+  }
+  document.getElementById('login-btn').addEventListener('click', () => showAuthInfo('login'));
+  document.getElementById('signup-btn').addEventListener('click', () => showAuthInfo('signup'));
 
-  // ── Export: download every bit of state as a JSON file ──
+  // ── Export: tiny JSON of just task labels keyed by HHMM slot ──
   document.getElementById('export-btn').addEventListener('click', () => {
     try {
-      const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+      const labels = {};
+      for (const k in state.tasks) {
+        const t = state.tasks[k];
+        if (t && t.label && t.label.trim()) labels[k] = t.label;
+      }
+      const blob = new Blob([JSON.stringify(labels, null, 2)], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       const d = new Date();
       const stamp = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
       a.href = url;
-      a.download = `daily-flow-${stamp}.json`;
+      a.download = `daily-flow-tasks-${stamp}.json`;
       document.body.appendChild(a);
       a.click();
       a.remove();
       setTimeout(() => URL.revokeObjectURL(url), 1000);
-      showToast('Exported', `Saved daily-flow-${stamp}.json to your downloads.`, '');
+      showToast('Exported', `Saved ${Object.keys(labels).length} task label${Object.keys(labels).length!==1?'s':''}.`, '');
     } catch (e) {
       showToast('Export failed', String(e && e.message || e), '');
     }
   });
 
-  // ── Import: pick a JSON file, merge into state ──
+  // ── Import: read JSON of {HHMM:label}, apply only labels (keeps your checks + locks) ──
   const importFile = document.getElementById('import-file');
   document.getElementById('import-btn').addEventListener('click', () => importFile.click());
   importFile.addEventListener('change', async () => {
@@ -2567,24 +2582,29 @@
     try {
       const text = await f.text();
       const parsed = JSON.parse(text);
-      if (!parsed || typeof parsed !== 'object' || !parsed.tasks) {
-        throw new Error('Not a Daily Flow backup file');
+      if (!parsed || typeof parsed !== 'object') {
+        throw new Error('Not a valid task labels file');
       }
-      if (!confirm(`Replace current state with backup "${f.name}"?\nThis cannot be undone (use Export first if you want a safety copy).`)) {
+      const keys = Object.keys(parsed);
+      if (!confirm(`Apply ${keys.length} task label${keys.length!==1?'s':''} from "${f.name}"?\nThis overwrites task names, but keeps every check, lock, and daily-repeat flag.`)) {
         importFile.value = '';
         return;
       }
       snapshot();
-      const def = defaultState();
-      state = { ...def, ...parsed };
-      // Make sure every slot exists
-      HOURS.forEach(h => MINUTES.forEach(m => {
-        const k = hmKey(h, parseInt(m, 10));
-        if (!state.tasks[k]) state.tasks[k] = { label:'', done:false, locked:false, repeat:false, lastFired:null };
-      }));
-      renderAll();
+      let count = 0;
+      for (const k of keys) {
+        if (state.tasks[k] && typeof parsed[k] === 'string') {
+          state.tasks[k].label = parsed[k];
+          count++;
+        }
+      }
+      renderHourGrid();
+      updateCounters();
+      updateNowTaskDisplay();
+      updateOverdueDisplay();
+      updateCashTotal();
       scheduleSave();
-      showToast('Imported', `Restored from ${f.name}.`, '');
+      showToast('Imported', `Restored ${count} task label${count!==1?'s':''}.`, '');
     } catch (e) {
       showToast('Import failed', String(e && e.message || e), '');
     } finally {
@@ -2898,7 +2918,7 @@
     });
   }
 
-  // Sum done+labeled tasks ($1 each) into the cash pile
+  // Sum done+labeled tasks ($0.01 each) into the cash pile
   function updateCashTotal() {
     let n = 0;
     for (const k in state.tasks) {
@@ -2906,7 +2926,7 @@
       if (t && t.done && t.label && t.label.trim()) n++;
     }
     const el = document.getElementById('cash-total-num');
-    if (el) el.textContent = n;
+    if (el) el.textContent = (n * 0.01).toFixed(2);
   }
 
   // Animate a coin flying from `srcEl` → cash pile, with a "+$1" popper
@@ -2928,7 +2948,7 @@
 
     const pop = document.createElement('div');
     pop.className = 'cash-pop';
-    pop.textContent = '+$1';
+    pop.textContent = '+$0.01';
     pop.style.left = (sx + 14) + 'px';
     pop.style.top  = (sy - 8) + 'px';
     pop.style.opacity = '1';
