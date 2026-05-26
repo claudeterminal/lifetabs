@@ -35,20 +35,121 @@
     --mono:  "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
   }
   * { box-sizing: border-box; }
+  /* Account / login button — top-right, left of nothing, fixed */
+  .account-fab {
+    position: fixed;
+    top: 8px; right: 14px;
+    z-index: 400;
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    padding: 9px 16px;
+    border-radius: 100px;
+    border: 2px solid var(--ink);
+    background: var(--paper);
+    color: var(--ink);
+    cursor: pointer;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.18);
+    transition: transform 0.15s ease, background 0.15s ease;
+  }
+  .account-fab:hover { transform: translateY(-1px); background: var(--paper-2); }
+  .account-fab.signed-in {
+    background: var(--daily); color: #fff; border-color: var(--daily);
+  }
+  .auth-modal {
+    position: fixed; inset: 0;
+    z-index: 600;
+    background: rgba(20,15,10,0.55);
+    display: flex; align-items: center; justify-content: center;
+    padding: 20px;
+    animation: blocker-in 0.18s ease-out;
+  }
+  .auth-modal.hidden { display: none; }
+  .auth-card {
+    background: var(--paper);
+    border-radius: 12px;
+    padding: 32px 30px 26px;
+    max-width: 380px; width: 100%;
+    box-shadow: 0 24px 60px rgba(0,0,0,0.5);
+    text-align: center;
+    position: relative;
+  }
+  .auth-close {
+    position: absolute; top: 12px; right: 14px;
+    width: 30px; height: 30px; border-radius: 50%;
+    background: transparent; border: 1px solid var(--rule);
+    color: var(--ink-3); font-size: 18px; cursor: pointer;
+    display: inline-flex; align-items: center; justify-content: center;
+  }
+  .auth-title {
+    font-family: var(--serif); font-size: 24px; font-weight: 700;
+    color: var(--ink); margin-bottom: 8px;
+  }
+  .auth-sub {
+    font-family: var(--serif); font-size: 14px; color: var(--ink-2);
+    line-height: 1.4; margin-bottom: 20px;
+  }
+  .auth-input {
+    width: 100%; padding: 12px 14px; margin-bottom: 10px;
+    border: 1.5px solid var(--rule); border-radius: 8px;
+    font-family: var(--serif); font-size: 15px; color: var(--ink);
+    background: var(--paper-2); outline: none;
+  }
+  .auth-input:focus { border-color: var(--ink-3); }
+  .auth-error {
+    font-family: var(--mono); font-size: 12px; color: var(--accent);
+    min-height: 16px; margin-bottom: 8px; text-align: left;
+  }
+  .auth-btn {
+    width: 100%; padding: 12px; margin-bottom: 8px;
+    border-radius: 8px; border: 1.5px solid var(--ink);
+    background: var(--paper); color: var(--ink);
+    font-family: var(--serif); font-size: 15px; font-weight: 600;
+    cursor: pointer; transition: background 0.15s ease;
+  }
+  .auth-btn:hover { background: var(--paper-2); }
+  .auth-btn.primary {
+    background: var(--ink); color: var(--paper); border-color: var(--ink);
+  }
+  .auth-btn.primary:hover { background: var(--daily); border-color: var(--daily); }
+  .auth-skip {
+    background: none; border: none; cursor: pointer;
+    font-family: var(--mono); font-size: 11px; color: var(--ink-3);
+    text-decoration: underline; margin-top: 6px;
+  }
+  /* Data-loss warning banner */
+  .dataloss-warn {
+    position: fixed; top: 0; left: 0; right: 0;
+    z-index: 550;
+    background: var(--accent); color: #fff;
+    font-family: var(--serif); font-size: 14px; font-weight: 600;
+    text-align: center; padding: 10px 44px 10px 16px;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.25);
+    animation: blocker-in 0.2s ease-out;
+  }
+  .dataloss-warn.hidden { display: none; }
+  .dataloss-warn .dw-link {
+    text-decoration: underline; cursor: pointer; font-weight: 700;
+  }
+  .dataloss-warn .dw-close {
+    position: absolute; top: 6px; right: 10px;
+    background: none; border: none; color: #fff; font-size: 18px; cursor: pointer;
+  }
   /* Big always-visible voice toggle in the bottom-right corner */
   .voice-toggle-fab {
     position: fixed;
-    bottom: 18px; right: 18px;
+    top: 8px; right: 230px;
     z-index: 400;
     font-family: var(--mono);
-    font-size: 15px;
+    font-size: 13px;
     font-weight: 700;
-    letter-spacing: 0.06em;
-    padding: 14px 22px;
+    letter-spacing: 0.04em;
+    padding: 9px 16px;
     border-radius: 100px;
     border: 2px solid var(--ink);
     cursor: pointer;
-    box-shadow: 0 8px 22px rgba(0,0,0,0.25);
+    box-shadow: 0 6px 18px rgba(0,0,0,0.18);
     transition: transform 0.15s ease, background 0.15s ease;
   }
   .voice-toggle-fab:hover { transform: translateY(-2px); }
@@ -2131,6 +2232,7 @@
 
   /* Now bubble — top center, big and prominent */
   .now-bubble {
+    display: none !important;
     position: fixed;
     top: 56px;
     left: 50%;
@@ -2212,6 +2314,7 @@
 
   /* Manual countdown timer — small, top-center, doesn't overlap other floating UI */
   .manual-timer {
+    display: none !important;
     position: fixed;
     top: 8px;
     left: 50%;
@@ -2296,7 +2399,7 @@
   /* Life Rewards pile — top-left corner. Mirrors the cash pile shape. */
   .life-pile {
     position: fixed;
-    top: 8px; left: 14px;
+    top: 8px; left: 160px;
     z-index: 250;
     background: #f4ede0;
     border: 1.5px solid rgba(0,0,0,0.12);
@@ -2312,33 +2415,32 @@
     transition: transform 0.18s ease;
   }
   .life-pile.bumped { animation: cash-bump 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); }
-  .life-icon { font-size: 24px; line-height: 1; }
+  .life-icon { font-size: 22px; line-height: 1; }
   .life-total {
     font-family: var(--serif);
-    font-size: 17px;
-    font-weight: 600;
+    font-size: 15px;
+    font-weight: 700;
     color: #3f7d4f;
     letter-spacing: -0.02em;
-    line-height: 1;
+    line-height: 1.1;
   }
-  .life-total { font-weight: 700; }
   .life-stack {
     display: flex;
     flex-direction: column;
-    line-height: 1.1;
+    line-height: 1.05;
   }
   .life-death-date {
     font-family: var(--mono);
-    font-size: 10px;
+    font-size: 9px;
     font-weight: 600;
     color: var(--ink-3);
     letter-spacing: 0.04em;
-    margin-top: 2px;
+    margin-top: 1px;
   }
-  /* Cash pile — top-right corner */
+  /* Cash pile — top-left corner, left of the lives */
   .cash-pile {
     position: fixed;
-    top: 8px; right: 14px;
+    top: 8px; left: 14px;
     z-index: 250;
     background: #f4ede0;
     border: 1.5px solid rgba(0,0,0,0.12);
@@ -2368,11 +2470,11 @@
     60% { transform: translateX(5px) rotate(1.5deg); }
     80% { transform: translateX(-2px); }
   }
-  .cash-icon { font-size: 24px; line-height: 1; }
+  .cash-icon { font-size: 22px; line-height: 1; }
   .cash-total {
     font-family: var(--serif);
-    font-size: 17px;
-    font-weight: 600;
+    font-size: 15px;
+    font-weight: 700;
     color: #b08410;
     letter-spacing: -0.02em;
     line-height: 1;
@@ -2573,10 +2675,44 @@
   }
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<!-- Supabase client for login + cloud save -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  // ════════════════════════════════════════════════════════════════════
+  //  SUPABASE CONFIG — PASTE YOUR TWO VALUES BELOW
+  //  Get them from: Supabase dashboard → Settings → API
+  //    1. Project URL  (looks like https://xxxxxxxx.supabase.co)
+  //    2. anon public key (the long string starting with eyJ...)
+  //  Until both are filled in, login/signup will show a friendly message
+  //  and the app falls back to local-only saving.
+  // ════════════════════════════════════════════════════════════════════
+  window.SUPABASE_URL = "PASTE_YOUR_PROJECT_URL_HERE";
+  window.SUPABASE_ANON_KEY = "PASTE_YOUR_ANON_KEY_HERE";
+</script>
 </head>
 <body>
 <canvas id="space-bg" aria-hidden="true"></canvas>
 <button type="button" id="voice-toggle-fab" class="voice-toggle-fab muted">🔇 UNMUTE</button>
+
+<!-- Account button (top center-ish) + login/signup modal -->
+<button type="button" id="account-fab" class="account-fab">☁ Sign in / Sign up</button>
+<div id="dataloss-warn" class="dataloss-warn hidden">
+  ⚠ Your tasks are only on this device and will be lost. <span class="dw-link" id="dw-signup">Sign up to save them →</span>
+  <button type="button" class="dw-close" id="dw-close" aria-label="Dismiss">×</button>
+</div>
+<div id="auth-modal" class="auth-modal hidden">
+  <div class="auth-card">
+    <button type="button" id="auth-close" class="auth-close" aria-label="Close">×</button>
+    <div class="auth-title" id="auth-title">Save your data</div>
+    <div class="auth-sub" id="auth-sub">Create an account so your tasks sync across devices and never get lost.</div>
+    <input type="email" id="auth-email" class="auth-input" placeholder="email" autocomplete="email" />
+    <input type="password" id="auth-password" class="auth-input" placeholder="password" autocomplete="current-password" />
+    <div class="auth-error" id="auth-error"></div>
+    <button type="button" id="auth-primary" class="auth-btn primary">Sign up</button>
+    <button type="button" id="auth-secondary" class="auth-btn">I already have an account — Log in</button>
+    <button type="button" id="auth-skip" class="auth-skip">Skip for now (data stays on this device only)</button>
+  </div>
+</div>
 <div class="container">
 
   <!-- ───────── HEADER ───────── -->
@@ -2595,7 +2731,6 @@
       <button class="btn" id="voice-btn" title="Toggle spoken reminders">🔊 Voice</button>
       <button class="btn" id="check-all-btn">Check All</button>
       <button class="btn" id="uncheck-all-btn">Uncheck All</button>
-      <button class="btn" id="example-btn" title="Fill empty slots with the example day">Example Day</button>
       <button class="btn putback" id="putback-btn" title="Restore every task you've deleted today">↺ Put Back All</button>
       <button class="btn danger" id="delete-all-btn">Delete Tasks</button>
       <button class="btn" id="export-btn" title="Download a backup file of everything (tasks, pads, meals, finances)">⤓ Export</button>
@@ -3516,6 +3651,13 @@
     try {
       if (window.storage && window.storage.set) {
         window.storage.set(STORAGE_KEY, payload);
+      }
+    } catch (e) {}
+    // If signed in, also push to the cloud (debounced to avoid hammering).
+    try {
+      if (window._cloudSaveHook) {
+        clearTimeout(window._cloudSaveTimer);
+        window._cloudSaveTimer = setTimeout(window._cloudSaveHook, 1200);
       }
     } catch (e) {}
   }
@@ -5163,6 +5305,7 @@
   // Snooze map — when user X-closes the blocker, we record the task key and mode
   // so the auto-poll doesn't re-pop the same thing for 60s. Cleared on day rollover.
   const SNOOZE_MS = 60 * 1000;
+  const GLOBAL_SNOOZE_MS = 10 * 60 * 1000; // X = quiet for 10 min to edit in peace
   const blockerSnoozeUntil = new Map(); // key = `${mode}:${slotKey}`, value = timestamp
   function snoozeKey(mode, slotKey) { return mode + ':' + slotKey; }
   function isSnoozed(mode, slotKey) {
@@ -5178,14 +5321,21 @@
     return globalSnoozeUntil && Date.now() < globalSnoozeUntil;
   }
   function snoozeGlobally() {
-    globalSnoozeUntil = Date.now() + SNOOZE_MS;
+    globalSnoozeUntil = Date.now() + GLOBAL_SNOOZE_MS;
   }
 
   const blockerCloseBtn = document.getElementById('blocker-close');
   if (blockerCloseBtn) {
     blockerCloseBtn.addEventListener('click', () => {
-      // Snooze EVERY blocker (eliminate/overdue/now) for 60s so you get
-      // a real breather, not just a single-task snooze.
+      // X = "I want to edit my grid — get out of my way." Pause ALL auto-popping
+      // for 10 minutes so nothing interrupts editing. Also snooze the specific
+      // task for the same window so it isn't first in line when the breather ends.
+      const k = blockerOpenFor;
+      if (k) {
+        ['now', 'overdue', 'eliminate'].forEach(mode => {
+          blockerSnoozeUntil.set(snoozeKey(mode, k), Date.now() + GLOBAL_SNOOZE_MS);
+        });
+      }
       snoozeGlobally();
       hideBlocker();
     });
@@ -6552,7 +6702,8 @@
     showToast('Put back', `Restored ${restored} task${restored!==1?'s':''} to their original times${note}.`, '');
   });
 
-  document.getElementById('example-btn').addEventListener('click', () => {
+  const _exBtn = document.getElementById('example-btn');
+  if (_exBtn) _exBtn.addEventListener('click', () => {
     snapshot();
     forceRestoreAllSeed();
     renderHourGrid();
@@ -6562,7 +6713,6 @@
     updatePastUndone();
     updateCashTotal();
     scheduleSave();
-    showToast('Example Day', 'Restored every default task into the grid.', '');
   });
 
   // ── Export: download every bit of state as a JSON file ──
@@ -7602,11 +7752,8 @@
     const px = p.left + p.width / 2;
     const py = p.top + p.height / 2;
 
-    const fly = document.createElement('div');
-    fly.className = 'flying-coin';
-    fly.style.left = (sx - 11) + 'px';
-    fly.style.top  = (sy - 11) + 'px';
-    document.body.appendChild(fly);
+    // EXPLOSION: spray a burst of coins outward, then they arc to the pile.
+    coinExplosion(sx, sy, px, py);
 
     const pop = document.createElement('div');
     pop.className = 'cash-pop';
@@ -7615,23 +7762,56 @@
     pop.style.top  = (sy - 8) + 'px';
     pop.style.opacity = '1';
     document.body.appendChild(pop);
-
-    void fly.offsetHeight; void pop.offsetHeight;
-
-    fly.style.transform =
-      `translate(${px - sx}px, ${py - sy}px) scale(0.45) rotate(720deg)`;
-    fly.style.opacity = '0.2';
+    void pop.offsetHeight;
     pop.style.transform = 'translateY(-28px)';
     pop.style.opacity = '0';
-
-    setTimeout(() => fly.remove(), 760);
     setTimeout(() => pop.remove(), 960);
+
     setTimeout(() => {
       pile.classList.remove('bumped');
       void pile.offsetHeight;
       pile.classList.add('bumped');
       playCashSound();
-    }, 600);
+    }, 500);
+  }
+
+  // Burst of ~18 coins exploding from (sx,sy) outward, then curving toward the
+  // pile at (px,py). Pure DOM + transitions, cleaned up after.
+  function coinExplosion(sx, sy, px, py) {
+    const N = 18;
+    for (let i = 0; i < N; i++) {
+      const coin = document.createElement('div');
+      coin.className = 'flying-coin burst';
+      coin.style.left = (sx - 11) + 'px';
+      coin.style.top  = (sy - 11) + 'px';
+      document.body.appendChild(coin);
+
+      // Random outward explosion vector
+      const ang = (Math.PI * 2 * i / N) + (Math.random() - 0.5) * 0.6;
+      const dist = 70 + Math.random() * 120;
+      const burstX = Math.cos(ang) * dist;
+      const burstY = Math.sin(ang) * dist - 40; // bias upward
+      const spin = (Math.random() * 1440 - 720);
+      const delay = Math.random() * 80;
+
+      // Phase 1: explode outward
+      coin.style.transition = 'none';
+      void coin.offsetHeight;
+      setTimeout(() => {
+        coin.style.transition = 'transform 0.32s cubic-bezier(0.1,0.8,0.3,1)';
+        coin.style.transform = `translate(${burstX}px, ${burstY}px) rotate(${spin}deg) scale(1.1)`;
+      }, delay);
+
+      // Phase 2: arc to the pile and fade
+      setTimeout(() => {
+        coin.style.transition = 'transform 0.5s cubic-bezier(0.5,0,0.7,1), opacity 0.5s ease';
+        coin.style.transform =
+          `translate(${px - sx}px, ${py - sy}px) scale(0.4) rotate(${spin + 360}deg)`;
+        coin.style.opacity = '0.15';
+      }, delay + 360);
+
+      setTimeout(() => coin.remove(), delay + 920);
+    }
   }
 
   // ════════════════════════════════════════════════════════════════════
@@ -8097,7 +8277,231 @@
       }
     });
   }
+  // ════════════════════════════════════════════════════════════════════
+  //  ACCOUNT / LOGIN / SIGNUP (Supabase Auth) + data-loss nudges
+  // ════════════════════════════════════════════════════════════════════
+  let supa = null;          // Supabase client (null until configured)
+  let currentUser = null;   // logged-in user object
+  let authMode = 'signup';  // 'signup' | 'login'
+
+  function supabaseConfigured() {
+    return window.SUPABASE_URL &&
+           window.SUPABASE_ANON_KEY &&
+           !/PASTE_YOUR/.test(window.SUPABASE_URL) &&
+           !/PASTE_YOUR/.test(window.SUPABASE_ANON_KEY);
+  }
+
+  function initSupabase() {
+    if (!supabaseConfigured()) return;
+    try {
+      supa = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
+    } catch (e) { supa = null; }
+  }
+
+  // Save the whole state to the logged-in user's cloud row.
+  async function cloudSave() {
+    if (!supa || !currentUser) return;
+    try {
+      await supa.from('app_state').upsert({
+        id: currentUser.id,
+        data: JSON.stringify(state),
+        updated_at: new Date().toISOString()
+      });
+    } catch (e) {}
+  }
+
+  // Load this user's state from the cloud (returns parsed state or null).
+  async function cloudLoad() {
+    if (!supa || !currentUser) return null;
+    try {
+      const { data, error } = await supa.from('app_state')
+        .select('data').eq('id', currentUser.id).maybeSingle();
+      if (error || !data || !data.data) return null;
+      return JSON.parse(data.data);
+    } catch (e) { return null; }
+  }
+
+  const authModal = document.getElementById('auth-modal');
+  const accountFab = document.getElementById('account-fab');
+  const authTitle = document.getElementById('auth-title');
+  const authSub = document.getElementById('auth-sub');
+  const authEmail = document.getElementById('auth-email');
+  const authPassword = document.getElementById('auth-password');
+  const authError = document.getElementById('auth-error');
+  const authPrimary = document.getElementById('auth-primary');
+  const authSecondary = document.getElementById('auth-secondary');
+  const authSkip = document.getElementById('auth-skip');
+  const authCloseBtn = document.getElementById('auth-close');
+
+  function openAuth(mode) {
+    authMode = mode || 'signup';
+    syncAuthUI();
+    authError.textContent = '';
+    authModal.classList.remove('hidden');
+    document.body.classList.add('scroll-locked');
+  }
+  function closeAuth() {
+    authModal.classList.add('hidden');
+    document.body.classList.remove('scroll-locked');
+  }
+  function syncAuthUI() {
+    if (authMode === 'signup') {
+      authTitle.textContent = 'Save your data';
+      authSub.textContent = 'Create an account so your tasks sync across devices and never get lost.';
+      authPrimary.textContent = 'Sign up';
+      authSecondary.textContent = 'I already have an account — Log in';
+    } else {
+      authTitle.textContent = 'Welcome back';
+      authSub.textContent = 'Log in to load your saved tasks.';
+      authPrimary.textContent = 'Log in';
+      authSecondary.textContent = 'New here? Create an account';
+    }
+  }
+
+  function syncAccountFab() {
+    if (!accountFab) return;
+    if (currentUser) {
+      const name = currentUser.email ? currentUser.email.split('@')[0] : 'Account';
+      accountFab.textContent = '☁ ' + name + ' · Sign out';
+      accountFab.classList.add('signed-in');
+    } else {
+      accountFab.textContent = '☁ Sign in / Sign up';
+      accountFab.classList.remove('signed-in');
+    }
+  }
+
+  async function doAuth() {
+    authError.textContent = '';
+    if (!supabaseConfigured() || !supa) {
+      authError.textContent = 'Login isn\u2019t connected yet (Supabase keys not set).';
+      return;
+    }
+    const email = authEmail.value.trim();
+    const pw = authPassword.value;
+    if (!email || !pw) { authError.textContent = 'Enter an email and password.'; return; }
+    authPrimary.disabled = true;
+    authPrimary.textContent = '…';
+    try {
+      if (authMode === 'signup') {
+        const { data, error } = await supa.auth.signUp({ email, password: pw });
+        if (error) throw error;
+        currentUser = data.user;
+        // Migrate whatever's already on this device INTO the new account.
+        if (currentUser) { await cloudSave(); }
+        authError.style.color = 'var(--daily)';
+        authError.textContent = 'Account created — your data is now saved!';
+      } else {
+        const { data, error } = await supa.auth.signInWithPassword({ email, password: pw });
+        if (error) throw error;
+        currentUser = data.user;
+        // Load their cloud data, replacing local.
+        const cloud = await cloudLoad();
+        if (cloud) {
+          Object.keys(cloud).forEach(key => { state[key] = cloud[key]; });
+          saveNow();
+          renderAll();
+        } else {
+          // No cloud data yet — push current local up.
+          await cloudSave();
+        }
+      }
+      syncAccountFab();
+      hideDataLossWarn();
+      stopDataLossNudge();
+      setTimeout(closeAuth, 700);
+    } catch (e) {
+      authError.style.color = 'var(--accent)';
+      authError.textContent = (e && e.message) ? e.message : 'Something went wrong.';
+    } finally {
+      authPrimary.disabled = false;
+      syncAuthUI();
+    }
+  }
+
+  if (accountFab) accountFab.addEventListener('click', () => {
+    if (currentUser) {
+      // Signed in — offer logout
+      if (confirm('Log out of ' + (currentUser.email || 'your account') + '?')) {
+        if (supa) { try { supa.auth.signOut(); } catch (e) {} }
+        currentUser = null;
+        syncAccountFab();
+        startDataLossNudge();
+      }
+    } else {
+      openAuth('signup');
+    }
+  });
+  if (authPrimary) authPrimary.addEventListener('click', doAuth);
+  if (authSecondary) authSecondary.addEventListener('click', () => {
+    authMode = (authMode === 'signup') ? 'login' : 'signup';
+    syncAuthUI(); authError.textContent = '';
+  });
+  if (authSkip) authSkip.addEventListener('click', closeAuth);
+  if (authCloseBtn) authCloseBtn.addEventListener('click', closeAuth);
+
+  // ── Data-loss warnings (only when NOT signed in) ──────────────────
+  const datalossWarn = document.getElementById('dataloss-warn');
+  let datalossNudgeTimer = null;
+  function showDataLossWarn() {
+    if (currentUser) return;
+    if (datalossWarn) datalossWarn.classList.remove('hidden');
+  }
+  function hideDataLossWarn() {
+    if (datalossWarn) datalossWarn.classList.add('hidden');
+  }
+  function startDataLossNudge() {
+    stopDataLossNudge();
+    // Warn every 15 minutes that data will be lost without signup.
+    datalossNudgeTimer = setInterval(() => {
+      if (!currentUser) showDataLossWarn();
+    }, 15 * 60 * 1000);
+  }
+  function stopDataLossNudge() {
+    if (datalossNudgeTimer) { clearInterval(datalossNudgeTimer); datalossNudgeTimer = null; }
+  }
+  const dwSignup = document.getElementById('dw-signup');
+  const dwClose = document.getElementById('dw-close');
+  if (dwSignup) dwSignup.addEventListener('click', () => { hideDataLossWarn(); openAuth('signup'); });
+  if (dwClose) dwClose.addEventListener('click', hideDataLossWarn);
+
+  // Warn on attempt to leave/close if not signed in and there's real data.
+  window.addEventListener('beforeunload', (e) => {
+    if (currentUser) return; // signed in — data is safe
+    // Only warn if there's actually something to lose
+    const hasData = state && state.today && state.today.tasks &&
+      Object.values(state.today.tasks).some(t => t && t.label && t.label.trim());
+    if (hasData) {
+      e.preventDefault();
+      e.returnValue = 'Your tasks aren\u2019t saved to an account and will be lost. Sign up to keep them.';
+      return e.returnValue;
+    }
+  });
+
+  // On load: init Supabase, restore session if any, push cloud save into the
+  // existing save pipeline, and start the nudge timer for anonymous users.
+  async function initAuth() {
+    initSupabase();
+    if (supa) {
+      try {
+        const { data } = await supa.auth.getSession();
+        if (data && data.session && data.session.user) {
+          currentUser = data.session.user;
+          const cloud = await cloudLoad();
+          if (cloud) {
+            Object.keys(cloud).forEach(key => { state[key] = cloud[key]; });
+            saveNow(); renderAll();
+          }
+        }
+      } catch (e) {}
+    }
+    syncAccountFab();
+    if (!currentUser) startDataLossNudge();
+    // Hook cloud save into the existing saveNow so every save also goes to cloud.
+    const _origSaveNow = saveNow;
+    window._cloudSaveHook = () => { if (currentUser) cloudSave(); };
+  }
   init();
+  initAuth();
 })();
 </script>
 <script>
