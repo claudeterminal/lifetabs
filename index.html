@@ -4547,31 +4547,10 @@
 
   let overdueChantInterval = null;
   function startOverdueChant() {
-    stopOverdueChant();
-    // Only chant if voice is set up and not muted
-    if (!voiceUnlocked || reminderVoiceMuted) return;
-    if (!('speechSynthesis' in window)) return;
-    // First chant fires immediately, then every 3.5s
-    const chant = () => {
-      // Bail if blocker has been dismissed in the meantime
-      if (!blockerEl || blockerEl.classList.contains('hidden')) {
-        stopOverdueChant();
-        return;
-      }
-      try {
-        // Don't queue on top of itself — cancel any in-progress speech first
-        window.speechSynthesis.cancel();
-        const u = new SpeechSynthesisUtterance('overdue');
-        const ov = (typeof pickNaturalVoice === 'function') ? pickNaturalVoice() : null;
-        if (ov) { u.voice = ov; u.lang = ov.lang; }
-        u.rate = 0.95;
-        u.pitch = 1.0;
-        u.volume = 1;
-        window.speechSynthesis.speak(u);
-      } catch (e) {}
-    };
-    chant();
-    overdueChantInterval = setInterval(chant, 3500);
+    // Disabled — we never chant the word "overdue" anymore. The blocker reads
+    // the actual TASK NAME on loop instead (see startRepeatVoice). Kept as a
+    // no-op so any lingering calls are harmless.
+    return;
   }
   function stopOverdueChant() {
     if (overdueChantInterval) {
@@ -4618,22 +4597,25 @@
     window.speechSynthesis.onvoiceschanged = () => { _cachedVoice = null; pickNaturalVoice(); };
   } catch (e) {}
 
+  // Shared: strip emoji, $ amounts, and turn fractions into "X of Y" for speech.
+  function cleanLabelForSpeech(label) {
+    if (!label) return '';
+    return label
+      .replace(/^[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]+\s*/u, '')
+      .replace(/\$\d+(\.\d+)?/g, '')
+      .replace(/(\d+)\/(\d+)/g, '$1 of $2')
+      .replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/gu, '')
+      .replace(/[.!]+$/, '') // drop trailing . or ! (the health/badfood markers)
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
   function speakTask(label) {
     if (!label || !label.trim()) return;
     if (!('speechSynthesis' in window)) return;
     if (!voiceUnlocked) return; // browsers block TTS without user gesture
     if (reminderVoiceMuted) return;
-    const cleaned = label
-      // remove leading emoji + space
-      .replace(/^[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]+\s*/u, '')
-      // strip dollar amounts like "$0.25", "$10", "$50"
-      .replace(/\$\d+(\.\d+)?/g, '')
-      // strip standalone numeric fractions like "150/400 cal" → "150 of 400 cal"
-      .replace(/(\d+)\/(\d+)/g, '$1 of $2')
-      // remove any remaining emoji
-      .replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/gu, '')
-      .replace(/\s+/g, ' ')
-      .trim();
+    const cleaned = cleanLabelForSpeech(label);
     if (!cleaned) return;
     try {
       window.speechSynthesis.cancel();
@@ -4668,17 +4650,62 @@
   // While the blocker is open (and voice isn't muted), read the current task
   // over and over so you keep hearing it until you act.
   let repeatVoiceTimer = null;
+  // Build a spoken phrase for how much time is left on the current countdown.
+  // e.g. "you have 4 minutes left", "you have 45 seconds left",
+  // "you are 2 minutes over" once it goes negative.
+  function timeLeftPhrase() {
+    if (countdownStartMs == null || countdownDurationMs == null) return '';
+    const elapsed = Date.now() - countdownStartMs;
+    const remaining = countdownDurationMs - elapsed;
+    if (remaining <= 0) {
+      const over = Math.abs(remaining);
+      const mins = Math.floor(over / 60000);
+      const secs = Math.round((over % 60000) / 1000);
+      if (mins >= 1) return 'you are ' + mins + (mins === 1 ? ' minute' : ' minutes') + ' over';
+      return 'you are ' + secs + (secs === 1 ? ' second' : ' seconds') + ' over';
+    }
+    const totalSecs = Math.round(remaining / 1000);
+    const mins = Math.floor(totalSecs / 60);
+    const secs = totalSecs % 60;
+    if (mins >= 1 && secs > 0) {
+      return 'you have ' + mins + (mins === 1 ? ' minute' : ' minutes') + ' and ' + secs + (secs === 1 ? ' second' : ' seconds') + ' left';
+    }
+    if (mins >= 1) return 'you have ' + mins + (mins === 1 ? ' minute' : ' minutes') + ' left';
+    return 'you have ' + secs + (secs === 1 ? ' second' : ' seconds') + ' left';
+  }
+
+  // Speak an arbitrary phrase using the natural voice (no label-cleaning).
+  function speakPhrase(text) {
+    if (!text || !text.trim()) return;
+    if (!('speechSynthesis' in window)) return;
+    if (!voiceUnlocked || reminderVoiceMuted) return;
+    try {
+      window.speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(text);
+      const v = pickNaturalVoice();
+      if (v) { u.voice = v; u.lang = v.lang; }
+      u.rate = 0.98;
+      u.pitch = 1.02;
+      u.volume = 1;
+      window.speechSynthesis.speak(u);
+    } catch (e) {}
+  }
+
   function startRepeatVoice(label) {
     stopRepeatVoice();
     if (reminderVoiceMuted) return;
+    // Clean the label the same way speakTask does (strip emoji, $ amounts).
+    const cleanedLabel = cleanLabelForSpeech(label);
     const say = () => {
       // Only keep going while a blocker is open and not muted
       if (!blockerOpenFor || reminderVoiceMuted) { stopRepeatVoice(); return; }
-      speakTask(label);
+      const tphrase = timeLeftPhrase();
+      const full = tphrase ? (cleanedLabel + ', ' + tphrase) : cleanedLabel;
+      speakPhrase(full);
     };
     say(); // immediate first read
-    // Re-read every 4 seconds
-    repeatVoiceTimer = setInterval(say, 4000);
+    // Re-read every 5 seconds (time figure updates each cycle)
+    repeatVoiceTimer = setInterval(say, 5000);
   }
   function stopRepeatVoice() {
     if (repeatVoiceTimer) { clearInterval(repeatVoiceTimer); repeatVoiceTimer = null; }
@@ -4785,9 +4812,9 @@
     // Pause the coach so it doesn't talk over the blocker
     try { window.speechSynthesis && window.speechSynthesis.cancel(); } catch (e) {}
     stopOverdueChant();
-    // Read the task aloud, repeating over and over, in NOW and OVERDUE modes.
-    // OVERFLOW stays quieter since you cycle rapidly through those.
-    if (mode === 'now' || mode === 'overdue') {
+    // Always read the actual TASK NAME aloud, repeating over and over, in every
+    // mode (NOW, OVERDUE, OVERFLOW). Never the word "overdue".
+    if (t.label && t.label.trim()) {
       const lbl = t.label;
       setTimeout(() => startRepeatVoice(lbl), 150);
     } else {
