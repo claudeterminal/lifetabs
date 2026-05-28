@@ -109,7 +109,7 @@
   }
   /* Volume sits in a centered row directly under the table of contents */
   .volume-row {
-    display: flex; justify-content: center;
+    display: flex; justify-content: flex-end;
     width: 100%; margin: 0 auto 14px;
   }
   .volume-row .volume-control { height: 40px; padding: 6px 14px 6px 8px; }
@@ -137,11 +137,14 @@
 
   /* ---- Tabs (table of contents across the very top) ---- */
   .tabs {
+    position: sticky; top: 0; z-index: 50;
     display: flex; gap: 4px; flex-wrap: wrap;
     width: 100%; max-width: 1100px;
-    margin: 0 auto 14px; padding-bottom: 8px;
+    margin: 0 auto 14px; padding: 8px 0;
     border-bottom: 1px solid rgba(232,228,216,0.12);
     justify-content: center;
+    background: rgba(16, 20, 30, 0.94);
+    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
   }
   .tab {
     background: transparent; border: 1px solid transparent;
@@ -182,6 +185,52 @@
     text-decoration: none; transition: all 0.2s ease;
   }
   .instacart-link:hover { background: rgba(67,179,80,0.22); border-color: rgba(67,179,80,0.7); }
+
+  /* Life goals — area + measurable goal input */
+  .goal-list { display: flex; flex-direction: column; gap: 8px; }
+  .goal-row {
+    display: flex; align-items: center; gap: 12px;
+    padding: 8px 12px; border-radius: 10px;
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(232,228,216,0.10);
+  }
+  .goal-area {
+    flex-shrink: 0; width: 120px; font-weight: 600; font-size: 14px;
+    color: var(--accent);
+  }
+  .goal-input {
+    flex: 1; min-width: 0; background: transparent; border: none;
+    border-bottom: 1px solid rgba(232,228,216,0.18);
+    color: var(--fg); font-family: var(--sf-display); font-size: 15px;
+    padding: 4px 2px; outline: none;
+  }
+  .goal-input:focus { border-bottom-color: var(--accent); }
+  .goal-input::placeholder { color: rgba(232,228,216,0.3); }
+
+  /* Not alone card */
+  .notalone-card {
+    background: rgba(212,165,116,0.08); border: 1px solid rgba(212,165,116,0.3);
+    border-radius: 14px; padding: 18px; margin-bottom: 16px; text-align: center;
+  }
+  .notalone-goal { font-size: 16px; line-height: 1.5; margin-bottom: 14px; }
+  .notalone-btns { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+  .notalone-hint {
+    margin-top: 12px; font-size: 12px; color: rgba(232,228,216,0.45);
+  }
+  /* Reminder popup */
+  .reminder-modal {
+    position: fixed; inset: 0; z-index: 200;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(0,0,0,0.55); backdrop-filter: blur(4px);
+  }
+  .reminder-box {
+    max-width: 420px; width: calc(100% - 40px);
+    background: #1c2130; border: 1px solid rgba(212,165,116,0.45);
+    border-radius: 18px; padding: 26px; text-align: center;
+    box-shadow: 0 16px 48px rgba(0,0,0,0.5);
+  }
+  .reminder-box .r-emoji { font-size: 34px; }
+  .reminder-box .r-msg { font-size: 17px; line-height: 1.5; margin: 12px 0 20px; }
+  .reminder-box .btn { margin: 0 auto; }
 
   /* ---- Hour divider line with the time on the left ---- */
   .hour-line {
@@ -327,6 +376,10 @@
   }
   .btn-done:hover { background: rgba(107,155,122,0.25); border-color: var(--green-light); color: #a8d4b3; }
   .btn-icon { padding: 12px; }
+  .btn-nav { font-size: 13px; padding: 11px 15px; color: rgba(232,228,216,0.8); }
+  .btn-nav svg { stroke: currentColor; fill: none; stroke-width: 2.5; }
+  .btn:disabled { opacity: 0.32; cursor: default; }
+  .btn:disabled:hover { background: rgba(255,255,255,0.05); border-color: rgba(232,228,216,0.15); }
 
   /* ---- Action button grid (the screenshot's per-task actions) ---- */
   .actions-grid {
@@ -471,9 +524,24 @@
   }
   .task-play-btn svg { display: block; }
 
-  /* Default cursor on whole row: grab, but interactive elements override */
-  .task-item { cursor: grab; }
-  .task-item:active { cursor: grabbing; }
+  /* Default cursor on whole row: normal, so text can be selected & copied. */
+  .task-item { cursor: default; }
+  /* Drag handle — the only place that starts a reorder, so text stays selectable */
+  .drag-handle {
+    flex-shrink: 0; width: 16px; text-align: center;
+    cursor: grab; color: rgba(232,228,216,0.32);
+    font-size: 14px; line-height: 1; letter-spacing: -1px;
+    user-select: none; -webkit-user-select: none;
+    align-self: center;
+  }
+  .drag-handle:hover { color: rgba(232,228,216,0.7); }
+  .drag-handle:active { cursor: grabbing; }
+  .drag-handle.empty { visibility: hidden; cursor: default; }
+  /* All task text is freely selectable / copyable */
+  .task-name-text, .location-inline, .dur-bubble, .hour-label,
+  .sub-item-text, .center-task, .center-sub, .tab-panel, .task-tag {
+    user-select: text; -webkit-user-select: text;
+  }
   .task-item input,
   .task-item .check-circle,
   .task-item .location-inline,
@@ -507,6 +575,8 @@
   .task-current { background: rgba(212,165,116,0.08); border-color: rgba(212,165,116,0.3); }
   .task-done { opacity: 0.55; }
   .task-pending { opacity: 0.9; }
+  .task-pinned { cursor: default; }
+  .pin-marker { font-size: 11px; opacity: 0.7; flex-shrink: 0; cursor: default; }
 
   .task-main-row { display: flex; align-items: center; gap: 8px; min-height: 22px; }
   .task-body { flex: 1; min-width: 0; }
@@ -925,11 +995,9 @@ function curDurationSec() {
 }
 
 const DEFAULT_TASKS = [
-  // 8 AM (60 min)
-  { type: 'item', emoji: "🚽", name: "urinate / water floss", location: "", duration: 5 },
-  { type: 'item', emoji: "💧", name: "water 125 ml", location: "", duration: 5 },
-  { type: 'item', emoji: "", name: "brush teeth", location: "", duration: 5 },
-  { type: 'item', emoji: "", name: "contacts", location: "", duration: 5 },
+  // Hour 1
+  { type: 'item', emoji: "🚽", name: "urinate / water floss", location: "", duration: 5, pinned: true },
+  { type: 'item', emoji: "💧", name: "water 125 ml", location: "", duration: 5, pinned: true, hydration: true },
   { type: 'item', emoji: "", name: "bowel", location: "", duration: 5 },
   { type: 'item', emoji: "", name: "zyrtec bottle", location: "", duration: 5 },
   { type: 'item', emoji: "", name: "shorts", location: "", duration: 5 },
@@ -937,18 +1005,18 @@ const DEFAULT_TASKS = [
   { type: 'item', emoji: "💊", name: "quercetin", location: "", duration: 5 },
   { type: 'item', emoji: "", name: "wash face", location: "", duration: 5 },
   { type: 'item', emoji: "", name: "burn 50/400 cal", location: "", duration: 10 },
-  // 9 AM (60 min)
-  { type: 'item', emoji: "🚽", name: "urinate / water floss", location: "", duration: 5 },
-  { type: 'item', emoji: "💧", name: "water 125 ml", location: "", duration: 5 },
+  { type: 'item', emoji: "🚽", name: "urinate / water floss", location: "", duration: 5, pinned: true },
+  { type: 'item', emoji: "💧", name: "water 125 ml", location: "", duration: 5, pinned: true, hydration: true },
+  // Hour 2
   { type: 'item', emoji: "💧", name: "250 ml", location: "", duration: 5 },
   { type: 'item', emoji: "🍽️", name: "EAT 2 Egg whites", location: "", duration: 15 },
   { type: 'item', emoji: "", name: "10 cranberries", location: "", duration: 5 },
   { type: 'item', emoji: "", name: "Bowel or Shower", location: "", duration: 15 },
   { type: 'item', emoji: "", name: "wear clothes", location: "", duration: 5 },
   { type: 'item', emoji: "", name: "sun", location: "", duration: 5 },
-  // 10 AM (60 min)
-  { type: 'item', emoji: "🚽", name: "urinate / water floss", location: "", duration: 5 },
-  { type: 'item', emoji: "💧", name: "water 125 ml", location: "", duration: 5 },
+  { type: 'item', emoji: "🚽", name: "urinate / water floss", location: "", duration: 5, pinned: true },
+  { type: 'item', emoji: "💧", name: "water 125 ml", location: "", duration: 5, pinned: true, hydration: true },
+  // Hour 3
   { type: 'item', emoji: "", name: "L glutamine, Zinc Carnosine", location: "", duration: 5 },
   { type: 'item', emoji: "", name: "burn 75/400 cal", location: "", duration: 10 },
   { type: 'item', emoji: "💧", name: "375 ml", location: "", duration: 5 },
@@ -957,14 +1025,17 @@ const DEFAULT_TASKS = [
   { type: 'item', emoji: "", name: "peppermint tea", location: "", duration: 5 },
   { type: 'item', emoji: "", name: "apartments.com quick", location: "", duration: 5 },
   { type: 'item', emoji: "🍽️", name: "EAT arugula", location: "", duration: 10 },
-  // 11 AM (60 min)
-  { type: 'item', emoji: "🚽", name: "urinate / water floss", location: "", duration: 5 },
-  { type: 'item', emoji: "💧", name: "water 125 ml", location: "", duration: 5 },
+  { type: 'item', emoji: "🚽", name: "urinate / water floss", location: "", duration: 5, pinned: true },
+  { type: 'item', emoji: "💧", name: "water 125 ml", location: "", duration: 5, pinned: true, hydration: true },
+  // Hour 4
   { type: 'item', emoji: "", name: "eat 10 cranberries", location: "", duration: 5 },
   { type: 'item', emoji: "", name: "water floss", location: "", duration: 5 },
   { type: 'item', emoji: "", name: "TMJ RELEASE CERAM WRAP!", location: "", duration: 15 },
   { type: 'item', emoji: "", name: "burn 100/400 cal", location: "", duration: 15 },
   { type: 'item', emoji: "", name: "burn 100/400 cal", location: "", duration: 10 },
+  // end
+  { type: 'item', emoji: "", name: "brush teeth", location: "", duration: 5 },
+  { type: 'item', emoji: "", name: "contacts", location: "", duration: 5 },
 ];
 
 // Default unfurnished-list items (baked-in starter list; empty by default).
@@ -986,7 +1057,7 @@ const STORAGE_KEY = 'tunetask-state-v2';
 // refreshed to the new canonical list ONCE (other prefs are kept). Normal feature
 // updates that don't change the task list must NOT bump this — that's what keeps
 // the user's own edits/order intact between releases.
-const SEED_VERSION = 6;
+const SEED_VERSION = 8;
 // Older keys this app has used. If the main key is empty (e.g. first load
 // after an update that previously bumped the version), we adopt data from the
 // newest available legacy key so nothing is lost — then re-save under STORAGE_KEY.
@@ -1097,7 +1168,10 @@ function buildDefaultState() {
   const tasks = DEFAULT_TASKS.map((t, i) => {
     if (t.done) completedIds.push(i);
     const { done, ...rest } = t;
-    return { type: 'item', emoji: rest.emoji || '', name: rest.name || '', location: rest.location || '', time: rest.time || '', duration: Number(rest.duration) > 0 ? Number(rest.duration) : 5 };
+    const built = { type: 'item', emoji: rest.emoji || '', name: rest.name || '', location: rest.location || '', time: rest.time || '', duration: Number(rest.duration) > 0 ? Number(rest.duration) : 5 };
+    if (rest.pinned) built.pinned = true;
+    if (rest.hydration) built.hydration = true;
+    return built;
   });
 
   // Unfurnished: accept either plain strings or { name, done } objects
@@ -1118,6 +1192,10 @@ function buildDefaultState() {
     nextId: tasks.length,
     completedIds,
     seedVersion: SEED_VERSION,
+    tabNotes: {
+      events: "🎂 June 14 — Mom's birthday 🎉",
+      automated: "⏰ AUTOMATIONS (run while this page is open)\n\n• Remind me of Mom's birthday — June 14 🎂\n• Every hour: copy & paste my tasks and hard-code them, so they're never lost 💾\n• Hourly until May 31: find someone (Not alone) 🤝",
+    },
     suitcaseRows: [
       { name: "Row 1", items: ["Contact lenses"] },
     ],
@@ -1160,6 +1238,12 @@ const state = {
   // Tabs (table of contents). 'time' is the scheduler; others hold freeform notes.
   activeTab: base.activeTab || 'time',
   tabNotes: base.tabNotes || {},
+  // Life goals tab: a measurable goal per life area (keyed by tab id)
+  lifeGoals: base.lifeGoals || {},
+  // Timestamp (ms) of the last "Not alone" hourly reminder shown
+  lastNotAlone: base.lastNotAlone || 0,
+  notAloneNotified: base.notAloneNotified || false,
+  lastBackup: base.lastBackup || 0,
   // Runtime/transient state — never persisted
   timeLeft: DEFAULT_DURATION,
   isRunning: false,
@@ -1179,6 +1263,7 @@ const state = {
 const TABS = [
   { id: 'time', label: 'Time' },
   { id: 'automated', label: 'Automated' },
+  { id: 'notalone', label: 'Not alone' },
   { id: 'meal', label: 'Meal plan' },
   { id: 'groceries', label: 'Groceries' },
   { id: 'health', label: 'Health' },
@@ -1194,6 +1279,7 @@ const TABS = [
   { id: 'exercise', label: 'Exercise' },
   { id: 'beauty', label: 'Beauty' },
   { id: 'social', label: 'Social media' },
+  { id: 'inventory', label: 'Inventory' },
   { id: 'pack', label: 'Pack' },
   { id: 'goals', label: 'Life goals' },
 ];
@@ -1213,6 +1299,10 @@ function savePersistedState() {
         seedVersion: SEED_VERSION,
         activeTab: state.activeTab,
         tabNotes: state.tabNotes,
+        lifeGoals: state.lifeGoals,
+        lastNotAlone: state.lastNotAlone,
+        notAloneNotified: state.notAloneNotified,
+        lastBackup: state.lastBackup,
         suitcaseRows: state.suitcaseRows,
         unfurnished: state.unfurnished,
         unfurnishedDone: state.unfurnishedDone,
@@ -1237,6 +1327,10 @@ function flushPersistedState() {
       seedVersion: SEED_VERSION,
       activeTab: state.activeTab,
       tabNotes: state.tabNotes,
+      lifeGoals: state.lifeGoals,
+      lastNotAlone: state.lastNotAlone,
+      notAloneNotified: state.notAloneNotified,
+      lastBackup: state.lastBackup,
       suitcaseRows: state.suitcaseRows,
       unfurnished: state.unfurnished,
       unfurnishedDone: state.unfurnishedDone,
@@ -2372,6 +2466,14 @@ function extractTags(name) {
   return tags;
 }
 
+// A task is "pinned" (does not move) if it carries the #set tag or pinned flag.
+// Pinned tasks can't be dragged and stay in place even after being completed.
+function isPinned(task) {
+  if (!task) return false;
+  if (task.pinned === true) return true;
+  return extractTags(task.name).map(t => t.toLowerCase()).includes('set');
+}
+
 // Strip tags from name for the *displayed* text portion (so "Wash face #morning"
 // shows the name without the inline #morning, and #morning shows as a pill).
 function stripTagsFromName(name) {
@@ -2431,14 +2533,21 @@ function hourBlockHtml(hourMin) {
   `;
 }
 
-function renderTaskRow(task, idx, isCurrent, isDone) {
+function renderTaskRow(task, idx, isCurrent, isDone, overrideName) {
   const isEditingName = state.editingNameIdx === idx;
   const isEditingLoc = state.editingLocationIdx === idx;
   const isEditingTime = state.editingTimeIdx === idx;
   const isGroup = task.type === 'group';
+  const pinned = isPinned(task);
 
-  let html = `<div class="task-item ${isCurrent ? 'task-current' : isDone ? 'task-done' : 'task-pending'}" data-idx="${idx}" draggable="true">`;
+  let html = `<div class="task-item ${isCurrent ? 'task-current' : isDone ? 'task-done' : 'task-pending'} ${pinned ? 'task-pinned' : ''}" data-idx="${idx}" ${pinned ? 'data-pinned="1"' : ''} draggable="false">`;
   html += `<div class="task-main-row">`;
+
+  // Drag handle — the only spot that initiates a reorder (keeps text selectable).
+  // Pinned (#set) tasks don't move, so their handle is an invisible spacer.
+  html += pinned
+    ? `<span class="drag-handle empty" aria-hidden="true">⠿</span>`
+    : `<span class="drag-handle" title="Drag to reorder" aria-hidden="true">⠿</span>`;
 
   // Check circle
   html += `<div class="check-circle ${isDone ? 'done' : isCurrent ? 'current' : ''}" data-action="toggle-task" data-idx="${idx}" title="${isDone ? 'Click to uncheck' : 'Mark done'}">`;
@@ -2471,7 +2580,7 @@ function renderTaskRow(task, idx, isCurrent, isDone) {
   } else {
     const struck = isDone ? 'struck' : '';
     const empty = !task.name ? 'empty' : '';
-    const visibleName = stripTagsFromName(task.name);
+    const visibleName = stripTagsFromName(overrideName || task.name);
     const nameDisplay = visibleName ? escapeHtml(visibleName) + (isGroup ? ':' : '') : (task.name ? '' : 'untitled');
     // Render emoji inline as part of the same clickable text element.
     // Skip the leading space if emoji is empty (user deleted it).
@@ -2483,8 +2592,12 @@ function renderTaskRow(task, idx, isCurrent, isDone) {
   html += `</div>`; // task-body
 
   // Right-side slot: tags + location, always pinned right, never wraps under the name.
-  const tags = extractTags(task.name);
+  const tags = extractTags(task.name).filter(t => t.toLowerCase() !== 'set');
   html += `<div class="task-location-slot">`;
+  // Pin marker for tasks that don't move (#set)
+  if (pinned) {
+    html += `<span class="pin-marker" title="Pinned (#set) — stays at the top of the hour">📌</span>`;
+  }
   // Tag pills first (to the left of location, still on the right side of the row)
   if (!isEditingName && tags.length) {
     html += renderTagPills(tags, idx);
@@ -2701,7 +2814,7 @@ function render() {
   if (ae && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA') && ae.dataset && ae.dataset.action) {
     const protectedActions = [
       'edit-name', 'edit-sub', 'edit-location', 'edit-time', 'edit-duration',
-      'edit-sc-row-name', 'edit-sc-item', 'edit-unfurnished', 'edit-tab-notes',
+      'edit-sc-row-name', 'edit-sc-item', 'edit-unfurnished', 'edit-tab-notes', 'edit-life-goal',
     ];
     if (protectedActions.includes(ae.dataset.action)) {
       updateLiveTimerDisplay(); // update time only, leave inputs alone
@@ -2800,7 +2913,9 @@ function render() {
 
   let controlsHtml = '';
   if (!isAllDone) {
-    // Start / Pause toggle (timer control) + repeat-aloud — kept compact above the action grid
+    // Previous task (left of Start)
+    controlsHtml += `<button class="btn btn-nav" data-action="prev-task" ${!canPrev ? 'disabled' : ''} title="Previous task"><svg width="15" height="15" aria-hidden="true"><use href="#i-chev-left"/></svg> Previous task</button>`;
+    // Start / Pause toggle (timer control)
     if (state.isRunning) {
       controlsHtml += `<button class="btn" data-action="pause">${icon('pause')} Pause</button>`;
     } else {
@@ -2809,6 +2924,8 @@ function render() {
     if (state.hasStarted) {
       controlsHtml += `<button class="btn btn-icon" data-action="repeat" title="Repeat task aloud">${icon('refresh')}</button>`;
     }
+    // Next task (right of Start)
+    controlsHtml += `<button class="btn btn-nav" data-action="next-task" ${!canNext ? 'disabled' : ''} title="Next task">Next task <svg width="15" height="15" aria-hidden="true"><use href="#i-chev-right"/></svg></button>`;
   }
 
   // ---- The action buttons from the screenshot ----
@@ -2890,13 +3007,19 @@ function render() {
   }
 
   // Separate active (unchecked) from done. Active tasks keep their natural order
-  // so the user's drag-ordering & current-task logic is preserved.
+  // so the user's drag-ordering & current-task logic is preserved. Pinned (#set)
+  // tasks always stay in the active list — even when completed — so they never
+  // leave the top of their hour.
   const activeEntries = [];
   const doneEntries = [];
   state.tasks.forEach((task, i) => {
     const id = state.ids[i];
     const isDone = state.completedIds.includes(id);
-    (isDone ? doneEntries : activeEntries).push({ task, idx: i, id, key: doneSortKey(task) });
+    if (isDone && !isPinned(task)) {
+      doneEntries.push({ task, idx: i, id, key: doneSortKey(task) });
+    } else {
+      activeEntries.push({ task, idx: i, id, done: isDone });
+    }
   });
   // Sort done tasks by location grouping
   doneEntries.sort((a, b) => cmpKey(a.key, b.key));
@@ -2906,15 +3029,19 @@ function render() {
   const MIDNIGHT = 24 * 60; // 12 AM = end of the day grid
   let clockMin = dayStartMin();
   let lastHour = -1;
-  activeEntries.forEach(({ task, idx }) => {
+  let hourIndex = 0; // 1 for the first hour shown, +1 each hour — drives water ramp
+  activeEntries.forEach(({ task, idx, done }) => {
     const thisHour = Math.floor(clockMin / 60);
     // Draw an hour line when the hour changes, but never past 12 AM (midnight).
     if (thisHour !== lastHour && thisHour * 60 <= MIDNIGHT) {
       listHtml += hourBlockHtml(thisHour * 60);
       lastHour = thisHour;
+      hourIndex++;
     }
-    const isCurrent = cur && cur.idx === idx;
-    listHtml += renderTaskRow(task, idx, isCurrent, false);
+    const isCurrent = cur && cur.idx === idx && !done;
+    // Hourly water ramps +125 ml each hour: 125, 250, 375, …
+    const overrideName = task.hydration ? `water ${125 * Math.max(1, hourIndex)} ml` : null;
+    listHtml += renderTaskRow(task, idx, isCurrent, !!done, overrideName);
     const durMin = (task && Number(task.duration) > 0) ? Number(task.duration) : 5;
     clockMin += durMin;
   });
@@ -2941,9 +3068,6 @@ function render() {
       <div class="header-count">${completedCount} / ${totalCount}</div>
     </div>
     <div class="circle-row">
-      <button class="nav-arrow" data-action="prev-task" ${!canPrev ? 'aria-disabled="true"' : ''} title="Previous task (←)">
-        <svg width="20" height="20" aria-hidden="true"><use href="#i-chev-left"/></svg>
-      </button>
       <div class="circle-wrap">
         <svg class="ring" width="300" height="300">
           <circle cx="150" cy="150" r="${radius}" fill="none" stroke="rgba(232,228,216,0.08)" stroke-width="3"/>
@@ -2951,15 +3075,47 @@ function render() {
         </svg>
         <div class="circle-center">${centerHtml}</div>
       </div>
-      <button class="nav-arrow" data-action="next-task" ${!canNext ? 'aria-disabled="true"' : ''} title="Skip (send to bottom) (→)">
-        <svg width="20" height="20" aria-hidden="true"><use href="#i-chev-right"/></svg>
-      </button>
     </div>
     <div class="controls">${controlsHtml}</div>
     ${actionsHtml}
     ${listHtml}
     ${renderUnfurnished()}
     <div class="footer-hint">TAP ANY TEXT TO EDIT &nbsp;·&nbsp; DRAG ROWS TO REORDER &nbsp;·&nbsp; <span class="reset-link" data-action="export-tasks">EXPORT MY TASKS</span> &nbsp;·&nbsp; <span class="reset-link" data-action="import-tasks">IMPORT</span> &nbsp;·&nbsp; <span class="reset-link" data-action="reset-all">RESET TO DEFAULTS</span></div>
+    `;
+  } else if (state.activeTab === 'goals') {
+    // Life goals: list every area and an editable measurable goal beside it.
+    const rows = TABS.filter(t => t.id !== 'goals').map(t => {
+      const g = (state.lifeGoals && state.lifeGoals[t.id]) || '';
+      return `<div class="goal-row">
+        <div class="goal-area">${escapeHtml(t.label)}</div>
+        <input class="goal-input" data-action="edit-life-goal" data-area="${t.id}" value="${escapeHtml(g)}" placeholder="measurable goal…" />
+      </div>`;
+    }).join('');
+    bodyHtml = `
+    <div class="tab-panel goals-panel">
+      <div class="tab-panel-title">Life goals</div>
+      <div class="tab-panel-sub">One measurable goal per area</div>
+      <div class="goal-list">${rows}</div>
+    </div>
+    `;
+  } else if (state.activeTab === 'notalone') {
+    const note = (state.tabNotes && state.tabNotes['notalone']) || '';
+    const perm = (typeof Notification !== 'undefined') ? Notification.permission : 'unsupported';
+    const alertLabel = perm === 'granted' ? '🔔 Alerts on' : (perm === 'denied' ? '🔕 Alerts blocked' : '🔔 Enable hourly alerts');
+    bodyHtml = `
+    <div class="tab-panel">
+      <div class="tab-panel-title">Not alone</div>
+      <div class="tab-panel-sub">Find someone for Sunday, May 31</div>
+      <div class="notalone-card">
+        <div class="notalone-goal">🤝 Reach out and find someone to spend time with on <b>Sunday, May 31</b>. You're not alone.</div>
+        <div class="notalone-btns">
+          <button class="btn" data-action="enable-alerts">${alertLabel}</button>
+          <button class="btn" data-action="notalone-now">Remind me now</button>
+        </div>
+        <div class="notalone-hint">While this page is open, it will pop up and speak this reminder once an hour until May 31.</div>
+      </div>
+      <textarea class="tab-notes" id="tab-notes" data-action="edit-tab-notes" placeholder="Who could you reach out to? Names, ideas, plans…">${escapeHtml(note)}</textarea>
+    </div>
     `;
   } else {
     const tab = TABS.find(t => t.id === state.activeTab) || { label: '' };
@@ -3062,6 +3218,9 @@ document.addEventListener('click', (e) => {
     case 'uncheck-all': uncheckAll(); break;
     case 'repeat': handleRepeat(); break;
     case 'mute': toggleMute(); break;
+    case 'enable-alerts': enableAlerts(); break;
+    case 'notalone-now': showNotAloneReminder(true); break;
+    case 'dismiss-reminder': dismissReminder(); break;
     case 'toggle-task': toggleTaskDone(state.ids[idx]); break;
     case 'toggle-sub': toggleSub(idx, sub); break;
     case 'start-edit-name':
@@ -3265,6 +3424,10 @@ document.addEventListener('input', (e) => {
   } else if (target.dataset.action === 'edit-tab-notes') {
     if (!state.tabNotes) state.tabNotes = {};
     state.tabNotes[state.activeTab] = val;
+  } else if (target.dataset.action === 'edit-life-goal') {
+    if (!state.lifeGoals) state.lifeGoals = {};
+    state.lifeGoals[target.dataset.area] = val;
+    savePersistedState();
   } else if (target.dataset.action === 'edit-sub') {
     const split = splitLeadingEmoji(val);
     state.tasks[idx].items[sub].emoji = split.emoji;
@@ -3432,11 +3595,12 @@ let dragSrcIdx = null;
 document.addEventListener('mousedown', (e) => {
   const item = e.target.closest && e.target.closest('.task-item');
   if (!item) return;
-  // If clicking on an input, disable dragging so text selection works
-  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
-    item.setAttribute('draggable', 'false');
-  } else {
+  // Reordering starts ONLY from the grip handle, so the rest of the row text
+  // can be selected and copied normally. Pinned (#set) tasks never move.
+  if (e.target.closest('.drag-handle') && item.dataset.pinned !== '1') {
     item.setAttribute('draggable', 'true');
+  } else {
+    item.setAttribute('draggable', 'false');
   }
 });
 
@@ -3457,6 +3621,7 @@ document.addEventListener('dragstart', (e) => {
 document.addEventListener('dragend', (e) => {
   document.querySelectorAll('.task-item').forEach(el => {
     el.classList.remove('dragging', 'drag-over-top', 'drag-over-bottom');
+    el.setAttribute('draggable', 'false');
   });
   dragSrcIdx = null;
 });
@@ -3482,12 +3647,99 @@ document.addEventListener('drop', (e) => {
   e.preventDefault();
   const targetIdx = parseInt(item.dataset.idx, 10);
   const rect = item.getBoundingClientRect();
-  const after = (e.clientY - rect.top) > rect.height / 2;
+  let after = (e.clientY - rect.top) > rect.height / 2;
+  // Never let a task land above a pinned (#set) task — it stays put.
+  if (item.dataset.pinned === '1') after = true;
   // Calculate insertion target: after = insert at targetIdx + 1
   let toIdx = after ? targetIdx + 1 : targetIdx;
   reorderTask(dragSrcIdx, toIdx);
   dragSrcIdx = null;
 });
+
+// ---- Reminders / alerts ----------------------------------------------------
+let reminderShowing = false;
+let momBdayShownSession = false;
+
+function stripHtml(s) { return (s || '').replace(/<[^>]+>/g, ''); }
+
+function showReminder(emoji, msg, speakText) {
+  // Only one popup at a time — if one is open, wait until it's dismissed.
+  if (reminderShowing) return false;
+  reminderShowing = true;
+  try {
+    if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+      new Notification('TuneTask', { body: stripHtml(msg) });
+    }
+  } catch (e) {}
+  speak(speakText || stripHtml(msg));
+  const overlay = document.createElement('div');
+  overlay.className = 'reminder-modal';
+  overlay.id = 'reminder-modal';
+  overlay.innerHTML = `<div class="reminder-box">
+      <div class="r-emoji">${emoji}</div>
+      <div class="r-msg">${msg}</div>
+      <button class="btn btn-primary" data-action="dismiss-reminder">Got it</button>
+    </div>`;
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) dismissReminder(); });
+  return true;
+}
+
+function dismissReminder() {
+  const m = document.getElementById('reminder-modal');
+  if (m) m.remove();
+  reminderShowing = false;
+}
+
+function showNotAloneReminder() {
+  const shown = showReminder(
+    '🤝',
+    "Reach out and find someone to spend time with on <b>Sunday, May 31</b>. You're not alone. 💛",
+    "Reminder. Reach out and find someone to spend time with for Sunday, May thirty first. You are not alone."
+  );
+  if (shown) { state.lastNotAlone = Date.now(); savePersistedState(); }
+}
+
+function enableAlerts() {
+  try {
+    if (typeof Notification === 'undefined') {
+      alert('This browser does not support pop-up notifications.');
+      return;
+    }
+    if (Notification.permission === 'granted') { render(); return; }
+    Notification.requestPermission().then(() => render());
+  } catch (e) { render(); }
+}
+
+const HOUR_MS = 60 * 60 * 1000;
+function checkReminders() {
+  if (reminderShowing) return; // don't stack popups
+  const now = new Date();
+  // 1) Mom's birthday — once per session on June 14, 2026
+  if (now.getFullYear() === 2026 && now.getMonth() === 5 && now.getDate() === 14 && !momBdayShownSession) {
+    if (showReminder('🎂', "Today is <b>Mom's birthday</b> (June 14)! 🎉 Give her a call.", "Today is your mom's birthday, June fourteenth. Give her a call.")) {
+      momBdayShownSession = true;
+    }
+    return;
+  }
+  // 2) Not alone — hourly until end of Sunday, May 31, 2026
+  const cutoff = new Date(2026, 4, 31, 23, 59, 59);
+  if (now <= cutoff && Date.now() - (state.lastNotAlone || 0) >= HOUR_MS) {
+    showNotAloneReminder();
+    return;
+  }
+  // 3) Back up tasks — hourly nudge to copy & hard-code them
+  if (Date.now() - (state.lastBackup || 0) >= HOUR_MS) {
+    if (showReminder('💾', "Copy your tasks (<b>EXPORT MY TASKS</b> at the bottom of the Time tab) and send them to hard-code — so they're never lost.", "Reminder. Copy and paste your tasks and hard code them, so they are saved.")) {
+      state.lastBackup = Date.now();
+      savePersistedState();
+    }
+    return;
+  }
+}
+// Check every minute while the page is open; first check a few seconds after load.
+setInterval(checkReminders, 60 * 1000);
+setTimeout(checkReminders, 6000);
 
 // Start the countdown at the first task's own duration.
 state.timeLeft = curDurationSec();
