@@ -1,0 +1,3501 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>TuneTask</title>
+<style>
+  :root {
+    --sf-display: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI", system-ui, sans-serif;
+    --sf-mono: ui-monospace, "SF Mono", Menlo, Monaco, "JetBrains Mono", monospace;
+    --accent: #d4a574;
+    --green: #6b9b7a;
+    --green-light: #8ec19c;
+    --bg-1: #1a1f2e;
+    --bg-0: #0a0d14;
+    --fg: #e8e4d8;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--bg-0); }
+  body {
+    min-height: 100vh;
+    background: radial-gradient(ellipse at top, #1a1f2e 0%, #0a0d14 100%);
+    color: var(--fg);
+    font-family: var(--sf-display);
+    padding: 6px 16px 32px;
+    display: flex; flex-direction: column; align-items: center;
+    -webkit-font-smoothing: antialiased;
+  }
+  .sf-display { font-family: var(--sf-display); }
+  .sf-mono { font-family: var(--sf-mono); }
+
+  @keyframes pulse-ring { 0%,100% { opacity: 0.4; } 50% { opacity: 0.8; } }
+  .ring-active { animation: pulse-ring 2s ease-in-out infinite; }
+
+  .header { text-align: center; margin-bottom: 4px; }
+  .header-title {
+    font-family: var(--sf-mono); font-size: 10px;
+    letter-spacing: 0.3em; opacity: 0.5; margin-bottom: 4px;
+  }
+  .header-count {
+    font-family: var(--sf-mono); font-size: 11px; opacity: 0.6;
+  }
+
+  .circle-wrap { position: relative; width: 300px; height: 300px; margin-bottom: 10px; }
+  .circle-wrap svg.ring { position: absolute; top: 0; left: 0; transform: rotate(-90deg); }
+  .circle-center {
+    position: absolute; inset: 0; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; padding: 0 30px; text-align: center;
+  }
+  .center-task-name {
+    font-size: 22px; font-weight: 700; line-height: 1.2;
+    margin-bottom: 4px; letter-spacing: -0.02em;
+  }
+  .center-task-name.group { font-size: 19px; }
+  .center-emoji {
+    font-size: 32px; line-height: 1; margin-bottom: 6px;
+    font-family: "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji", sans-serif;
+  }
+  .center-sub-emoji {
+    font-size: 11px; line-height: 1; margin-right: -2px;
+    font-family: "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji", sans-serif;
+  }
+  .center-location {
+    display: inline-block;
+    font-family: var(--sf-display); font-size: 11px;
+    color: var(--accent);
+    background: rgba(212, 165, 116, 0.12);
+    border: 1px solid rgba(212, 165, 116, 0.35);
+    padding: 2px 10px; border-radius: 999px;
+    margin-top: 4px; margin-bottom: 6px;
+    letter-spacing: 0.01em;
+    font-weight: 600;
+  }
+  .center-badges .center-location { margin-top: 0; margin-bottom: 0; }
+  .center-sub-list { margin: 2px 0 6px; max-width: 220px; }
+  .center-sub {
+    font-size: 11px; color: rgba(232,228,216,0.7); margin: 2px 0;
+    letter-spacing: -0.005em; display: flex; align-items: center;
+    gap: 6px; justify-content: center; cursor: pointer;
+  }
+  .center-sub.done {
+    opacity: 0.5;
+  }
+  .center-time {
+    font-family: var(--sf-mono); font-size: 34px; font-weight: 300;
+    letter-spacing: 0.02em; opacity: 0.85; margin-top: 4px;
+  }
+  .center-time.warn { color: var(--accent); }
+  .center-time.small { font-size: 26px; }
+
+  .controls {
+    display: flex; gap: 8px; margin-bottom: 10px;
+    flex-wrap: wrap; justify-content: center; align-items: center;
+  }
+
+  /* Volume control — speaker icon + live slider */
+  .volume-control {
+    display: inline-flex; align-items: center;
+    gap: 10px; padding: 8px 14px 8px 8px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(232,228,216,0.15);
+    border-radius: 999px;
+    height: 44px;
+    transition: all 0.2s ease;
+  }
+  .volume-control:hover {
+    background: rgba(255,255,255,0.08);
+    border-color: rgba(232,228,216,0.25);
+  }
+  /* Volume sits in a centered row directly under the table of contents */
+  .volume-row {
+    display: flex; justify-content: center;
+    width: 100%; margin: 0 auto 14px;
+  }
+  .volume-row .volume-control { height: 40px; padding: 6px 14px 6px 8px; }
+  /* Pinned to top right of the viewport */
+  .volume-control-top {
+    position: fixed;
+    top: 16px; right: 16px;
+    z-index: 100;
+    height: 40px;
+    padding: 6px 12px 6px 6px;
+    background: rgba(26, 31, 46, 0.85);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    box-shadow: 0 2px 12px rgba(0,0,0,0.25);
+  }
+  @media (max-width: 460px) {
+    .volume-control-top {
+      top: 10px; right: 10px;
+      padding: 4px 10px 4px 4px;
+      height: 36px;
+    }
+    .volume-control-top .volume-slider { width: 80px; }
+    .volume-control-top .volume-pct { display: none; }
+  }
+
+  /* ---- Tabs (table of contents across the very top) ---- */
+  .tabs {
+    display: flex; gap: 4px; flex-wrap: wrap;
+    width: 100%; max-width: 1100px;
+    margin: 0 auto 14px; padding-bottom: 8px;
+    border-bottom: 1px solid rgba(232,228,216,0.12);
+    justify-content: center;
+  }
+  .tab {
+    background: transparent; border: 1px solid transparent;
+    color: rgba(232,228,216,0.55);
+    font-family: var(--sf-display); font-size: 13px; font-weight: 600;
+    letter-spacing: -0.01em; padding: 7px 13px; border-radius: 999px;
+    cursor: pointer; transition: all 0.15s ease; white-space: nowrap;
+  }
+  .tab:hover { color: var(--fg); background: rgba(255,255,255,0.05); }
+  .tab.active {
+    color: #0a0d14; background: var(--accent); border-color: var(--accent);
+  }
+
+  /* Placeholder panel for the not-yet-built tabs */
+  .tab-panel { width: 100%; max-width: 640px; margin: 24px auto 0; }
+  .tab-panel-title {
+    font-family: var(--sf-display); font-size: 26px; font-weight: 700;
+    letter-spacing: -0.02em; margin-bottom: 6px; text-align: center;
+  }
+  .tab-panel-sub {
+    font-family: var(--sf-mono); font-size: 11px; letter-spacing: 0.15em;
+    text-transform: uppercase; color: rgba(232,228,216,0.4);
+    text-align: center; margin-bottom: 18px;
+  }
+  .tab-notes {
+    width: 100%; min-height: 320px; resize: vertical;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(232,228,216,0.15); border-radius: 14px;
+    color: var(--fg); font-family: var(--sf-display); font-size: 15px;
+    line-height: 1.6; padding: 16px; outline: none;
+  }
+  .tab-notes:focus { border-color: rgba(212,165,116,0.5); background: rgba(255,255,255,0.06); }
+  .instacart-link {
+    display: inline-flex; align-items: center; gap: 8px;
+    margin-bottom: 12px; padding: 9px 16px;
+    background: rgba(67,179,80,0.14); border: 1px solid rgba(67,179,80,0.45);
+    border-radius: 999px; color: #7ed98b; font-weight: 600; font-size: 14px;
+    text-decoration: none; transition: all 0.2s ease;
+  }
+  .instacart-link:hover { background: rgba(67,179,80,0.22); border-color: rgba(67,179,80,0.7); }
+
+  /* ---- Hour divider line with the time on the left ---- */
+  .hour-line {
+    display: flex; align-items: center; gap: 12px;
+    margin: 10px 0 3px; padding: 0 2px;
+  }
+  .hour-line:first-of-type { margin-top: 2px; }
+  .hour-label {
+    font-family: var(--sf-mono); font-size: 13px; font-weight: 600;
+    letter-spacing: 0.04em; color: var(--accent);
+    flex-shrink: 0; min-width: 54px;
+  }
+  .hour-rule { flex: 1; height: 1px; background: rgba(212,165,116,0.28); }
+  /* Hard-coded water reminder at the top of each hour */
+  .hour-water {
+    display: flex; align-items: center; gap: 8px;
+    margin: 0 0 6px 4px; padding: 6px 12px;
+    background: rgba(126,170,210,0.10);
+    border: 1px solid rgba(126,170,210,0.3);
+    border-radius: 10px;
+    font-family: var(--sf-display); font-size: 13px; font-weight: 600;
+    color: #9cc4e0; width: fit-content;
+  }
+
+  /* ---- Per-task duration bubble (far right of each row) ---- */
+  .dur-bubble {
+    flex-shrink: 0;
+    font-family: var(--sf-mono); font-size: 11px; font-weight: 600;
+    color: var(--accent);
+    background: rgba(212,165,116,0.12);
+    border: 1px solid rgba(212,165,116,0.35);
+    border-radius: 999px; padding: 3px 9px; cursor: pointer;
+    white-space: nowrap; transition: background 0.15s ease;
+  }
+  .dur-bubble:hover { background: rgba(212,165,116,0.22); }
+  .dur-input {
+    width: 56px;
+    font-family: var(--sf-mono); font-size: 11px; font-weight: 600;
+    color: var(--accent); text-align: center;
+    background: rgba(212,165,116,0.12);
+    border: 1px solid rgba(212,165,116,0.5);
+    border-radius: 999px; padding: 3px 6px; outline: none;
+  }
+  .volume-icon-btn {
+    background: transparent; border: none; color: var(--fg);
+    width: 28px; height: 28px; padding: 0;
+    display: inline-flex; align-items: center; justify-content: center;
+    cursor: pointer; border-radius: 50%;
+    transition: background 0.18s ease;
+    flex-shrink: 0;
+  }
+  .volume-icon-btn:hover { background: rgba(255,255,255,0.1); }
+
+  .volume-slider {
+    -webkit-appearance: none; appearance: none;
+    width: 110px; height: 4px;
+    background: rgba(232,228,216,0.18);
+    border-radius: 999px;
+    outline: none; cursor: pointer;
+    margin: 0; padding: 0;
+    background-image: linear-gradient(to right, var(--accent), var(--accent));
+    background-repeat: no-repeat;
+  }
+  /* Filled portion via gradient set in JS */
+  .volume-slider::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 14px; height: 14px; border-radius: 50%;
+    background: var(--accent);
+    cursor: pointer; border: none;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+    transition: transform 0.15s ease;
+  }
+  .volume-slider::-webkit-slider-thumb:hover { transform: scale(1.2); }
+  .volume-slider::-webkit-slider-thumb:active { transform: scale(1.15); }
+  .volume-slider::-moz-range-thumb {
+    width: 14px; height: 14px; border-radius: 50%;
+    background: var(--accent);
+    cursor: pointer; border: none;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+  }
+  .volume-slider::-moz-range-thumb:hover { transform: scale(1.2); }
+
+  .volume-pct {
+    font-family: var(--sf-mono); font-size: 10px;
+    color: rgba(232,228,216,0.55);
+    min-width: 22px; text-align: right;
+    letter-spacing: 0.05em;
+  }
+
+  .circle-row {
+    display: flex; align-items: center; justify-content: center;
+    gap: 8px; margin-bottom: 4px;
+  }
+  .nav-arrow {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(232,228,216,0.12);
+    color: rgba(232,228,216,0.7);
+    width: 40px; height: 40px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: all 0.18s ease; flex-shrink: 0;
+  }
+  .nav-arrow:hover {
+    background: rgba(212,165,116,0.15);
+    border-color: rgba(212,165,116,0.5);
+    color: var(--accent);
+    transform: scale(1.06);
+  }
+  .nav-arrow[aria-disabled="true"] {
+    opacity: 0.25; cursor: default; transform: none;
+    background: rgba(255,255,255,0.04);
+    border-color: rgba(232,228,216,0.12);
+    color: rgba(232,228,216,0.7);
+  }
+  .nav-arrow[aria-disabled="true"]:hover {
+    background: rgba(255,255,255,0.04);
+    border-color: rgba(232,228,216,0.12);
+    color: rgba(232,228,216,0.7);
+    transform: none;
+  }
+  .kbd-hint {
+    font-family: var(--sf-mono); font-size: 9px;
+    letter-spacing: 0.2em; opacity: 0.4; margin-bottom: 14px;
+    text-align: center;
+  }
+  .kbd {
+    display: inline-block; padding: 1px 5px; border-radius: 3px;
+    background: rgba(255,255,255,0.06); border: 1px solid rgba(232,228,216,0.15);
+    margin: 0 2px; font-size: 9px;
+  }
+  .btn {
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(232,228,216,0.15);
+    color: var(--fg); padding: 12px 18px; border-radius: 999px; cursor: pointer;
+    font-family: var(--sf-display); font-size: 14px; font-weight: 500;
+    letter-spacing: -0.01em; transition: all 0.2s ease;
+    display: inline-flex; align-items: center; gap: 8px;
+  }
+  .btn:hover { background: rgba(255,255,255,0.1); border-color: rgba(232,228,216,0.3); }
+  .btn-primary { background: var(--accent); color: var(--bg-1); border-color: var(--accent); }
+  .btn-primary:hover { background: #e0b585; border-color: #e0b585; }
+  .btn-done {
+    background: rgba(107,155,122,0.15); border-color: rgba(107,155,122,0.5);
+    color: var(--green-light); padding: 12px;
+  }
+  .btn-done:hover { background: rgba(107,155,122,0.25); border-color: var(--green-light); color: #a8d4b3; }
+  .btn-icon { padding: 12px; }
+
+  /* ---- Action button grid (the screenshot's per-task actions) ---- */
+  .actions-grid {
+    width: 100%; max-width: 1000px;
+    display: flex; flex-direction: column; gap: 6px;
+    margin-bottom: 14px;
+  }
+  .actions-row {
+    display: flex; gap: 6px; flex-wrap: nowrap; justify-content: center;
+  }
+  .abtn {
+    flex: 1 1 0; min-width: 0;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(232,228,216,0.18);
+    color: var(--fg);
+    padding: 5px 10px; border-radius: 8px; cursor: pointer;
+    font-family: var(--sf-display); font-size: 13px; font-weight: 600;
+    letter-spacing: -0.01em; line-height: 1.15; transition: all 0.15s ease;
+    display: inline-flex; align-items: center; justify-content: center; gap: 5px;
+    white-space: nowrap;
+  }
+  .abtn:hover { background: rgba(255,255,255,0.1); border-color: rgba(232,228,216,0.35); transform: translateY(-1px); }
+  .abtn:active { transform: translateY(0); }
+  /* Did it — solid green, the primary affirmative */
+  .abtn-did {
+    background: var(--green); border-color: var(--green); color: #0a0d14;
+  }
+  .abtn-did:hover { background: var(--green-light); border-color: var(--green-light); }
+  /* Did + repeat / Did + delete — green outline */
+  .abtn-did-ghost {
+    background: rgba(107,155,122,0.12); border-color: rgba(107,155,122,0.5);
+    color: var(--green-light);
+  }
+  .abtn-did-ghost:hover { background: rgba(107,155,122,0.22); border-color: var(--green-light); color: #a8d4b3; }
+  /* Later today / Later tomorrow — amber */
+  .abtn-later {
+    background: rgba(212,165,116,0.12); border-color: rgba(212,165,116,0.45);
+    color: var(--accent);
+  }
+  .abtn-later:hover { background: rgba(212,165,116,0.22); border-color: var(--accent); color: #e6c193; }
+  /* Skip today — neutral muted */
+  .abtn-skip { color: rgba(232,228,216,0.85); }
+  /* Delete forever / Failed — red danger */
+  .abtn-danger, .abtn-fail {
+    background: rgba(200,90,80,0.1); border-color: rgba(200,90,80,0.45);
+    color: #d98c84;
+  }
+  .abtn-danger:hover, .abtn-fail:hover { background: rgba(200,90,80,0.2); border-color: #d98c84; color: #e8a59e; }
+
+  .list-section { width: 100%; max-width: 560px; }
+  .list-header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 8px; padding: 0 4px;
+  }
+
+  .quick-add-wrap {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 14px; border-radius: 12px;
+    border: 1.5px dashed rgba(212, 165, 116, 0.35);
+    background: rgba(212, 165, 116, 0.04);
+    margin-bottom: 8px;
+    transition: all 0.2s ease;
+  }
+  .quick-add-wrap:focus-within {
+    border-color: rgba(212, 165, 116, 0.7);
+    background: rgba(212, 165, 116, 0.08);
+    border-style: solid;
+  }
+  .quick-add-plus {
+    color: rgba(212, 165, 116, 0.7);
+    flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .quick-add-input {
+    flex: 1;
+    background: transparent; border: none; outline: none;
+    color: var(--fg);
+    font-family: var(--sf-display); font-size: 15px;
+    font-weight: 500; letter-spacing: -0.01em;
+    padding: 2px 0;
+  }
+  .quick-add-input::placeholder {
+    color: rgba(232,228,216,0.35); font-style: italic; font-weight: 400;
+  }
+  /* Location field on the far right of the quick-add row */
+  .quick-add-location {
+    flex-shrink: 0;
+    width: 120px;
+    background: rgba(212,165,116,0.08);
+    border: 1px solid rgba(212,165,116,0.25);
+    border-radius: 999px; outline: none;
+    color: var(--accent);
+    font-family: var(--sf-display); font-size: 12px;
+    font-weight: 500; letter-spacing: -0.005em;
+    padding: 4px 10px;
+    transition: all 0.2s ease;
+  }
+  .quick-add-location:focus {
+    border-color: rgba(212,165,116,0.6);
+    background: rgba(212,165,116,0.14);
+  }
+  .quick-add-location::placeholder {
+    color: rgba(212,165,116,0.45); font-style: italic; font-weight: 400;
+  }
+  @media (max-width: 460px) {
+    .quick-add-location { width: 90px; }
+  }
+
+  /* Drag-and-drop — whole row is draggable, no handle */
+  .task-item.dragging {
+    opacity: 0.4; cursor: grabbing;
+    transform: scale(0.98);
+  }
+  .task-item.drag-over-top {
+    box-shadow: 0 -2px 0 var(--accent);
+  }
+  .task-item.drag-over-bottom {
+    box-shadow: 0 2px 0 var(--accent);
+  }
+
+  /* Per-task play button — triangle, larger, rounded corners */
+  .task-play-btn {
+    background: transparent;
+    border: none;
+    color: var(--accent);
+    width: 28px; height: 28px; border-radius: 8px;
+    cursor: pointer; flex-shrink: 0;
+    display: inline-flex; align-items: center; justify-content: center;
+    margin-top: 0;
+    transition: all 0.18s ease;
+    padding: 0;
+  }
+  .task-play-btn:hover {
+    background: rgba(212, 165, 116, 0.15);
+    color: var(--accent);
+    transform: scale(1.12);
+  }
+  .task-play-btn.playing {
+    background: rgba(212, 165, 116, 0.2);
+    color: var(--accent);
+    animation: pulse-ring 2s ease-in-out infinite;
+  }
+  .task-play-btn svg { display: block; }
+
+  /* Default cursor on whole row: grab, but interactive elements override */
+  .task-item { cursor: grab; }
+  .task-item:active { cursor: grabbing; }
+  .task-item input,
+  .task-item .check-circle,
+  .task-item .location-inline,
+  .task-item .location-add,
+  .task-item .remove-btn,
+  .task-item .task-name-text,
+  .task-item .sub-item-text,
+  .task-item .sub-add,
+  .task-item .check-small,
+  .task-item .task-play-btn,
+  .task-item .task-tag {
+    cursor: pointer;
+  }
+  .task-item input { cursor: text; }
+
+  .list-label { font-family: var(--sf-mono); font-size: 10px; letter-spacing: 0.3em; opacity: 0.4; }
+  .add-btn {
+    background: transparent; border: 1px solid rgba(232,228,216,0.15);
+    color: rgba(232,228,216,0.7); cursor: pointer; font-size: 10px;
+    letter-spacing: 0.15em; padding: 5px 11px; border-radius: 999px;
+    display: inline-flex; align-items: center; gap: 5px;
+    transition: all 0.2s ease; font-family: var(--sf-mono);
+  }
+  .add-btn:hover { background: rgba(255,255,255,0.06); color: var(--fg); }
+
+  .task-item {
+    padding: 0 12px; border-radius: 7px; margin-bottom: 0;
+    transition: background 0.4s ease, border-color 0.4s ease, opacity 0.4s ease;
+    border: 1px solid transparent; position: relative;
+  }
+  .task-current { background: rgba(212,165,116,0.08); border-color: rgba(212,165,116,0.3); }
+  .task-done { opacity: 0.55; }
+  .task-pending { opacity: 0.9; }
+
+  .task-main-row { display: flex; align-items: center; gap: 8px; min-height: 22px; }
+  .task-body { flex: 1; min-width: 0; }
+  /* Name row: don't wrap — let text extend horizontally instead of stacking */
+  .task-row { display: flex; align-items: baseline; gap: 6px; flex-wrap: nowrap; min-width: 0; }
+  .task-name-text { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  /* Right-side slot for tags + location — always stays right, never wraps below */
+  .task-location-slot {
+    flex-shrink: 0;
+    display: flex; align-items: center; gap: 5px;
+    min-height: 17px;
+    justify-content: flex-end;
+    flex-wrap: wrap; max-width: 55%;
+  }
+  /* Tag pills inside the slot shouldn't have the left margin they use elsewhere */
+  .task-location-slot .task-tag { margin-left: 0; }
+
+  .check-circle {
+    width: 17px; height: 17px; border-radius: 50%;
+    border: 1.5px solid rgba(232,228,216,0.3); flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: all 0.2s ease;
+  }
+  .check-circle:hover { border-color: rgba(232,228,216,0.6); transform: scale(1.1); }
+  .check-circle.done { background: var(--green); border-color: var(--green); }
+  .check-circle.done:hover {
+    background: #d97a6c; border-color: #d97a6c;
+    transform: scale(1.1);
+  }
+  .check-circle.current { border-color: var(--accent); background: rgba(212,165,116,0.15); }
+  .check-circle[title]:hover::after { content: ""; }
+
+  .check-small {
+    width: 13px; height: 13px; border-radius: 50%;
+    border: 1.5px solid rgba(232,228,216,0.3); flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: all 0.2s ease;
+  }
+  .check-small:hover { border-color: rgba(232,228,216,0.6); transform: scale(1.15); }
+  .check-small.done { background: var(--green); border-color: var(--green); }
+  .check-small.done:hover {
+    background: #d97a6c; border-color: #d97a6c;
+    transform: scale(1.15);
+  }
+
+  .task-name-text {
+    font-size: 13px; font-weight: 500; cursor: pointer;
+    padding: 1px 5px; margin: -1px -5px; border-radius: 5px;
+    transition: background 0.2s ease; letter-spacing: -0.005em;
+  }
+  .task-name-text.group { font-weight: 700; font-size: 14px; letter-spacing: -0.015em; }
+  .task-name-text:hover { background: rgba(255,255,255,0.06); }
+  .task-name-text.struck { opacity: 0.6; }
+  .task-name-text.empty { opacity: 0.4; font-style: italic; }
+
+  /* Category tag pills (#sleep, #urgent, etc.) — rounded, colored pill next to task title */
+  .task-tag {
+    display: inline-block;
+    font-family: var(--sf-display);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: -0.005em;
+    padding: 1px 8px;
+    border-radius: 999px;
+    border: 1px solid;
+    line-height: 1.5;
+    margin-left: 5px;
+    vertical-align: baseline;
+    cursor: pointer;
+    transition: filter 0.18s ease, transform 0.18s ease;
+    white-space: nowrap;
+  }
+  .task-tag:hover { filter: brightness(1.25); transform: translateY(-1px); }
+
+  /* Tag pills inside the big center circle */
+  .center-tags {
+    display: flex; gap: 4px; justify-content: center; flex-wrap: wrap;
+    margin-top: 4px; margin-bottom: 4px;
+  }
+
+  /* Emoji next to task / sub-item name */
+  .task-emoji {
+    font-size: 15px; line-height: 1;
+    display: inline-block; flex-shrink: 0;
+    font-family: "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji", sans-serif;
+  }
+  .sub-emoji {
+    font-size: 13px; line-height: 1;
+    display: inline-block; flex-shrink: 0; margin-right: -2px;
+    font-family: "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji", sans-serif;
+  }
+
+  .task-name-input {
+    font-family: var(--sf-display); font-size: 13px; font-weight: 500;
+    background: rgba(255,255,255,0.08); border: 1px solid rgba(212,165,116,0.4);
+    color: var(--fg); padding: 1px 5px; border-radius: 5px; outline: none;
+    width: 100%; max-width: 280px; letter-spacing: -0.005em;
+  }
+  .task-name-input.group { font-weight: 700; font-size: 14px; }
+
+  /* Right-side location styling */
+  .location-inline {
+    font-family: var(--sf-display); font-size: 12px;
+    color: var(--accent); opacity: 0.85;
+    cursor: pointer; padding: 2px 8px;
+    background: rgba(212,165,116,0.08);
+    border-radius: 999px;
+    transition: background 0.2s ease;
+    letter-spacing: -0.005em;
+    white-space: nowrap;
+  }
+  .location-inline:hover { background: rgba(212,165,116,0.16); }
+
+  .location-add {
+    font-family: var(--sf-display); font-size: 11px;
+    color: rgba(232,228,216,0.3); cursor: pointer;
+    padding: 2px 8px; border-radius: 999px;
+    border: 1px dashed rgba(232,228,216,0.18);
+    transition: all 0.2s ease;
+    opacity: 0; font-style: italic;
+    white-space: nowrap;
+  }
+  .task-item:hover .location-add { opacity: 1; }
+  .location-add:hover { color: var(--accent); background: rgba(212,165,116,0.08); }
+
+  .location-input {
+    font-family: var(--sf-display); font-size: 12px;
+    background: rgba(212,165,116,0.1); border: 1px solid rgba(212,165,116,0.4);
+    color: var(--accent); padding: 2px 8px; border-radius: 999px; outline: none;
+    width: 140px;
+  }
+
+  /* Time chip — sits to the right of the location chip */
+  .time-inline {
+    font-family: var(--sf-mono); font-size: 12px;
+    color: var(--green-light); opacity: 0.9;
+    cursor: pointer; padding: 2px 8px;
+    background: rgba(107,155,122,0.1);
+    border-radius: 999px;
+    transition: background 0.2s ease;
+    letter-spacing: 0; white-space: nowrap;
+  }
+  .time-inline:hover { background: rgba(107,155,122,0.2); }
+  .time-add {
+    font-family: var(--sf-display); font-size: 11px;
+    color: rgba(232,228,216,0.3); cursor: pointer;
+    padding: 2px 8px; border-radius: 999px;
+    border: 1px dashed rgba(232,228,216,0.18);
+    transition: all 0.2s ease;
+    opacity: 0; font-style: italic; white-space: nowrap;
+  }
+  .task-item:hover .time-add { opacity: 1; }
+  .time-add:hover { color: var(--green-light); background: rgba(107,155,122,0.08); }
+  .time-input {
+    font-family: var(--sf-mono); font-size: 12px;
+    background: rgba(107,155,122,0.12); border: 1px solid rgba(107,155,122,0.45);
+    color: var(--green-light); padding: 2px 8px; border-radius: 999px; outline: none;
+    width: 90px;
+  }
+
+  /* Center badges (location + time) shown side by side in the ring */
+  .center-badges {
+    display: flex; gap: 6px; justify-content: center; align-items: center;
+    flex-wrap: wrap; margin-top: 4px; margin-bottom: 6px;
+  }
+  .center-time-badge {
+    color: var(--green-light);
+    background: rgba(107,155,122,0.12);
+    border-color: rgba(107,155,122,0.4);
+    font-family: var(--sf-mono);
+  }
+
+  .sub-item-text {
+    font-size: 12px; cursor: pointer; padding: 1px 5px; margin-left: -5px;
+    border-radius: 4px; transition: background 0.2s ease; flex: 1;
+    letter-spacing: -0.005em;
+  }
+  .sub-item-text:hover { background: rgba(255,255,255,0.06); }
+  .sub-item-text.struck { opacity: 0.6; }
+  .sub-item-input {
+    font-family: var(--sf-display); font-size: 12px;
+    background: rgba(255,255,255,0.08); border: 1px solid rgba(212,165,116,0.4);
+    color: var(--fg); padding: 1px 5px; border-radius: 4px; outline: none; flex: 1;
+  }
+
+  .remove-btn {
+    background: transparent; border: none; color: rgba(232,228,216,0.3);
+    cursor: pointer; padding: 3px; border-radius: 5px; opacity: 0;
+    transition: all 0.2s ease; flex-shrink: 0;
+    display: flex; align-items: center;
+  }
+  .task-item:hover .remove-btn { opacity: 1; }
+  .sub-row:hover .remove-btn { opacity: 1; }
+  .remove-btn:hover { color: #d97a6c; background: rgba(217,122,108,0.1); }
+
+  .sub-items-wrap { margin-top: 2px; padding-bottom: 2px; }
+  .sub-row { display: flex; align-items: center; gap: 7px; padding: 0 0 0 56px; }
+
+  .sub-add {
+    background: transparent; border: none; color: rgba(232,228,216,0.4);
+    cursor: pointer; font-family: var(--sf-mono); font-size: 9px;
+    letter-spacing: 0.12em; padding: 2px 7px; margin-left: 50px; margin-top: 1px;
+    border-radius: 4px; transition: all 0.2s ease;
+    display: inline-flex; align-items: center; gap: 4px;
+  }
+  .sub-add:hover { color: var(--fg); background: rgba(255,255,255,0.04); }
+
+  .footer-hint {
+    font-family: var(--sf-mono); font-size: 9px; opacity: 0.3;
+    margin-top: 20px; letter-spacing: 0.2em; text-align: center;
+  }
+  .reset-link {
+    cursor: pointer; transition: color 0.2s ease;
+  }
+  .reset-link:hover { color: #d97a6c; opacity: 1; }
+
+  .suitcase-section { width: 100%; max-width: 460px; margin-top: 28px; }
+  .suitcase-svg { width: 100%; height: auto; display: block; }
+
+  /* ---- Unfurnished list (second checklist, big gap above) ---- */
+  .unfurnished-gap { height: 56px; width: 100%; }
+  .unfurnished-section { width: 100%; max-width: 560px; }
+  .unfurnished-header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 4px; padding: 0 4px;
+  }
+  .unfurnished-title {
+    font-family: var(--sf-mono); font-size: 11px;
+    letter-spacing: 0.3em; color: var(--accent); font-weight: 700;
+  }
+  .unfurnished-subtitle {
+    font-family: var(--sf-display); font-size: 12px;
+    color: rgba(232,228,216,0.45); margin-bottom: 12px; padding: 0 4px;
+    font-style: italic; letter-spacing: -0.005em;
+  }
+  .unfurnished-body {
+    border: 1.5px solid rgba(212,165,116,0.3);
+    border-radius: 14px;
+    background: linear-gradient(180deg, rgba(212,165,116,0.06) 0%, rgba(212,165,116,0.02) 100%);
+    padding: 6px;
+    box-shadow: inset 0 0 0 1px rgba(212,165,116,0.1);
+  }
+  .uf-empty {
+    text-align: center; padding: 16px; font-size: 12px;
+    color: rgba(232,228,216,0.3); font-style: italic;
+  }
+  .uf-row {
+    display: flex; align-items: center; gap: 9px;
+    padding: 4px 8px;
+    border-bottom: 1px solid rgba(232,228,216,0.06);
+  }
+  .uf-row:last-child { border-bottom: none; }
+  .uf-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .uf-check {
+    width: 17px; height: 17px; border-radius: 50%;
+    border: 1.5px solid rgba(232,228,216,0.3); flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: all 0.2s ease;
+  }
+  .uf-check:hover { border-color: rgba(232,228,216,0.6); transform: scale(1.1); }
+  .uf-check.done { background: var(--green); border-color: var(--green); }
+  .uf-check.done:hover { background: #d97a6c; border-color: #d97a6c; }
+  .uf-name {
+    flex: 1; font-size: 13px; cursor: pointer;
+    padding: 1px 5px; margin: -1px -5px; border-radius: 5px;
+    transition: background 0.2s ease; letter-spacing: -0.005em;
+  }
+  .uf-name:hover { background: rgba(255,255,255,0.06); }
+  .uf-name.struck { opacity: 0.55; }
+  .uf-input {
+    flex: 1; font-family: var(--sf-display); font-size: 13px;
+    background: rgba(212,165,116,0.1); border: 1px solid rgba(212,165,116,0.4);
+    color: var(--fg); padding: 2px 8px; border-radius: 6px; outline: none;
+  }
+  .uf-remove {
+    background: transparent; border: none; color: rgba(232,228,216,0.3);
+    cursor: pointer; padding: 2px; display: flex; flex-shrink: 0;
+    transition: color 0.2s ease;
+  }
+  .uf-remove:hover { color: #d97a6c; }
+  .uf-row.uf-done { opacity: 0.7; }
+
+  .suitcase-header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 12px; padding: 0 4px;
+  }
+  .suitcase-title {
+    font-family: var(--sf-mono); font-size: 10px;
+    letter-spacing: 0.3em; color: #c8504a; font-weight: 600;
+  }
+  .suitcase-body {
+    border: 1.5px solid rgba(162, 58, 58, 0.5);
+    border-radius: 14px;
+    background: linear-gradient(180deg, rgba(162,58,58,0.08) 0%, rgba(122,40,40,0.04) 100%);
+    padding: 8px;
+    box-shadow: inset 0 0 0 1px rgba(162,58,58,0.15), 0 0 40px rgba(162,58,58,0.05);
+  }
+  .sc-row {
+    border-top: 1px dashed rgba(232,228,216,0.12);
+    padding: 10px 4px;
+  }
+  .sc-row:first-child { border-top: none; }
+
+  .sc-row-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 6px;
+  }
+  .sc-row-name {
+    font-family: var(--sf-mono); font-size: 10px;
+    letter-spacing: 0.2em; color: #d4a574;
+    font-weight: 600; cursor: pointer;
+    padding: 2px 6px; margin-left: -6px;
+    border-radius: 4px; transition: background 0.2s ease;
+    text-transform: uppercase;
+  }
+  .sc-row-name:hover { background: rgba(212,165,116,0.1); }
+  .sc-row-name-input {
+    font-family: var(--sf-mono); font-size: 10px;
+    letter-spacing: 0.2em; background: rgba(212,165,116,0.1);
+    border: 1px solid rgba(212,165,116,0.4); color: #d4a574;
+    padding: 2px 6px; border-radius: 4px; outline: none;
+    text-transform: uppercase; font-weight: 600;
+    max-width: 200px;
+  }
+
+  .sc-remove-row, .sc-remove-item {
+    background: transparent; border: none;
+    color: rgba(232,228,216,0.25); cursor: pointer;
+    padding: 4px; border-radius: 4px; opacity: 0;
+    transition: all 0.2s ease;
+    display: inline-flex; align-items: center;
+  }
+  .sc-row:hover .sc-remove-row { opacity: 1; }
+  .sc-item:hover .sc-remove-item { opacity: 1; }
+  .sc-remove-row:hover, .sc-remove-item:hover {
+    color: #d97a6c; background: rgba(217,122,108,0.1);
+  }
+
+  .sc-items {
+    display: flex; flex-wrap: wrap; gap: 6px; align-items: center;
+  }
+  .sc-item {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 13px; color: var(--fg);
+    background: rgba(232,228,216,0.06);
+    border: 1px solid rgba(232,228,216,0.1);
+    padding: 5px 4px 5px 11px; border-radius: 999px;
+    cursor: pointer; transition: all 0.2s ease;
+    letter-spacing: -0.005em;
+  }
+  .sc-item:hover {
+    background: rgba(232,228,216,0.1);
+    border-color: rgba(232,228,216,0.2);
+  }
+  .sc-item-input {
+    font-family: var(--sf-display); font-size: 13px;
+    background: rgba(255,255,255,0.08); border: 1px solid rgba(212,165,116,0.4);
+    color: var(--fg); padding: 5px 11px; border-radius: 999px; outline: none;
+    width: 140px;
+  }
+  .sc-add-item {
+    background: transparent; border: 1px dashed rgba(232,228,216,0.2);
+    color: rgba(232,228,216,0.5); cursor: pointer;
+    width: 28px; height: 28px; border-radius: 50%;
+    display: inline-flex; align-items: center; justify-content: center;
+    transition: all 0.2s ease;
+  }
+  .sc-add-item:hover {
+    color: var(--accent); border-color: rgba(212,165,116,0.5);
+    background: rgba(212,165,116,0.08);
+  }
+
+  /* Inline SVG icons */
+  .icon { width: 16px; height: 16px; flex-shrink: 0; }
+  .icon-sm { width: 12px; height: 12px; }
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<!-- Inline SVG icon symbols -->
+<svg style="display:none">
+  <symbol id="i-play" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="6 3 20 12 6 21 6 3"/></symbol>
+  <symbol id="i-pause" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></symbol>
+  <symbol id="i-rotate" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></symbol>
+  <symbol id="i-volume" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></symbol>
+  <symbol id="i-volume-mute" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="22" y1="9" x2="16" y2="15"/><line x1="16" y1="9" x2="22" y2="15"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></symbol>
+  <symbol id="i-chev-left" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></symbol>
+  <symbol id="i-chev-right" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></symbol>
+  <symbol id="i-grip" viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="6" r="1.5"/><circle cx="15" cy="6" r="1.5"/><circle cx="9" cy="12" r="1.5"/><circle cx="15" cy="12" r="1.5"/><circle cx="9" cy="18" r="1.5"/><circle cx="15" cy="18" r="1.5"/></symbol>
+  <symbol id="i-refresh" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></symbol>
+</svg>
+
+<script>
+'use strict';
+
+const DEFAULT_DURATION = 5 * 60; // default seconds per task (non-cooking)
+// The schedule's hour labels start at the CURRENT clock hour (floored). Tasks
+// don't move — only the time shown shifts. e.g. at 11:31 the first line is 11 AM.
+function dayStartMin() {
+  return new Date().getHours() * 60;
+}
+// Duration of a given task in seconds (minutes field, default 5).
+function taskDurationSec(task) {
+  const m = task && Number(task.duration) > 0 ? Number(task.duration) : 5;
+  return Math.round(m * 60);
+}
+// Duration in seconds for the CURRENT task (used to reset the countdown).
+function curDurationSec() {
+  const c = (typeof getCurrent === 'function') ? getCurrent() : null;
+  return taskDurationSec(c && c.task);
+}
+
+const DEFAULT_TASKS = [
+  // 8 AM (60 min)
+  { type: 'item', emoji: "🚽", name: "urinate / water floss", location: "", duration: 5 },
+  { type: 'item', emoji: "💧", name: "water 125 ml", location: "", duration: 5 },
+  { type: 'item', emoji: "", name: "brush teeth", location: "", duration: 5 },
+  { type: 'item', emoji: "", name: "contacts", location: "", duration: 5 },
+  { type: 'item', emoji: "", name: "bowel", location: "", duration: 5 },
+  { type: 'item', emoji: "", name: "zyrtec bottle", location: "", duration: 5 },
+  { type: 'item', emoji: "", name: "shorts", location: "", duration: 5 },
+  { type: 'item', emoji: "", name: "serum", location: "", duration: 5 },
+  { type: 'item', emoji: "💊", name: "quercetin", location: "", duration: 5 },
+  { type: 'item', emoji: "", name: "wash face", location: "", duration: 5 },
+  { type: 'item', emoji: "", name: "burn 50/400 cal", location: "", duration: 10 },
+  // 9 AM (60 min)
+  { type: 'item', emoji: "🚽", name: "urinate / water floss", location: "", duration: 5 },
+  { type: 'item', emoji: "💧", name: "water 125 ml", location: "", duration: 5 },
+  { type: 'item', emoji: "💧", name: "250 ml", location: "", duration: 5 },
+  { type: 'item', emoji: "🍽️", name: "EAT 2 Egg whites", location: "", duration: 15 },
+  { type: 'item', emoji: "", name: "10 cranberries", location: "", duration: 5 },
+  { type: 'item', emoji: "", name: "Bowel or Shower", location: "", duration: 15 },
+  { type: 'item', emoji: "", name: "wear clothes", location: "", duration: 5 },
+  { type: 'item', emoji: "", name: "sun", location: "", duration: 5 },
+  // 10 AM (60 min)
+  { type: 'item', emoji: "🚽", name: "urinate / water floss", location: "", duration: 5 },
+  { type: 'item', emoji: "💧", name: "water 125 ml", location: "", duration: 5 },
+  { type: 'item', emoji: "", name: "L glutamine, Zinc Carnosine", location: "", duration: 5 },
+  { type: 'item', emoji: "", name: "burn 75/400 cal", location: "", duration: 10 },
+  { type: 'item', emoji: "💧", name: "375 ml", location: "", duration: 5 },
+  { type: 'item', emoji: "", name: "L -glutamine", location: "", duration: 5 },
+  { type: 'item', emoji: "💊", name: "zinc carnosine", location: "", duration: 5 },
+  { type: 'item', emoji: "", name: "peppermint tea", location: "", duration: 5 },
+  { type: 'item', emoji: "", name: "apartments.com quick", location: "", duration: 5 },
+  { type: 'item', emoji: "🍽️", name: "EAT arugula", location: "", duration: 10 },
+  // 11 AM (60 min)
+  { type: 'item', emoji: "🚽", name: "urinate / water floss", location: "", duration: 5 },
+  { type: 'item', emoji: "💧", name: "water 125 ml", location: "", duration: 5 },
+  { type: 'item', emoji: "", name: "eat 10 cranberries", location: "", duration: 5 },
+  { type: 'item', emoji: "", name: "water floss", location: "", duration: 5 },
+  { type: 'item', emoji: "", name: "TMJ RELEASE CERAM WRAP!", location: "", duration: 15 },
+  { type: 'item', emoji: "", name: "burn 100/400 cal", location: "", duration: 15 },
+  { type: 'item', emoji: "", name: "burn 100/400 cal", location: "", duration: 10 },
+];
+
+// Default unfurnished-list items (baked-in starter list; empty by default).
+const DEFAULT_UNFURNISHED = [
+];
+
+// ---- App State ----
+// Persisted to localStorage so your edits, checks, ordering, and additions
+// survive page reloads AND any future updates to the app code.
+//
+// ⚠️ DO NOT CHANGE THIS KEY STRING. Changing it makes the app look for data
+// under a new name, find nothing, and reload the default list — which wipes
+// the user's tasks/order/edits. The key is permanent. When new fields are
+// added later, migrate them inside loadPersistedState() (non-destructively)
+// instead of bumping the key.
+const STORAGE_KEY = 'tunetask-state-v2';
+// Bump this ONLY when republishing the baked-in canonical task list (DEFAULT_TASKS).
+// On load, if the saved state was seeded under an older version, the task list is
+// refreshed to the new canonical list ONCE (other prefs are kept). Normal feature
+// updates that don't change the task list must NOT bump this — that's what keeps
+// the user's own edits/order intact between releases.
+const SEED_VERSION = 6;
+// Older keys this app has used. If the main key is empty (e.g. first load
+// after an update that previously bumped the version), we adopt data from the
+// newest available legacy key so nothing is lost — then re-save under STORAGE_KEY.
+const LEGACY_KEYS = ['tunetask-state-v1', 'packing-assistant-state-v1'];
+
+// Make sure every task has all the fields the current UI expects, WITHOUT
+// discarding anything the user has. Safe to run on data from any past version.
+function normalizeTasks(parsed) {
+  if (!parsed || !Array.isArray(parsed.tasks)) return parsed;
+  parsed.tasks = parsed.tasks.map(t => {
+    const task = Object.assign({}, t);
+    if (task.type === undefined) task.type = 'item';
+    if (task.emoji === undefined) task.emoji = '';
+    if (task.name === undefined) task.name = '';
+    if (task.location === undefined) task.location = '';
+    if (!(Number(task.duration) > 0)) task.duration = 5;
+    if (task.time === undefined) {
+      // Very old data stored the time inside `location`. If location looks like
+      // a clock value and there's no separate time yet, move it over.
+      if (/^\s*\d{1,2}:\d{2}\s*(am|pm)?\s*$/i.test(task.location || '')) {
+        task.time = task.location.trim();
+        task.location = '';
+      } else {
+        task.time = '';
+      }
+    }
+    return task;
+  });
+  return parsed;
+}
+
+function loadPersistedState() {
+  try {
+    let raw = localStorage.getItem(STORAGE_KEY);
+    // If nothing under the current key, adopt the newest legacy data we can find
+    // so a user's existing tasks/order are never lost across an update.
+    if (!raw) {
+      for (const k of LEGACY_KEYS) {
+        const legacy = localStorage.getItem(k);
+        if (legacy) { raw = legacy; break; }
+      }
+    }
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    // Sanity check: must have tasks array & ids array of matching length
+    if (!parsed || !Array.isArray(parsed.tasks) || !Array.isArray(parsed.ids)) return null;
+    if (parsed.tasks.length !== parsed.ids.length) return null;
+
+    // Migration: flatten any old group-type tasks into individual items
+    // with a #tag matching the original group name. Preserves the user's
+    // sub-item edits, emojis, and completion state.
+    const hasGroups = parsed.tasks.some(t => t.type === 'group');
+    if (hasGroups) {
+      const newTasks = [];
+      const newIds = [];
+      let nextId = parsed.nextId || 0;
+      parsed.tasks.forEach((task, i) => {
+        const groupId = parsed.ids[i];
+        if (task.type === 'group') {
+          // Make a hashtag from the group name (e.g. "Fanny pack" → "#fannypack")
+          const tag = '#' + (task.name || 'group').toLowerCase().replace(/[^a-z0-9_-]/g, '');
+          (task.items || []).forEach(item => {
+            const baseName = (item.name || '').trim();
+            // Don't duplicate the tag if it's somehow already present
+            const finalName = baseName.includes(tag) ? baseName : `${baseName} ${tag}`.trim();
+            newTasks.push({
+              type: 'item',
+              emoji: item.emoji !== undefined ? item.emoji : '',
+              name: finalName,
+              location: task.location || '',
+            });
+            // Preserve sub-item completion: use a fresh id, mark complete if it was done
+            const newId = nextId++;
+            newIds.push(newId);
+            if (item.done) {
+              parsed.completedIds = parsed.completedIds || [];
+              parsed.completedIds.push(newId);
+            }
+          });
+          // The group's own completedId is no longer meaningful — drop it
+          if (parsed.completedIds) {
+            parsed.completedIds = parsed.completedIds.filter(x => x !== groupId);
+          }
+        } else {
+          newTasks.push(task);
+          newIds.push(groupId);
+        }
+      });
+      parsed.tasks = newTasks;
+      parsed.ids = newIds;
+      parsed.nextId = nextId;
+    }
+
+    // Ensure every task has the fields the current UI needs (time/location/etc.)
+    // without discarding any user data. Lets us add features without resets.
+    normalizeTasks(parsed);
+
+    return parsed;
+  } catch (e) {
+    console.warn('Failed to load saved state:', e);
+    return null;
+  }
+}
+
+function buildDefaultState() {
+  // Tasks: strip any inline `done` flag into completedIds
+  const completedIds = [];
+  const tasks = DEFAULT_TASKS.map((t, i) => {
+    if (t.done) completedIds.push(i);
+    const { done, ...rest } = t;
+    return { type: 'item', emoji: rest.emoji || '', name: rest.name || '', location: rest.location || '', time: rest.time || '', duration: Number(rest.duration) > 0 ? Number(rest.duration) : 5 };
+  });
+
+  // Unfurnished: accept either plain strings or { name, done } objects
+  const unfurnished = [];
+  const unfurnishedDone = [];
+  DEFAULT_UNFURNISHED.forEach((u, i) => {
+    if (typeof u === 'string') {
+      unfurnished.push(u);
+    } else if (u && typeof u === 'object') {
+      unfurnished.push(u.name || '');
+      if (u.done) unfurnishedDone.push(i);
+    }
+  });
+
+  return {
+    tasks,
+    ids: tasks.map((_, i) => i),
+    nextId: tasks.length,
+    completedIds,
+    seedVersion: SEED_VERSION,
+    suitcaseRows: [
+      { name: "Row 1", items: ["Contact lenses"] },
+    ],
+    unfurnished,
+    unfurnishedDone,
+  };
+}
+
+const persisted = loadPersistedState();
+let base;
+if (persisted && persisted.seedVersion === SEED_VERSION) {
+  // Same canonical list as last time — keep the user's tasks/order/edits exactly.
+  base = persisted;
+} else if (persisted) {
+  // A new canonical task list has been published since this state was saved.
+  // Refresh the task list to the new baked-in default, but keep the user's other
+  // preferences (suitcase rows, unfurnished list).
+  const fresh = buildDefaultState();
+  base = Object.assign({}, persisted, {
+    tasks: fresh.tasks,
+    ids: fresh.ids,
+    nextId: fresh.nextId,
+    completedIds: fresh.completedIds,
+    seedVersion: SEED_VERSION,
+  });
+} else {
+  base = buildDefaultState();
+}
+
+const state = {
+  tasks: base.tasks,
+  ids: base.ids,
+  nextId: base.nextId,
+  completedIds: base.completedIds || [],
+  suitcaseRows: base.suitcaseRows || [{ name: "Row 1", items: ["Contact lenses"] }],
+  // Second checklist: things needed if the place were unfurnished
+  unfurnished: base.unfurnished || [],
+  unfurnishedDone: base.unfurnishedDone || [],
+  editingUnfurnished: null, // index being edited, or null
+  // Tabs (table of contents). 'time' is the scheduler; others hold freeform notes.
+  activeTab: base.activeTab || 'time',
+  tabNotes: base.tabNotes || {},
+  // Runtime/transient state — never persisted
+  timeLeft: DEFAULT_DURATION,
+  isRunning: false,
+  hasStarted: false,
+  muted: false,
+  volume: 1.0,
+  manualIdx: null,
+  editingNameIdx: null,
+  editingLocationIdx: null,
+  editingTimeIdx: null,
+  editingDurationIdx: null,
+  editingSub: { taskIdx: null, subIdx: null },
+  editingSuitcaseRow: null,
+};
+
+// Tabs shown across the top (the table of contents).
+const TABS = [
+  { id: 'time', label: 'Time' },
+  { id: 'automated', label: 'Automated' },
+  { id: 'meal', label: 'Meal plan' },
+  { id: 'groceries', label: 'Groceries' },
+  { id: 'health', label: 'Health' },
+  { id: 'appts', label: 'Appointments' },
+  { id: 'expenses', label: 'Expenses' },
+  { id: 'finances', label: 'Finances' },
+  { id: 'income', label: 'Income' },
+  { id: 'projects', label: 'Projects' },
+  { id: 'dating', label: 'Dating' },
+  { id: 'events', label: 'Events' },
+  { id: 'housing', label: 'Housing' },
+  { id: 'papers', label: 'Papers' },
+  { id: 'exercise', label: 'Exercise' },
+  { id: 'beauty', label: 'Beauty' },
+  { id: 'social', label: 'Social media' },
+  { id: 'pack', label: 'Pack' },
+  { id: 'goals', label: 'Life goals' },
+];
+
+// Save the persistable parts of state. Called after every mutation.
+let saveDebounceTimer = null;
+function savePersistedState() {
+  // Debounce slightly so rapid keystrokes don't hammer localStorage
+  if (saveDebounceTimer) clearTimeout(saveDebounceTimer);
+  saveDebounceTimer = setTimeout(() => {
+    try {
+      const toSave = {
+        tasks: state.tasks,
+        ids: state.ids,
+        nextId: state.nextId,
+        completedIds: state.completedIds,
+        seedVersion: SEED_VERSION,
+        activeTab: state.activeTab,
+        tabNotes: state.tabNotes,
+        suitcaseRows: state.suitcaseRows,
+        unfurnished: state.unfurnished,
+        unfurnishedDone: state.unfurnishedDone,
+      };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
+    } catch (e) {
+      console.warn('Failed to save state:', e);
+    }
+  }, 200);
+}
+
+// Write the current state to storage RIGHT NOW, bypassing the debounce. Used
+// when the page is about to be hidden/closed so a just-made change is never lost.
+function flushPersistedState() {
+  if (saveDebounceTimer) { clearTimeout(saveDebounceTimer); saveDebounceTimer = null; }
+  try {
+    const toSave = {
+      tasks: state.tasks,
+      ids: state.ids,
+      nextId: state.nextId,
+      completedIds: state.completedIds,
+      seedVersion: SEED_VERSION,
+      activeTab: state.activeTab,
+      tabNotes: state.tabNotes,
+      suitcaseRows: state.suitcaseRows,
+      unfurnished: state.unfurnished,
+      unfurnishedDone: state.unfurnishedDone,
+    };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
+  } catch (e) {
+    console.warn('Failed to flush state:', e);
+  }
+}
+// Flush on any signal that the tab is going away or being backgrounded.
+window.addEventListener('pagehide', flushPersistedState);
+window.addEventListener('beforeunload', flushPersistedState);
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden') flushPersistedState();
+});
+
+// refs
+let lastSpokenId = -1;
+let lastReminderTime = DEFAULT_DURATION;
+let timerInterval = null;
+let currentSpeechText = ''; // track latest utterance text for live volume adjustments
+
+// ---- Undo history ----
+const UNDO_LIMIT = 50;
+const undoStack = [];
+
+// Snapshot the state fields that should be undoable. Excludes timer/play state.
+function snapshotState() {
+  return JSON.stringify({
+    tasks: state.tasks,
+    ids: state.ids,
+    completedIds: state.completedIds,
+    suitcaseRows: state.suitcaseRows,
+    unfurnished: state.unfurnished,
+    unfurnishedDone: state.unfurnishedDone,
+    manualIdx: state.manualIdx,
+    nextId: state.nextId,
+  });
+}
+
+function pushUndo() {
+  const snap = snapshotState();
+  // Don't push duplicates back-to-back
+  if (undoStack.length > 0 && undoStack[undoStack.length - 1] === snap) return;
+  undoStack.push(snap);
+  if (undoStack.length > UNDO_LIMIT) undoStack.shift();
+}
+
+function undo() {
+  if (undoStack.length === 0) return;
+  const snap = undoStack.pop();
+  const parsed = JSON.parse(snap);
+  state.tasks = parsed.tasks;
+  state.ids = parsed.ids;
+  state.completedIds = parsed.completedIds;
+  state.suitcaseRows = parsed.suitcaseRows;
+  if (parsed.unfurnished) state.unfurnished = parsed.unfurnished;
+  if (parsed.unfurnishedDone) state.unfurnishedDone = parsed.unfurnishedDone;
+  state.manualIdx = parsed.manualIdx;
+  state.nextId = parsed.nextId;
+  // Clear any in-progress edits since indices may have shifted
+  state.editingNameIdx = null;
+  state.editingLocationIdx = null;
+  state.editingTimeIdx = null;
+  state.editingSub = { taskIdx: null, subIdx: null };
+  state.editingSuitcaseRow = null;
+  state.editingUnfurnished = null;
+  render();
+}
+
+// ---- Derived ----
+function getOrder() {
+  const active = [], done = [];
+  state.ids.forEach((id, idx) => {
+    if (state.completedIds.includes(id)) done.push({ id, idx });
+    else active.push({ id, idx });
+  });
+  return { active, done };
+}
+
+function getCurrent() {
+  // If user manually navigated AND that task is still uncompleted, use it.
+  // If the manually-selected task got checked off, fall through to the next
+  // uncompleted task so the voice doesn't keep reading a done item.
+  if (state.manualIdx !== null && state.manualIdx >= 0 && state.manualIdx < state.tasks.length) {
+    const id = state.ids[state.manualIdx];
+    if (!state.completedIds.includes(id)) {
+      return { id, idx: state.manualIdx, task: state.tasks[state.manualIdx] };
+    }
+    // The manually-chosen task is done now — clear the manual override
+    state.manualIdx = null;
+  }
+  // First active (uncompleted) task
+  const { active } = getOrder();
+  if (!active.length) return null;
+  const entry = active[0];
+  return { id: entry.id, idx: entry.idx, task: state.tasks[entry.idx] };
+}
+
+function goToPrevTask() {
+  const cur = getCurrent();
+  if (!cur) return;
+  // Find the previous unchecked task in array order (skip done ones)
+  let target = -1;
+  for (let i = cur.idx - 1; i >= 0; i--) {
+    if (!state.completedIds.includes(state.ids[i])) {
+      target = i;
+      break;
+    }
+  }
+  // Fall back to immediate previous even if done, rather than going nowhere
+  if (target === -1 && cur.idx > 0) target = cur.idx - 1;
+  if (target === -1) return;
+  state.manualIdx = target;
+  state.timeLeft = curDurationSec();
+  lastReminderTime = curDurationSec();
+  checkSpeakOnTaskChange();
+  render();
+}
+
+function goToNextTask() {
+  const cur = getCurrent();
+  if (!cur) return;
+  pushUndo();
+
+  // Find the boundary between active and crossed-off tasks. We want to move
+  // the current task to just AFTER the last active task (i.e. the position
+  // right before the first crossed-off task), so it lands at the bottom of
+  // the active list but stays above anything checked-off.
+  const curId = cur.id;
+  const curIdx = cur.idx;
+
+  // Remove current task from its current position
+  const [movedTask] = state.tasks.splice(curIdx, 1);
+  const [movedId] = state.ids.splice(curIdx, 1);
+
+  // Find where to re-insert: just after the last non-completed task remaining.
+  // Walk from the end of the array backward until we find an active task,
+  // then insert right after it.
+  let insertAt = state.tasks.length; // default: at the very end
+  for (let i = state.tasks.length - 1; i >= 0; i--) {
+    const id = state.ids[i];
+    if (!state.completedIds.includes(id)) {
+      insertAt = i + 1; // insert right after this active task
+      break;
+    }
+    // If we never find an active task (everything else is done), we want
+    // the skipped task to go BEFORE the crossed-off pile.
+    if (i === 0) insertAt = 0;
+  }
+
+  state.tasks.splice(insertAt, 0, movedTask);
+  state.ids.splice(insertAt, 0, movedId);
+
+  // Clear manual navigation so we resume picking the first active task
+  state.manualIdx = null;
+  state.timeLeft = curDurationSec();
+  lastReminderTime = curDurationSec();
+  checkSpeakOnTaskChange();
+  render();
+}
+
+// ---- Speech ----
+function buildSpeechIntro(task) {
+  if (!task) return '';
+  const name = stripTagsFromName(task.name);
+  const loc = (task.location || '').trim();
+  const locSuffix = loc ? ` Located at ${loc}.` : '';
+  if (task.type === 'group' && task.items && task.items.length) {
+    const items = task.items.map(it => stripTagsFromName(it.name)).join(', ');
+    return `${name}. ${items}.${locSuffix}`;
+  }
+  return `${name || ''}${locSuffix}`;
+}
+
+function makeMotivation(taskName) {
+  const t = (taskName || '').toLowerCase();
+  const templates = [
+    `You've got this — ${t} and you're one step closer.`,
+    `Keep going. ${taskName} is happening right now.`,
+    `Stay with it. ${taskName} matters.`,
+    `Almost there — just ${t} and move on.`,
+    `Focus up. ${taskName}, then breathe.`,
+    `One thing at a time. Right now: ${t}.`,
+    `You're doing great. ${taskName} is in motion.`,
+    `Don't overthink it. Just ${t}.`,
+    `Trust the process. ${taskName} is the only thing right now.`,
+    `Small win incoming — ${t} and check it off.`,
+    `You started, so finish. ${taskName}.`,
+    `Steady hands. ${taskName}, nothing else.`,
+    `Momentum matters. ${taskName}, keep rolling.`,
+    `This is the move: ${t}. Lock in.`,
+    `Quiet the noise. ${taskName}.`,
+    `Progress over perfection — just ${t}.`,
+    `Every second counts. ${taskName}.`,
+    `You're capable. ${taskName} is well within reach.`,
+    `Half the battle is starting. ${taskName}.`,
+  ];
+  return templates[Math.floor(Math.random() * templates.length)];
+}
+
+// ---- Cash register "ka-ching" sound (Web Audio, no external files) ----
+// Layered: a bright metallic bell ding + a soft drawer-slide noise burst.
+let _audioCtx = null;
+function getAudioCtx() {
+  if (!_audioCtx) {
+    try {
+      _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    } catch (e) { return null; }
+  }
+  if (_audioCtx.state === 'suspended') _audioCtx.resume();
+  return _audioCtx;
+}
+
+function playCashSound() {
+  // Honor mute / volume settings so we don't surprise the user
+  if (state.muted) return;
+  const vol = (state.volume !== undefined ? state.volume : 1) * 0.45;
+  if (vol <= 0) return;
+
+  const ctx = getAudioCtx();
+  if (!ctx) return;
+  const now = ctx.currentTime;
+
+  // ---- Bell "ding" — multiple harmonics for a metallic bell timbre ----
+  const playBell = (start, freq, dur, amp) => {
+    // Use sine + overtones to mimic a bell hammer hit
+    const harmonics = [
+      { mult: 1.0, gain: 1.0 },
+      { mult: 2.76, gain: 0.5 },  // characteristic bell partial
+      { mult: 5.4, gain: 0.25 },
+      { mult: 8.2, gain: 0.12 },
+    ];
+    harmonics.forEach(h => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = freq * h.mult;
+      gain.gain.setValueAtTime(0, start);
+      gain.gain.linearRampToValueAtTime(vol * amp * h.gain, start + 0.002);
+      gain.gain.exponentialRampToValueAtTime(0.0001, start + dur);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(start);
+      osc.stop(start + dur + 0.02);
+    });
+  };
+
+  // ---- Drawer-pop noise — short filtered noise burst for the "ka" part ----
+  const playPop = (start, dur, amp, filterFreq) => {
+    const bufSize = Math.floor(ctx.sampleRate * dur);
+    const buffer = ctx.createBuffer(1, bufSize, ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < bufSize; i++) {
+      data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (bufSize * 0.3));
+    }
+    const noise = ctx.createBufferSource();
+    noise.buffer = buffer;
+    const filter = ctx.createBiquadFilter();
+    filter.type = 'bandpass';
+    filter.frequency.value = filterFreq;
+    filter.Q.value = 1.5;
+    const gain = ctx.createGain();
+    gain.gain.value = vol * amp;
+    noise.connect(filter);
+    filter.connect(gain);
+    gain.connect(ctx.destination);
+    noise.start(start);
+    noise.stop(start + dur);
+  };
+
+  // Sequence: "ka" (low drawer thud) → "CHING" (bright bell)
+  playPop(now, 0.08, 0.4, 250);                    // low thud — drawer opening
+  playPop(now + 0.03, 0.12, 0.25, 1800);           // crisp metallic shimmer
+  playBell(now + 0.06, 1760, 0.9, 0.5);            // A6 bell — the "CHING"
+  playBell(now + 0.07, 2349, 0.7, 0.3);            // D7 bell — overtone shimmer
+}
+
+function speak(text) {
+  if (!('speechSynthesis' in window)) {
+    console.warn('No speech synthesis available');
+    return;
+  }
+  if (state.muted) return;
+  if (state.volume <= 0) return;
+  try {
+    window.speechSynthesis.cancel();
+    currentSpeechText = text;
+    const u = new SpeechSynthesisUtterance(text);
+    u.rate = 0.95; u.pitch = 1.0; u.volume = state.volume;
+    u.onend = () => { if (currentSpeechText === text) currentSpeechText = ''; };
+    u.onerror = (ev) => { console.warn('Speech error:', ev); };
+    window.speechSynthesis.speak(u);
+  } catch (e) { console.error('Speech failed:', e); }
+}
+
+// ---- Actions ----
+function startTimer() {
+  if (timerInterval) return;
+  timerInterval = setInterval(() => {
+    if (!state.isRunning) return;
+    state.timeLeft -= 1;
+    if (state.timeLeft <= 0) {
+      // auto advance — mark current done & move strictly downward
+      const cur = getCurrent();
+      if (cur && !state.completedIds.includes(cur.id)) {
+        pushUndo();
+        state.completedIds.push(cur.id);
+        playCashSound();
+      }
+      advanceToNextInList();
+      state.timeLeft = curDurationSec();
+      lastReminderTime = curDurationSec();
+      checkSpeakOnTaskChange();
+    } else {
+      const elapsed = curDurationSec() - state.timeLeft;
+      // Fire a reminder every ~15 seconds. We track the elapsed-time of the last
+      // reminder and fire whenever 15+ seconds have passed since then, instead of
+      // requiring `elapsed % 15 === 0` exactly (which could be missed if the tab
+      // was backgrounded for a moment).
+      const lastReminderElapsed = curDurationSec() - lastReminderTime;
+      if (state.isRunning && !state.muted && elapsed >= lastReminderElapsed + 15) {
+        lastReminderTime = state.timeLeft;
+        const cur = getCurrent();
+        // Don't read out a task that's already crossed off
+        if (cur && !state.completedIds.includes(cur.id)) {
+          const m = Math.floor(state.timeLeft / 60), s = state.timeLeft % 60;
+          let timeStr;
+          if (m > 0 && s > 0) timeStr = `${m} minute${m !== 1 ? 's' : ''} and ${s} second${s !== 1 ? 's' : ''}`;
+          else if (m > 0) timeStr = `${m} minute${m !== 1 ? 's' : ''}`;
+          else timeStr = `${s} second${s !== 1 ? 's' : ''}`;
+          let extra = '';
+          if (cur.task.type === 'group') {
+            const rem = (cur.task.items || []).filter(it => !it.done).map(it => stripTagsFromName(it.name));
+            if (rem.length) extra = ` Still need: ${rem.join(', ')}.`;
+          }
+          const cleanName = stripTagsFromName(cur.task.name);
+          speak(`${cleanName}. ${timeStr} left.${extra} ${makeMotivation(cleanName)}`);
+        }
+      }
+    }
+    render();
+  }, 1000);
+}
+
+// Move strictly downward in the list to the next task (whether or not it's completed).
+// If we're at the bottom, stop.
+function advanceToNextInList() {
+  const cur = getCurrent();
+  if (!cur) return;
+  const nextIdx = cur.idx + 1;
+  if (nextIdx < state.tasks.length) {
+    state.manualIdx = nextIdx;
+  } else {
+    // Reached the end — clear manual nav so getCurrent returns null (all done)
+    // or first uncompleted if any still exist
+    state.manualIdx = null;
+    state.isRunning = false;
+  }
+}
+
+function checkSpeakOnTaskChange() {
+  const cur = getCurrent();
+  if (!cur) { lastSpokenId = -1; return; }
+  // Safety: if for any reason getCurrent returns a completed task, bail out.
+  if (state.completedIds.includes(cur.id)) { lastSpokenId = cur.id; return; }
+  if (state.muted || !state.hasStarted) { lastSpokenId = cur.id; return; }
+  if (lastSpokenId === cur.id) return;
+  lastSpokenId = cur.id;
+  lastReminderTime = curDurationSec();
+  speak(buildSpeechIntro(cur.task));
+}
+
+function handleStart() {
+  const cur = getCurrent();
+  if (!cur) return;
+  if (!state.hasStarted) {
+    state.hasStarted = true;
+    lastSpokenId = cur.id;
+    if (!state.muted) speak(buildSpeechIntro(cur.task));
+  }
+  state.isRunning = true;
+  startTimer();
+  render();
+}
+
+function handlePause() {
+  state.isRunning = false;
+  if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+  render();
+}
+
+function handleMarkDone() {
+  const cur = getCurrent();
+  if (!cur) return;
+  pushUndo();
+  if (!state.completedIds.includes(cur.id)) {
+    state.completedIds.push(cur.id);
+    playCashSound();
+  }
+  // Move strictly downward (not to "first uncompleted")
+  advanceToNextInList();
+  state.timeLeft = curDurationSec();
+  lastReminderTime = curDurationSec();
+  checkSpeakOnTaskChange();
+  render();
+}
+
+// "Did + repeat": mark done AND re-queue a fresh copy at the bottom of the
+// active list, so a recurring task comes back around.
+function handleDidRepeat() {
+  const cur = getCurrent();
+  if (!cur) return;
+  pushUndo();
+  // Mark the current instance complete
+  if (!state.completedIds.includes(cur.id)) {
+    state.completedIds.push(cur.id);
+    playCashSound();
+  }
+  // Create a fresh, un-done duplicate
+  const copy = JSON.parse(JSON.stringify(cur.task));
+  const newId = state.nextId++;
+  // Insert right after the last active (un-done) task, before the done pile
+  let insertAt = state.tasks.length;
+  for (let i = state.tasks.length - 1; i >= 0; i--) {
+    if (!state.completedIds.includes(state.ids[i])) { insertAt = i + 1; break; }
+    if (i === 0) insertAt = 0;
+  }
+  state.tasks.splice(insertAt, 0, copy);
+  state.ids.splice(insertAt, 0, newId);
+  advanceToNextInList();
+  state.timeLeft = curDurationSec();
+  lastReminderTime = curDurationSec();
+  checkSpeakOnTaskChange();
+  render();
+}
+
+// "Did + delete": count it done (chime) then remove it from the list entirely.
+function handleDidDelete() {
+  const cur = getCurrent();
+  if (!cur) return;
+  pushUndo();
+  playCashSound();
+  const idx = cur.idx;
+  const removedId = state.ids[idx];
+  state.tasks.splice(idx, 1);
+  state.ids.splice(idx, 1);
+  state.completedIds = state.completedIds.filter(x => x !== removedId);
+  state.manualIdx = null;
+  state.timeLeft = curDurationSec();
+  lastReminderTime = curDurationSec();
+  checkSpeakOnTaskChange();
+  render();
+}
+
+// "Later tomorrow": pull it off today's list (no credit) and stash it so it's
+// out of the way for now. Tagged so you can see it was pushed to tomorrow.
+function handleLaterTomorrow() {
+  const cur = getCurrent();
+  if (!cur) return;
+  pushUndo();
+  const idx = cur.idx;
+  const [movedTask] = state.tasks.splice(idx, 1);
+  const [movedId] = state.ids.splice(idx, 1);
+  if (!/#tomorrow\b/.test(movedTask.name)) {
+    movedTask.name = (movedTask.name + ' #tomorrow').trim();
+  }
+  // Park it at the very bottom (below everything, even done items)
+  state.tasks.push(movedTask);
+  state.ids.push(movedId);
+  state.completedIds.push(movedId); // hidden from the active flow for today
+  state.manualIdx = null;
+  state.timeLeft = curDurationSec();
+  lastReminderTime = curDurationSec();
+  checkSpeakOnTaskChange();
+  render();
+}
+
+// "Skip today": move on without credit. Sends to the bottom of the active list.
+function handleSkipToday() {
+  // Same placement behaviour as Later today, but no completion credit.
+  goToNextTask();
+}
+
+// "Delete forever": remove the task permanently (with a confirm).
+function handleDeleteForever() {
+  const cur = getCurrent();
+  if (!cur) return;
+  const label = stripTagsFromName(cur.task.name) || 'this task';
+  if (!confirm(`Delete "${label}" forever? This removes it from the list.`)) return;
+  pushUndo();
+  const idx = cur.idx;
+  const removedId = state.ids[idx];
+  state.tasks.splice(idx, 1);
+  state.ids.splice(idx, 1);
+  state.completedIds = state.completedIds.filter(x => x !== removedId);
+  state.manualIdx = null;
+  state.timeLeft = curDurationSec();
+  lastReminderTime = curDurationSec();
+  checkSpeakOnTaskChange();
+  render();
+}
+
+// "Failed to do": acknowledge you didn't do it (no chime), tag it, move on.
+function handleFailed() {
+  const cur = getCurrent();
+  if (!cur) return;
+  pushUndo();
+  const idx = cur.idx;
+  const [movedTask] = state.tasks.splice(idx, 1);
+  const [movedId] = state.ids.splice(idx, 1);
+  if (!/#failed\b/.test(movedTask.name)) {
+    movedTask.name = (movedTask.name + ' #failed').trim();
+  }
+  // Send to bottom of the active list so you can revisit it
+  let insertAt = state.tasks.length;
+  for (let i = state.tasks.length - 1; i >= 0; i--) {
+    if (!state.completedIds.includes(state.ids[i])) { insertAt = i + 1; break; }
+    if (i === 0) insertAt = 0;
+  }
+  state.tasks.splice(insertAt, 0, movedTask);
+  state.ids.splice(insertAt, 0, movedId);
+  state.manualIdx = null;
+  state.timeLeft = curDurationSec();
+  lastReminderTime = curDurationSec();
+  checkSpeakOnTaskChange();
+  render();
+}
+
+function toggleTaskDone(id) {
+  pushUndo();
+  const cur = getCurrent();
+  const wasCurrent = cur && cur.id === id;
+  if (state.completedIds.includes(id)) {
+    // Un-checking — no sound
+    state.completedIds = state.completedIds.filter(x => x !== id);
+  } else {
+    // Checking off — coin chime
+    state.completedIds.push(id);
+    playCashSound();
+  }
+  if (wasCurrent) {
+    state.timeLeft = curDurationSec();
+    lastReminderTime = curDurationSec();
+    checkSpeakOnTaskChange();
+  }
+  render();
+}
+
+function handleReset() {
+  pushUndo();
+  state.isRunning = false;
+  state.completedIds = [];
+  state.timeLeft = curDurationSec();
+  state.hasStarted = false;
+  state.manualIdx = null;
+  state.tasks.forEach(t => {
+    if (t.type === 'group') t.items.forEach(it => it.done = false);
+  });
+  lastSpokenId = -1;
+  lastReminderTime = curDurationSec();
+  if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+  render();
+}
+
+function handleRepeat() {
+  const cur = getCurrent();
+  if (cur && !state.muted) speak(buildSpeechIntro(cur.task));
+}
+
+// Uncheck every task & sub-item & unfurnished item, but DON'T touch the timer,
+// playing state, or current position (unlike "Start over"/reset).
+function uncheckAll() {
+  pushUndo();
+  state.completedIds = [];
+  state.tasks.forEach(t => {
+    if (t.type === 'group' && t.items) t.items.forEach(it => it.done = false);
+  });
+  state.unfurnishedDone = [];
+  render();
+}
+
+// Export current tasks as a ready-to-paste DEFAULT_TASKS array + unfurnished list.
+// This lets the user bake their live edits into a publishable HTML file.
+function exportTasks() {
+  // Build a complete, human-readable dump of EVERY task (checked or not),
+  // plus the unfurnished list. We include the completed flag inline so nothing
+  // is lost, and also produce a ready-to-paste DEFAULT_TASKS array.
+  const taskLines = state.tasks.map((t, i) => {
+    const id = state.ids[i];
+    const isDone = state.completedIds.includes(id);
+    const emoji = (t.emoji || '').replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+    const name = (t.name || '').replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+    const loc = (t.location || '').replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+    const tm = (t.time || '').replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+    return `  { type: 'item', emoji: "${emoji}", name: "${name}", time: "${tm}", location: "${loc}", done: ${isDone} },`;
+  }).join('\n');
+
+  const ufLines = state.unfurnished.map((item, i) => {
+    const isDone = state.unfurnishedDone.includes(i);
+    const txt = (item || '').replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+    return `  { name: "${txt}", done: ${isDone} },`;
+  }).join('\n');
+
+  const snippet =
+`const DEFAULT_TASKS = [
+${taskLines}
+];
+
+const DEFAULT_UNFURNISHED = [
+${ufLines}
+];`;
+
+  showExportPanel(snippet);
+}
+
+// Show the export text in an on-screen overlay with a big selectable textarea
+// and a copy button — far more reliable than silent clipboard/download.
+function showExportPanel(text) {
+  // Remove any existing panel
+  const existing = document.getElementById('export-overlay');
+  if (existing) existing.remove();
+
+  const overlay = document.createElement('div');
+  overlay.id = 'export-overlay';
+  overlay.style.cssText = `
+    position: fixed; inset: 0; z-index: 9999;
+    background: rgba(0,0,0,0.7); backdrop-filter: blur(4px);
+    display: flex; align-items: center; justify-content: center; padding: 20px;
+  `;
+
+  const panel = document.createElement('div');
+  panel.style.cssText = `
+    background: #14182a; border: 1px solid rgba(212,165,116,0.4);
+    border-radius: 16px; padding: 20px; max-width: 600px; width: 100%;
+    max-height: 80vh; display: flex; flex-direction: column; gap: 12px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+  `;
+
+  const taskCount = state.tasks.length;
+  const ufCount = state.unfurnished.length;
+  panel.innerHTML = `
+    <div style="font-family: var(--sf-display); color: #e8e4d8; font-size: 16px; font-weight: 700;">
+      Export your tasks
+    </div>
+    <div style="font-family: var(--sf-display); color: rgba(232,228,216,0.6); font-size: 13px; line-height: 1.4;">
+      This includes ALL ${taskCount} task${taskCount !== 1 ? 's' : ''} (checked &amp; unchecked) and ${ufCount} unfurnished item${ufCount !== 1 ? 's' : ''}.
+      Copy everything below and paste it to Claude to bake it into a publishable file.
+    </div>
+  `;
+
+  const textarea = document.createElement('textarea');
+  textarea.value = text;
+  textarea.readOnly = true;
+  textarea.style.cssText = `
+    width: 100%; flex: 1; min-height: 240px; resize: vertical;
+    background: #0a0d14; color: #a8d4b3; border: 1px solid rgba(232,228,216,0.2);
+    border-radius: 10px; padding: 12px; font-family: var(--sf-mono);
+    font-size: 11px; line-height: 1.5; outline: none; box-sizing: border-box;
+  `;
+  panel.appendChild(textarea);
+
+  const btnRow = document.createElement('div');
+  btnRow.style.cssText = 'display: flex; gap: 10px; justify-content: flex-end;';
+
+  const copyBtn = document.createElement('button');
+  copyBtn.textContent = 'Copy to clipboard';
+  copyBtn.style.cssText = `
+    background: var(--accent); color: #14182a; border: none;
+    padding: 10px 18px; border-radius: 999px; cursor: pointer;
+    font-family: var(--sf-display); font-weight: 600; font-size: 13px;
+  `;
+  copyBtn.onclick = () => {
+    textarea.select();
+    let ok = false;
+    try { ok = document.execCommand('copy'); } catch {}
+    if (!ok) {
+      try { navigator.clipboard.writeText(text); ok = true; } catch {}
+    }
+    copyBtn.textContent = ok ? '✓ Copied!' : 'Press ⌘C now';
+    setTimeout(() => { copyBtn.textContent = 'Copy to clipboard'; }, 2000);
+  };
+
+  const closeBtn = document.createElement('button');
+  closeBtn.textContent = 'Close';
+  closeBtn.style.cssText = `
+    background: transparent; color: rgba(232,228,216,0.7);
+    border: 1px solid rgba(232,228,216,0.25);
+    padding: 10px 18px; border-radius: 999px; cursor: pointer;
+    font-family: var(--sf-display); font-weight: 600; font-size: 13px;
+  `;
+  closeBtn.onclick = () => overlay.remove();
+
+  btnRow.appendChild(closeBtn);
+  btnRow.appendChild(copyBtn);
+  panel.appendChild(btnRow);
+  overlay.appendChild(panel);
+  overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
+  document.body.appendChild(overlay);
+
+  // Auto-select the text so the user can just hit Cmd/Ctrl+C
+  setTimeout(() => { textarea.focus(); textarea.select(); }, 50);
+}
+
+// Import tasks from a pasted JSON / snippet (advanced). Accepts the same shape
+// exportTasks produces, or a raw JSON state object.
+function importTasks() {
+  const txt = prompt('Paste exported task text here to load it:');
+  if (!txt) return;
+  try {
+    // Try to extract DEFAULT_TASKS array via a loose eval in a sandbox-ish way
+    const taskMatch = txt.match(/DEFAULT_TASKS\s*=\s*(\[[\s\S]*?\]);/);
+    const ufMatch = txt.match(/DEFAULT_UNFURNISHED\s*=\s*(\[[\s\S]*?\]);/);
+    if (taskMatch) {
+      pushUndo();
+      // eslint-disable-next-line no-eval
+      const tasks = eval(taskMatch[1]);
+      const completedIds = [];
+      state.tasks = tasks.map((t, i) => {
+        if (t.done) completedIds.push(i);
+        return { type: 'item', emoji: t.emoji || '', name: t.name || '', location: t.location || '', time: t.time || '' };
+      });
+      state.ids = tasks.map((_, i) => i);
+      state.nextId = tasks.length;
+      state.completedIds = completedIds;
+      state.manualIdx = null;
+      if (ufMatch) {
+        // eslint-disable-next-line no-eval
+        const ufRaw = eval(ufMatch[1]);
+        state.unfurnished = [];
+        state.unfurnishedDone = [];
+        ufRaw.forEach((u, i) => {
+          if (typeof u === 'string') {
+            state.unfurnished.push(u);
+          } else if (u && typeof u === 'object') {
+            state.unfurnished.push(u.name || '');
+            if (u.done) state.unfurnishedDone.push(i);
+          }
+        });
+      }
+      render();
+      alert('Tasks imported successfully.');
+    } else {
+      alert('Could not find a DEFAULT_TASKS array in the pasted text.');
+    }
+  } catch (e) {
+    alert('Import failed: ' + e.message);
+  }
+}
+
+function toggleMute() {
+  state.muted = !state.muted;
+  if (state.muted && 'speechSynthesis' in window) window.speechSynthesis.cancel();
+  render();
+}
+
+function updateTaskName(idx, name) { state.tasks[idx].name = name; render(); }
+function updateTaskLocation(idx, location) { state.tasks[idx].location = location; render(); }
+function updateSubName(idx, j, name) { state.tasks[idx].items[j].name = name; render(); }
+
+// Scan the main task list for any task tagged #unfurnished. Move each such task
+// into the unfurnished checklist (stripping the #unfurnished tag from its text)
+// and remove it from the main timed list.
+function moveUnfurnishedTaggedToList() {
+  let moved = false;
+  for (let i = state.tasks.length - 1; i >= 0; i--) {
+    const task = state.tasks[i];
+    const tags = extractTags(task.name).map(t => t.toLowerCase());
+    if (tags.includes('unfurnished')) {
+      // Keep the emoji + name, drop only the #unfurnished tag (keep any other tags).
+      const text = task.name.replace(/\s*#unfurnished\b/gi, '').trim();
+      const emoji = task.emoji ? task.emoji + ' ' : '';
+      const finalText = (emoji + text).trim();
+      if (!moved) pushUndo();
+      moved = true;
+      state.unfurnished.push(finalText || '(untitled)');
+      // Remove from main tasks
+      const removedId = state.ids[i];
+      state.tasks.splice(i, 1);
+      state.ids.splice(i, 1);
+      state.completedIds = state.completedIds.filter(x => x !== removedId);
+      if (state.manualIdx !== null) {
+        if (state.manualIdx === i) state.manualIdx = null;
+        else if (state.manualIdx > i) state.manualIdx -= 1;
+      }
+    }
+  }
+  return moved;
+}
+
+function toggleSub(idx, j) {
+  pushUndo();
+  const task = state.tasks[idx];
+  if (!task || task.type !== 'group') return;
+  const wasChecked = task.items[j].done;
+  task.items[j].done = !task.items[j].done;
+  // Coin sound when checking off, no sound when un-checking
+  if (!wasChecked) playCashSound();
+  // If this is the current task and ALL sub-items are now done, auto-complete the group
+  const cur = getCurrent();
+  if (cur && cur.idx === idx && task.items.length > 0 && task.items.every(it => it.done)) {
+    setTimeout(() => {
+      if (!state.completedIds.includes(state.ids[idx])) {
+        state.completedIds.push(state.ids[idx]);
+        playCashSound(); // group completion gets its own cash sound too
+        state.timeLeft = curDurationSec();
+        lastReminderTime = curDurationSec();
+        checkSpeakOnTaskChange();
+        render();
+      }
+    }, 250);
+  }
+  render();
+}
+
+function addSubItem(idx) {
+  const task = state.tasks[idx];
+  if (!task || task.type !== 'group') return;
+  pushUndo();
+  task.items.push({ emoji: "", name: "", done: false });
+  state.editingSub = { taskIdx: idx, subIdx: task.items.length - 1 };
+  render();
+}
+
+function removeSubItem(idx, j) {
+  pushUndo();
+  state.tasks[idx].items.splice(j, 1);
+  render();
+}
+
+function addTask() {
+  pushUndo();
+  const newId = state.nextId++;
+  // Insert at top of list — no auto emoji, user can type one if they want
+  state.tasks.unshift({ type: "item", emoji: "", name: "", location: "", time: "", duration: 5 });
+  state.ids.unshift(newId);
+  // Existing indices shift down by 1
+  if (state.manualIdx !== null) state.manualIdx += 1;
+  state.editingNameIdx = 0;
+  render();
+  // Scroll to top so the new task is visible
+  setTimeout(() => {
+    const el = document.querySelector(`.task-item[data-idx="0"]`);
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, 0);
+}
+
+// Insert a fresh empty task directly BELOW the given index and start editing it.
+// Used when pressing Enter while editing a task name (list-style "add next").
+function addTaskAfter(idx) {
+  // Release the field currently being edited first. Otherwise render()'s
+  // "don't disrupt active typing" guard would skip drawing the new row.
+  const activeEl = document.activeElement;
+  if (activeEl && typeof activeEl.blur === 'function') activeEl.blur();
+  pushUndo();
+  const newId = state.nextId++;
+  const insertAt = Math.min(idx + 1, state.tasks.length);
+  state.tasks.splice(insertAt, 0, { type: "item", emoji: "", name: "", location: "", duration: 5 });
+  state.ids.splice(insertAt, 0, newId);
+  // Shift the "current task" pointer if it sat at or after the insert point
+  if (state.manualIdx !== null && state.manualIdx >= insertAt) state.manualIdx += 1;
+  state.editingNameIdx = insertAt;
+  state.editingLocationIdx = null;
+  state.editingTimeIdx = null;
+  state.editingSub = { taskIdx: null, subIdx: null };
+  render();
+  setTimeout(() => {
+    const el = document.querySelector(`.task-item[data-idx="${insertAt}"]`);
+    if (el && el.scrollIntoView) el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }, 0);
+}
+
+function quickAddTask(name, location) {
+  const trimmed = (name || '').trim();
+  if (!trimmed) return;
+  const loc = (location || '').trim();
+  pushUndo();
+  // If the typed task is tagged #unfurnished, put it straight in the unfurnished list.
+  if (extractTags(trimmed).map(t => t.toLowerCase()).includes('unfurnished')) {
+    const text = trimmed.replace(/\s*#unfurnished\b/gi, '').trim();
+    state.unfurnished.push(text || '(untitled)');
+    render();
+    setTimeout(() => {
+      const qa = document.getElementById('quick-add');
+      if (qa) qa.focus();
+    }, 0);
+    return;
+  }
+  const newId = state.nextId++;
+  // If user typed a leading emoji, use it; otherwise leave it empty.
+  const split = splitLeadingEmoji(trimmed);
+  const emoji = split.emoji; // may be ''
+  const taskName = split.emoji ? split.rest : trimmed;
+  // Insert at top of list
+  state.tasks.unshift({ type: "item", emoji, name: taskName, location: loc, time: "", duration: 5 });
+  state.ids.unshift(newId);
+  if (state.manualIdx !== null) state.manualIdx += 1;
+  render();
+  // Scroll to the new task and re-focus the quick-add input
+  setTimeout(() => {
+    const el = document.querySelector(`.task-item[data-idx="0"]`);
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    const qa = document.getElementById('quick-add');
+    if (qa) qa.focus();
+  }, 0);
+}
+
+function reorderTask(fromIdx, toIdx) {
+  if (fromIdx === toIdx) return;
+  pushUndo();
+  // Move task and id together
+  const [movedTask] = state.tasks.splice(fromIdx, 1);
+  const [movedId] = state.ids.splice(fromIdx, 1);
+  // Adjust target index if moving downward
+  const insertAt = fromIdx < toIdx ? toIdx - 1 : toIdx;
+  state.tasks.splice(insertAt, 0, movedTask);
+  state.ids.splice(insertAt, 0, movedId);
+  // Clear any manual nav so getCurrent re-picks the first active task
+  state.manualIdx = null;
+  render();
+}
+
+// Play from any task — jump current to that task, un-complete it if needed,
+// reset timer to fresh 5min, and start. Continues downward from there.
+function playFromTask(idx) {
+  if (idx < 0 || idx >= state.tasks.length) return;
+  const id = state.ids[idx];
+  // Un-complete if it was marked done
+  if (state.completedIds.includes(id)) {
+    pushUndo();
+    state.completedIds = state.completedIds.filter(x => x !== id);
+  }
+  state.manualIdx = idx;
+  state.timeLeft = curDurationSec();
+  lastReminderTime = curDurationSec();
+  // Force re-speak even if same task id
+  lastSpokenId = -1;
+  state.hasStarted = true;
+  state.isRunning = true;
+  if (!state.muted) speak(buildSpeechIntro(state.tasks[idx]));
+  lastSpokenId = id;
+  startTimer();
+  render();
+}
+
+function removeTask(idx) {
+  pushUndo();
+  const removedId = state.ids[idx];
+  state.tasks.splice(idx, 1);
+  state.ids.splice(idx, 1);
+  state.completedIds = state.completedIds.filter(x => x !== removedId);
+  render();
+}
+
+// ---- Suitcase row helpers ----
+function addSuitcaseRow() {
+  pushUndo();
+  const n = state.suitcaseRows.length + 1;
+  state.suitcaseRows.push({ name: `Row ${n}`, items: [] });
+  state.editingSuitcaseRow = { rowIdx: state.suitcaseRows.length - 1, itemIdx: -1 };
+  render();
+}
+function removeSuitcaseRow(ri) {
+  pushUndo();
+  state.suitcaseRows.splice(ri, 1);
+  state.editingSuitcaseRow = null;
+  render();
+}
+function addSuitcaseItem(ri) {
+  pushUndo();
+  state.suitcaseRows[ri].items.push("");
+  state.editingSuitcaseRow = { rowIdx: ri, itemIdx: state.suitcaseRows[ri].items.length - 1 };
+  render();
+}
+function removeSuitcaseItem(ri, ii) {
+  pushUndo();
+  state.suitcaseRows[ri].items.splice(ii, 1);
+  state.editingSuitcaseRow = null;
+  render();
+}
+
+// ---- Render helpers ----
+function icon(id, size) {
+  const sz = size || 16;
+  return `<svg class="icon" style="width:${sz}px;height:${sz}px" aria-hidden="true"><use href="#i-${id}"/></svg>`;
+}
+
+function escapeHtml(s) {
+  return String(s || '').replace(/[&<>"']/g, c => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  })[c]);
+}
+
+// Auto-pick an emoji for a task based on keywords in its name.
+// Returns a fallback random emoji if no keyword matches.
+const EMOJI_MAP = [
+  // Health & meds
+  [/\b(pill|xanax|zoloft|advil|tylenol|ibuprofen|aspirin|zofran|prescript|medication|meds?)\b/i, "💊"],
+  [/\b(vitamin|supplement|mint|gum)\b/i, "🌿"],
+  [/\b(toothbrush|tooth|brush|dental|floss)\b/i, "🪥"],
+  [/\b(soap|wash|shower|shampoo|conditioner)\b/i, "🧼"],
+  [/\b(lotion|cream|moistur)\b/i, "🧴"],
+  [/\b(deodorant)\b/i, "🧴"],
+  [/\b(razor|shave)\b/i, "🪒"],
+  [/\b(makeup|lipstick|mascara|eyeliner|foundation)\b/i, "💄"],
+  [/\b(perfume|cologne|fragrance)\b/i, "🌸"],
+  [/\b(sunscreen|sun ?screen|spf)\b/i, "🧴"],
+  [/\b(massag)\b/i, "💆"],
+  [/\b(contact ?lens|contacts?\b)\b/i, "👁️"],
+  [/\b(glasses|sunglasses)\b/i, "🕶️"],
+
+  // Drinks & food
+  [/\b(water|hydrat|bottle)\b/i, "💧"],
+  [/\b(coffee|espresso|latte)\b/i, "☕"],
+  [/\b(kettle|tea(?:pot)?)\b/i, "☕"],
+  [/\b(peppermint|herbal|chamomile|tea)\b/i, "🌱"],
+  [/\b(olive)\b/i, "🫒"],
+  [/\b(snack|chips|crisp)\b/i, "🍿"],
+  [/\b(bar|granola|protein)\b/i, "🥜"],
+  [/\b(fork|spoon|cutlery|utensil)\b/i, "🍴"],
+  [/\b(bowl|plate|dish)\b/i, "🥣"],
+  [/\b(taro|sweet ?potato)\b/i, "🍠"],
+  [/\b(fruit|apple|banana|orange)\b/i, "🍎"],
+  [/\b(sandwich)\b/i, "🥪"],
+
+  // Travel / packing
+  [/\b(suitcase|luggage|bag(?:gage)?)\b/i, "🧳"],
+  [/\b(empty|unpack|remove)\b/i, "📤"],
+  [/\b(passport)\b/i, "🛂"],
+  [/\b(ticket|boarding)\b/i, "🎫"],
+  [/\b(id|license|card)\b/i, "🪪"],
+  [/\b(wallet)\b/i, "👛"],
+  [/\b(fanny ?pack|belt ?bag|pouch)\b/i, "👝"],
+  [/\b(backpack)\b/i, "🎒"],
+
+  // Tech
+  [/\b(phone|cell|mobile|iphone)\b/i, "📱"],
+  [/\b(laptop|macbook|computer)\b/i, "💻"],
+  [/\b(charger|cable|cord|usb|adapt)\b/i, "🔌"],
+  [/\b(charge|battery)\b/i, "🔋"],
+  [/\b(headphone|earbud|airpod)\b/i, "🎧"],
+  [/\b(camera)\b/i, "📷"],
+  [/\b(watch|apple ?watch)\b/i, "⌚"],
+
+  // Clothing
+  [/\b(shirt|tee|blouse|top)\b/i, "👕"],
+  [/\b(pants|jean|trouser)\b/i, "👖"],
+  [/\b(dress)\b/i, "👗"],
+  [/\b(jacket|coat|hoodie|sweater)\b/i, "🧥"],
+  [/\b(sock)\b/i, "🧦"],
+  [/\b(underwear|undies|bra|panties)\b/i, "🩲"],
+  [/\b(shoe|sneaker|boot|sandal)\b/i, "👟"],
+  [/\b(hat|cap|beanie)\b/i, "🧢"],
+  [/\b(scarf)\b/i, "🧣"],
+  [/\b(swim|bikini|trunk)\b/i, "🩱"],
+  [/\b(pajama|pjs?\b|sleepwear)\b/i, "🛌"],
+
+  // Home / errands
+  [/\b(key)\b/i, "🔑"],
+  [/\b(lock|secure)\b/i, "🔒"],
+  [/\b(door|leave|leaving|home|house)\b/i, "🚪"],
+  [/\b(window)\b/i, "🪟"],
+  [/\b(light|lamp|turn off)\b/i, "💡"],
+  [/\b(trash|garbage|rubbish)\b/i, "🗑️"],
+  [/\b(plant|water plant)\b/i, "🌿"],
+  [/\b(mail|package|amazon|delivery|parcel)\b/i, "📦"],
+  [/\b(return|send back)\b/i, "↩️"],
+  [/\b(kitchen|cook)\b/i, "🍳"],
+
+  // Baby / kids
+  [/\b(diaper|baby|infant)\b/i, "👶"],
+  [/\b(toy)\b/i, "🧸"],
+  [/\b(bottle ?feed|formula|breast)\b/i, "🍼"],
+  [/\b(stroller|pram)\b/i, "🚼"],
+
+  // Documents / money
+  [/\b(money|cash|dollar)\b/i, "💵"],
+  [/\b(credit|debit|bank ?card)\b/i, "💳"],
+  [/\b(document|paper|receipt|form)\b/i, "📄"],
+  [/\b(book|reading|read)\b/i, "📖"],
+  [/\b(notebook|journal|pen)\b/i, "📓"],
+];
+
+const FALLBACK_EMOJIS = ["📌", "✨", "📦", "🎯", "📋", "🏷️", "🔖", "💼", "🧩", "📎"];
+let fallbackEmojiIdx = 0;
+
+function pickEmoji(name) {
+  const n = (name || '').trim();
+  if (!n) return FALLBACK_EMOJIS[(fallbackEmojiIdx++) % FALLBACK_EMOJIS.length];
+  for (const [pattern, emoji] of EMOJI_MAP) {
+    if (pattern.test(n)) return emoji;
+  }
+  // Cycle through fallback emojis so new untyped tasks get variety
+  return FALLBACK_EMOJIS[(fallbackEmojiIdx++) % FALLBACK_EMOJIS.length];
+}
+
+// Detect & split a leading emoji from the start of a string.
+// Returns { emoji: '...', rest: '...' }. If no leading emoji, emoji is ''.
+// Uses the Unicode "Extended_Pictographic" property which covers nearly all emoji,
+// plus following modifiers/joiners and one trailing space.
+function splitLeadingEmoji(s) {
+  const str = String(s || '');
+  if (!str) return { emoji: '', rest: '' };
+  // Try to match a leading emoji sequence: one base + optional VS16/modifiers/ZWJ-joined parts.
+  // We use a permissive regex that catches the common cases.
+  const re = /^(\p{Extended_Pictographic}(?:\uFE0F|\u200D\p{Extended_Pictographic}|\p{Emoji_Modifier}|[\u{E0020}-\u{E007F}])*)\s?/u;
+  const m = str.match(re);
+  if (m) {
+    return { emoji: m[1], rest: str.slice(m[0].length) };
+  }
+  return { emoji: '', rest: str };
+}
+
+// Combine emoji + name as a single editable string.
+function joinEmojiName(emoji, name) {
+  const e = (emoji || '').trim();
+  const n = (name || '').trim();
+  if (e && n) return `${e} ${n}`;
+  return e || n || '';
+}
+
+// ---- Tag extraction (#sleep, #urgent, etc.) ----
+// Tags are written in the task name as `#word`. We extract them for display
+// as colored pills, but keep them in the name text so the user edits them
+// naturally just by typing.
+function extractTags(name) {
+  const tags = [];
+  const re = /#([\p{L}\p{N}_-]+)/gu;
+  let m;
+  while ((m = re.exec(name || '')) !== null) {
+    tags.push(m[1]);
+  }
+  return tags;
+}
+
+// Strip tags from name for the *displayed* text portion (so "Wash face #morning"
+// shows the name without the inline #morning, and #morning shows as a pill).
+function stripTagsFromName(name) {
+  return (name || '').replace(/\s*#[\p{L}\p{N}_-]+/gu, '').trim();
+}
+
+// Hash-based color assignment so the same tag always gets the same color.
+// Uses a curated palette that contrasts with the dark background.
+const TAG_COLORS = [
+  { bg: 'rgba(120, 158, 220, 0.18)', border: 'rgba(120, 158, 220, 0.5)', fg: '#9fb8e0' }, // blue
+  { bg: 'rgba(180, 130, 200, 0.18)', border: 'rgba(180, 130, 200, 0.5)', fg: '#c9a0d8' }, // purple
+  { bg: 'rgba(130, 190, 150, 0.18)', border: 'rgba(130, 190, 150, 0.5)', fg: '#a8d4b3' }, // green
+  { bg: 'rgba(220, 160, 110, 0.18)', border: 'rgba(220, 160, 110, 0.5)', fg: '#e0b585' }, // orange
+  { bg: 'rgba(220, 122, 108, 0.18)', border: 'rgba(220, 122, 108, 0.5)', fg: '#e8978a' }, // red
+  { bg: 'rgba(140, 200, 200, 0.18)', border: 'rgba(140, 200, 200, 0.5)', fg: '#a4d8d8' }, // teal
+  { bg: 'rgba(220, 200, 110, 0.18)', border: 'rgba(220, 200, 110, 0.5)', fg: '#dcc878' }, // yellow
+  { bg: 'rgba(200, 145, 180, 0.18)', border: 'rgba(200, 145, 180, 0.5)', fg: '#d4a5c0' }, // pink
+];
+function tagColor(tag) {
+  // Special-case the status tags used by the action buttons
+  if (tag === 'failed') return { bg: 'rgba(200,90,80,0.15)', border: 'rgba(200,90,80,0.55)', fg: '#e8a59e' };
+  if (tag === 'tomorrow') return { bg: 'rgba(212,165,116,0.15)', border: 'rgba(212,165,116,0.55)', fg: '#e6c193' };
+  // Simple string hash → palette index
+  let h = 0;
+  for (let i = 0; i < tag.length; i++) {
+    h = ((h << 5) - h) + tag.charCodeAt(i);
+    h |= 0;
+  }
+  return TAG_COLORS[Math.abs(h) % TAG_COLORS.length];
+}
+
+function renderTagPills(tags, idx) {
+  if (!tags || !tags.length) return '';
+  const dataAttr = (idx !== undefined && idx !== null) ? ` data-action="start-edit-name" data-idx="${idx}"` : '';
+  return tags.map(t => {
+    const c = tagColor(t.toLowerCase());
+    return `<span class="task-tag" style="background:${c.bg};border-color:${c.border};color:${c.fg}"${dataAttr} title="Edit task to change tag">#${escapeHtml(t)}</span>`;
+  }).join('');
+}
+
+// Format a minute-of-day (e.g. 540) as a clock label like "9 AM" or "1:30 PM".
+function hourLabelFromMin(min) {
+  let h = Math.floor(min / 60) % 24;
+  const m = min % 60;
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  let h12 = h % 12; if (h12 === 0) h12 = 12;
+  return m === 0 ? `${h12} ${ampm}` : `${h12}:${String(m).padStart(2, '0')} ${ampm}`;
+}
+
+// The hour divider line (time on the left).
+function hourBlockHtml(hourMin) {
+  return `
+    <div class="hour-line">
+      <span class="hour-label">${hourLabelFromMin(hourMin)}</span>
+      <span class="hour-rule"></span>
+    </div>
+  `;
+}
+
+function renderTaskRow(task, idx, isCurrent, isDone) {
+  const isEditingName = state.editingNameIdx === idx;
+  const isEditingLoc = state.editingLocationIdx === idx;
+  const isEditingTime = state.editingTimeIdx === idx;
+  const isGroup = task.type === 'group';
+
+  let html = `<div class="task-item ${isCurrent ? 'task-current' : isDone ? 'task-done' : 'task-pending'}" data-idx="${idx}" draggable="true">`;
+  html += `<div class="task-main-row">`;
+
+  // Check circle
+  html += `<div class="check-circle ${isDone ? 'done' : isCurrent ? 'current' : ''}" data-action="toggle-task" data-idx="${idx}" title="${isDone ? 'Click to uncheck' : 'Mark done'}">`;
+  if (isDone) html += `<svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="#1a1f2e" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
+  html += `</div>`;
+
+  // Play button — triangle, larger, rounded corners
+  const isPlayingThis = isCurrent && state.isRunning;
+  html += `<button class="task-play-btn ${isPlayingThis ? 'playing' : ''}" data-action="play-from" data-idx="${idx}" title="${isPlayingThis ? 'Currently playing' : 'Play from here'}">`;
+  if (isPlayingThis) {
+    html += `<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></svg>`;
+  } else {
+    // Rounded-corner triangle
+    html += `<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round"><path d="M7 4.5 L19 12 L7 19.5 Z"/></svg>`;
+  }
+  html += `</button>`;
+
+  html += `<div class="task-body">`;
+  html += `<div class="task-row">`;
+
+  // Task name + emoji rendered together as one editable unit.
+  // Note: `task.emoji === ''` means user explicitly deleted the emoji — respect that.
+  // Only fall back to auto-pick if `emoji` is undefined (never been set).
+  const taskEmoji = task.emoji !== undefined ? task.emoji : '';
+  if (isEditingName) {
+    // Emoji is part of the input value so the user can edit/delete/replace it.
+    // Tags (#word) stay in the editable text so the user can edit them naturally.
+    const editValue = joinEmojiName(taskEmoji, task.name);
+    html += `<input autofocus class="task-name-input ${isGroup ? 'group' : ''}" data-action="edit-name" data-idx="${idx}" value="${escapeHtml(editValue)}" />`;
+  } else {
+    const struck = isDone ? 'struck' : '';
+    const empty = !task.name ? 'empty' : '';
+    const visibleName = stripTagsFromName(task.name);
+    const nameDisplay = visibleName ? escapeHtml(visibleName) + (isGroup ? ':' : '') : (task.name ? '' : 'untitled');
+    // Render emoji inline as part of the same clickable text element.
+    // Skip the leading space if emoji is empty (user deleted it).
+    const prefix = taskEmoji ? `${taskEmoji} ` : '';
+    html += `<span class="task-name-text ${isGroup ? 'group' : ''} ${struck} ${empty}" data-action="start-edit-name" data-idx="${idx}" title="Click to edit">${prefix}${nameDisplay}</span>`;
+  }
+
+  html += `</div>`; // task-row
+  html += `</div>`; // task-body
+
+  // Right-side slot: tags + location, always pinned right, never wraps under the name.
+  const tags = extractTags(task.name);
+  html += `<div class="task-location-slot">`;
+  // Tag pills first (to the left of location, still on the right side of the row)
+  if (!isEditingName && tags.length) {
+    html += renderTagPills(tags, idx);
+  }
+  // Location
+  if (isEditingLoc) {
+    html += `<input autofocus class="location-input" data-action="edit-location" data-idx="${idx}" value="${escapeHtml(task.location || '')}" placeholder="location" />`;
+  } else if (task.location) {
+    html += `<span class="location-inline" data-action="toggle-location-edit" data-idx="${idx}" title="Click to edit location">📍 ${escapeHtml(task.location)}</span>`;
+  } else if (!isEditingName) {
+    html += `<span class="location-add" data-action="toggle-location-edit" data-idx="${idx}" title="Add location">+ location</span>`;
+  }
+  html += `</div>`; // task-location-slot
+
+  // Duration bubble — far right, shows minutes per task (click to edit)
+  const isEditingDur = state.editingDurationIdx === idx;
+  const durMin = (task && Number(task.duration) > 0) ? Number(task.duration) : 5;
+  if (isEditingDur) {
+    html += `<input autofocus class="dur-input" type="number" min="1" max="180" step="1" data-action="edit-duration" data-idx="${idx}" value="${durMin}" />`;
+  } else {
+    html += `<span class="dur-bubble" data-action="toggle-duration-edit" data-idx="${idx}" title="Estimated minutes — click to edit">${durMin} min</span>`;
+  }
+
+  html += `<button class="remove-btn" data-action="remove-task" data-idx="${idx}" title="Remove task"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>`;
+
+  html += `</div>`; // main-row
+
+  if (isGroup) {
+    html += `<div class="sub-items-wrap">`;
+    task.items.forEach((sub, j) => {
+      const isEditingThis = state.editingSub.taskIdx === idx && state.editingSub.subIdx === j;
+      const subEmoji = sub.emoji !== undefined ? sub.emoji : '';
+      html += `<div class="sub-row">`;
+      html += `<div class="check-small ${sub.done ? 'done' : ''}" data-action="toggle-sub" data-idx="${idx}" data-sub="${j}" title="${sub.done ? 'Click to uncheck' : 'Mark done'}">`;
+      if (sub.done) html += `<svg viewBox="0 0 24 24" width="9" height="9" fill="none" stroke="#0a0d14" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
+      html += `</div>`;
+      if (isEditingThis) {
+        const editValue = joinEmojiName(subEmoji, sub.name);
+        html += `<input autofocus class="sub-item-input" data-action="edit-sub" data-idx="${idx}" data-sub="${j}" value="${escapeHtml(editValue)}" />`;
+      } else {
+        const struck = sub.done ? 'struck' : '';
+        const prefix = subEmoji ? `${subEmoji} ` : '';
+        const subTags = extractTags(sub.name);
+        const visibleSubName = stripTagsFromName(sub.name);
+        const nameOrUntitled = visibleSubName
+          ? escapeHtml(visibleSubName)
+          : (sub.name ? '' : '<span style="opacity:0.4;font-style:italic">untitled</span>');
+        html += `<span class="sub-item-text ${struck}" data-action="start-edit-sub" data-idx="${idx}" data-sub="${j}" title="Click to edit">${prefix}${nameOrUntitled}</span>`;
+        // Tag pills next to sub-item name
+        if (subTags.length) {
+          html += subTags.map(t => {
+            const c = tagColor(t.toLowerCase());
+            return `<span class="task-tag" style="background:${c.bg};border-color:${c.border};color:${c.fg}" data-action="start-edit-sub" data-idx="${idx}" data-sub="${j}" title="Edit to change tag">#${escapeHtml(t)}</span>`;
+          }).join('');
+        }
+      }
+      html += `<button class="remove-btn" data-action="remove-sub" data-idx="${idx}" data-sub="${j}" title="Remove"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>`;
+      html += `</div>`;
+    });
+    html += `<button class="sub-add" data-action="add-sub" data-idx="${idx}"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> ADD ITEM</button>`;
+    html += `</div>`;
+  }
+
+  html += `</div>`;
+  return html;
+}
+
+// Second checklist — items needed if the place were unfurnished.
+function renderUnfurnished() {
+  let itemsHtml = '';
+  state.unfurnished.forEach((item, i) => {
+    const isEditing = state.editingUnfurnished === i;
+    const isDone = state.unfurnishedDone.includes(i);
+    itemsHtml += `<div class="uf-row ${isDone ? 'uf-done' : ''}">`;
+    // Checkbox
+    itemsHtml += `<div class="uf-check ${isDone ? 'done' : ''}" data-action="toggle-unfurnished" data-uf="${i}" title="${isDone ? 'Click to uncheck' : 'Mark done'}">`;
+    if (isDone) itemsHtml += `<svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="#0a0d14" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
+    itemsHtml += `</div>`;
+    // Name (editable)
+    if (isEditing) {
+      itemsHtml += `<input autofocus class="uf-input" data-action="edit-unfurnished" data-uf="${i}" value="${escapeHtml(item)}" placeholder="item" />`;
+    } else {
+      const display = item ? escapeHtml(item) : '<em style="opacity:0.4">untitled</em>';
+      itemsHtml += `<span class="uf-name ${isDone ? 'struck' : ''}" data-action="start-edit-unfurnished" data-uf="${i}" title="Click to edit">${display}</span>`;
+    }
+    // Remove
+    itemsHtml += `<button class="uf-remove" data-action="remove-unfurnished" data-uf="${i}" title="Remove">
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>`;
+    itemsHtml += `</div>`;
+  });
+
+  return `
+    <div class="unfurnished-gap"></div>
+    <div class="unfurnished-section">
+      <div class="unfurnished-header">
+        <div class="unfurnished-title">UNFURNISHED LIST</div>
+        <button class="add-btn" data-action="add-unfurnished">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          ADD
+        </button>
+      </div>
+      <div class="unfurnished-subtitle">Additional things I need if the place was unfurnished</div>
+      <div class="quick-add-wrap">
+        <div class="quick-add-plus">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </div>
+        <input type="text" class="quick-add-input" id="unfurnished-quick-add"
+          placeholder="Type an item and press Enter…"
+          autocomplete="off"
+        />
+      </div>
+      <div class="unfurnished-body">
+        ${itemsHtml || '<div class="uf-empty">Nothing here yet — add items above.</div>'}
+      </div>
+    </div>
+  `;
+}
+
+function renderSuitcase() {
+  let rowsHtml = '';
+  state.suitcaseRows.forEach((row, ri) => {
+    const isEditingName = state.editingSuitcaseRow &&
+      state.editingSuitcaseRow.rowIdx === ri &&
+      state.editingSuitcaseRow.itemIdx === -1;
+
+    rowsHtml += `<div class="sc-row">`;
+
+    // Row header
+    rowsHtml += `<div class="sc-row-header">`;
+    if (isEditingName) {
+      rowsHtml += `<input autofocus class="sc-row-name-input" data-action="edit-sc-row-name" data-row="${ri}" value="${escapeHtml(row.name)}" placeholder="row name" />`;
+    } else {
+      rowsHtml += `<span class="sc-row-name" data-action="start-edit-sc-row-name" data-row="${ri}" title="Click to edit row name">${escapeHtml(row.name) || 'untitled row'}</span>`;
+    }
+    rowsHtml += `<button class="sc-remove-row" data-action="remove-sc-row" data-row="${ri}" title="Remove row">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>`;
+    rowsHtml += `</div>`;
+
+    // Items
+    rowsHtml += `<div class="sc-items">`;
+    row.items.forEach((item, ii) => {
+      const isEditingItem = state.editingSuitcaseRow &&
+        state.editingSuitcaseRow.rowIdx === ri &&
+        state.editingSuitcaseRow.itemIdx === ii;
+      if (isEditingItem) {
+        rowsHtml += `<input autofocus class="sc-item-input" data-action="edit-sc-item" data-row="${ri}" data-item="${ii}" value="${escapeHtml(item)}" placeholder="item" />`;
+      } else {
+        rowsHtml += `<span class="sc-item" data-action="start-edit-sc-item" data-row="${ri}" data-item="${ii}" title="Click to edit">
+          ${escapeHtml(item) || '<em style="opacity:0.4">untitled</em>'}
+          <button class="sc-remove-item" data-action="remove-sc-item" data-row="${ri}" data-item="${ii}" title="Remove">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </span>`;
+      }
+    });
+    rowsHtml += `<button class="sc-add-item" data-action="add-sc-item" data-row="${ri}" title="Add item">
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    </button>`;
+    rowsHtml += `</div>`;
+
+    rowsHtml += `</div>`;
+  });
+
+  return `
+    <div class="suitcase-section">
+      <div class="suitcase-header">
+        <div class="suitcase-title">RED SUITCASE</div>
+        <button class="add-btn" data-action="add-sc-row">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          ADD ROW
+        </button>
+      </div>
+      <div class="suitcase-body">
+        ${rowsHtml}
+      </div>
+    </div>
+  `;
+}
+
+// Update only the timer display (time text + ring progress) without rebuilding
+// the rest of the DOM. Used during text editing so inputs aren't disturbed.
+function updateLiveTimerDisplay() {
+  const m = Math.floor(state.timeLeft / 60);
+  const s = state.timeLeft % 60;
+  const timeStr = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  const timeEl = document.querySelector('.center-time');
+  if (timeEl) {
+    timeEl.textContent = timeStr;
+    if (state.timeLeft < 30) timeEl.classList.add('warn');
+    else timeEl.classList.remove('warn');
+  }
+  // Update ring progress
+  const radius = 130;
+  const circumference = 2 * Math.PI * radius;
+  const cur = getCurrent();
+  const isAllDone = !cur;
+  const progress = isAllDone ? 1 : 1 - state.timeLeft / curDurationSec();
+  const ring = document.querySelector('.ring circle:last-of-type');
+  if (ring) {
+    ring.setAttribute('stroke-dashoffset', String(circumference * progress));
+  }
+}
+
+function render() {
+  // Persist current state so changes survive reloads / future code updates.
+  savePersistedState();
+
+  // If the user is actively typing in a task/sub/location/suitcase input,
+  // skip the full re-render so their in-progress text is NEVER overwritten.
+  // We still update the live timer display so the countdown stays visible.
+  const ae = document.activeElement;
+  if (ae && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA') && ae.dataset && ae.dataset.action) {
+    const protectedActions = [
+      'edit-name', 'edit-sub', 'edit-location', 'edit-time', 'edit-duration',
+      'edit-sc-row-name', 'edit-sc-item', 'edit-unfurnished', 'edit-tab-notes',
+    ];
+    if (protectedActions.includes(ae.dataset.action)) {
+      updateLiveTimerDisplay(); // update time only, leave inputs alone
+      return;
+    }
+  }
+
+  // Preserve quick-add input value & focus across re-renders
+  const qaPrev = document.getElementById('quick-add');
+  const qaValue = qaPrev ? qaPrev.value : '';
+  const qaHadFocus = qaPrev && document.activeElement === qaPrev;
+  const qaSelStart = qaHadFocus ? qaPrev.selectionStart : null;
+  const qaSelEnd = qaHadFocus ? qaPrev.selectionEnd : null;
+
+  // Quick-add location field
+  const qlPrev = document.getElementById('quick-add-location');
+  const qlValue = qlPrev ? qlPrev.value : '';
+  const qlHadFocus = qlPrev && document.activeElement === qlPrev;
+
+  // Same for the unfurnished quick-add input
+  const ufPrev = document.getElementById('unfurnished-quick-add');
+  const ufValue = ufPrev ? ufPrev.value : '';
+  const ufHadFocus = ufPrev && document.activeElement === ufPrev;
+
+  const { active, done } = getOrder();
+  const cur = getCurrent();
+  const isAllDone = !cur;
+  const totalCount = state.ids.length;
+  const completedCount = state.completedIds.length;
+
+  const canPrev = cur && cur.idx > 0;
+  const canNext = cur && cur.idx < state.tasks.length - 1;
+
+  const radius = 130;
+  const circumference = 2 * Math.PI * radius;
+  const progress = isAllDone ? 1 : 1 - state.timeLeft / curDurationSec();
+  const dashOffset = circumference * progress;
+
+  const m = Math.floor(state.timeLeft / 60);
+  const s = state.timeLeft % 60;
+  const timeStr = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+
+  const isGroup = cur && cur.task.type === 'group';
+  const hasItems = isGroup && cur.task.items && cur.task.items.length > 0;
+
+  let centerHtml;
+  if (isAllDone) {
+    centerHtml = `
+      <div class="center-task-name">All done.</div>
+      <div class="sf-mono" style="font-size:11px;opacity:0.6;letter-spacing:0.15em">NOTHING LEFT FOR NOW</div>
+    `;
+  } else {
+    let subListHtml = '';
+    if (hasItems) {
+      subListHtml = `<div class="center-sub-list">` +
+        cur.task.items.map((it, j) => {
+          const e = it.emoji !== undefined ? it.emoji : '';
+          const itTags = extractTags(it.name);
+          const itName = stripTagsFromName(it.name);
+          const pills = itTags.length
+            ? itTags.map(t => {
+                const c = tagColor(t.toLowerCase());
+                return `<span class="task-tag" style="background:${c.bg};border-color:${c.border};color:${c.fg}">#${escapeHtml(t)}</span>`;
+              }).join('')
+            : '';
+          return `
+            <div class="center-sub ${it.done ? 'done' : ''}" data-action="toggle-sub" data-idx="${cur.idx}" data-sub="${j}">
+              <div class="check-small ${it.done ? 'done' : ''}" style="width:11px;height:11px">
+                ${it.done ? '<svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="#0a0d14" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>' : ''}
+              </div>
+              ${e ? `<span class="center-sub-emoji">${e}</span>` : ''}
+              ${escapeHtml(itName)}
+              ${pills}
+            </div>
+          `;
+        }).join('') +
+        `</div>`;
+    }
+    const centerEmoji = cur.task.emoji !== undefined ? cur.task.emoji : '';
+    const centerTags = extractTags(cur.task.name);
+    const centerName = stripTagsFromName(cur.task.name);
+    const centerTagsInline = centerTags.length ? ` ${renderTagPills(centerTags)}` : '';
+    const centerBadges = cur.task.location
+      ? `<div class="center-badges">
+           <span class="center-location">📍 ${escapeHtml(cur.task.location)}</span>
+         </div>`
+      : '';
+    centerHtml = `
+      ${centerEmoji ? `<div class="center-emoji">${centerEmoji}</div>` : ''}
+      <div class="center-task-name ${isGroup ? 'group' : ''}">${escapeHtml(centerName)}${isGroup ? ':' : ''}${centerTagsInline}</div>
+      ${centerBadges}
+      ${subListHtml}
+      <div class="center-time ${state.timeLeft < 30 ? 'warn' : ''} ${hasItems ? 'small' : ''}">${timeStr}</div>
+    `;
+  }
+
+  let controlsHtml = '';
+  if (!isAllDone) {
+    // Start / Pause toggle (timer control) + repeat-aloud — kept compact above the action grid
+    if (state.isRunning) {
+      controlsHtml += `<button class="btn" data-action="pause">${icon('pause')} Pause</button>`;
+    } else {
+      controlsHtml += `<button class="btn btn-primary" data-action="start">${icon('play')} ${state.hasStarted ? 'Resume' : 'Start'}</button>`;
+    }
+    if (state.hasStarted) {
+      controlsHtml += `<button class="btn btn-icon" data-action="repeat" title="Repeat task aloud">${icon('refresh')}</button>`;
+    }
+  }
+
+  // ---- The action buttons from the screenshot ----
+  // Each one acts on the CURRENT task (the one shown in the circle).
+  let actionsHtml = '';
+  if (!isAllDone) {
+    actionsHtml = `
+      <div class="actions-grid">
+        <div class="actions-row">
+          <button class="abtn abtn-did" data-action="did-it" title="Mark done & move to next">${icon('check')} Did it</button>
+          <button class="abtn abtn-did-ghost" data-action="did-repeat" title="Done — but keep it on the list to do again">Did + repeat</button>
+          <button class="abtn abtn-did-ghost" data-action="did-delete" title="Done — then remove it from the list">Did + delete</button>
+          <button class="abtn abtn-later" data-action="later-today" title="Send to the bottom of today's list">Later today →</button>
+          <button class="abtn abtn-later" data-action="later-tomorrow" title="Move this task to tomorrow">Later tomorrow</button>
+          <button class="abtn abtn-skip" data-action="skip-today" title="Skip for today (no credit), move on">Skip today</button>
+          <button class="abtn abtn-danger" data-action="delete-forever" title="Delete this task permanently">Delete forever</button>
+          <button class="abtn abtn-fail" data-action="failed" title="Mark as failed to do, move on">✕ Failed to do</button>
+        </div>
+      </div>
+    `;
+  } else {
+    actionsHtml = `<button class="btn" data-action="reset" title="Start over (reset timer & progress)">${icon('rotate')} Start over</button>`;
+  }
+
+  // Volume control — sits in a centered row right under the table of contents.
+  const effectiveVol = state.muted ? 0 : state.volume;
+  const volPct = Math.round(effectiveVol * 100);
+  const volumeHtml = `
+    <div class="volume-row">
+      <div class="volume-control" title="Volume: ${volPct}%">
+        <button class="volume-icon-btn" data-action="mute" title="${state.muted ? 'Unmute' : 'Mute'}">
+          ${state.muted || state.volume === 0 ? icon('volume-mute') : icon('volume')}
+        </button>
+        <input type="range" class="volume-slider" id="volume-slider"
+          min="0" max="100" step="1" value="${volPct}"
+          aria-label="Volume" />
+        <span class="volume-pct">${volPct}</span>
+      </div>
+    </div>
+  `;
+
+  let listHtml = `
+    <div class="list-section">
+      <div class="list-header">
+        <div class="list-label">TASKS</div>
+        <button class="add-btn" data-action="add-task">${icon('plus', 11)} ADD</button>
+      </div>
+      <div class="quick-add-wrap">
+        <div class="quick-add-plus">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </div>
+        <input type="text" class="quick-add-input" id="quick-add"
+          placeholder="Type a new task and press Enter…"
+          autocomplete="off"
+        />
+        <input type="text" class="quick-add-location" id="quick-add-location"
+          placeholder="📍 location"
+          autocomplete="off"
+        />
+      </div>
+  `;
+  // Sort key for checked-off tasks based on location:
+  // Shelf 1 → 6 first, then other named locations alphabetically, then no-location last.
+  function doneSortKey(task) {
+    const loc = (task.location || '').trim();
+    if (!loc) return [2, '', ''];
+    const shelfMatch = loc.match(/shelf\s*(\d+)/i);
+    if (shelfMatch) {
+      return [0, parseInt(shelfMatch[1], 10), loc.toLowerCase()];
+    }
+    return [1, 0, loc.toLowerCase()];
+  }
+  function cmpKey(a, b) {
+    for (let i = 0; i < a.length; i++) {
+      if (a[i] < b[i]) return -1;
+      if (a[i] > b[i]) return 1;
+    }
+    return 0;
+  }
+
+  // Separate active (unchecked) from done. Active tasks keep their natural order
+  // so the user's drag-ordering & current-task logic is preserved.
+  const activeEntries = [];
+  const doneEntries = [];
+  state.tasks.forEach((task, i) => {
+    const id = state.ids[i];
+    const isDone = state.completedIds.includes(id);
+    (isDone ? doneEntries : activeEntries).push({ task, idx: i, id, key: doneSortKey(task) });
+  });
+  // Sort done tasks by location grouping
+  doneEntries.sort((a, b) => cmpKey(a.key, b.key));
+
+  // Render active tasks with hour-divider lines. The clock accumulates each
+  // task's estimated duration, starting at the current real hour.
+  const MIDNIGHT = 24 * 60; // 12 AM = end of the day grid
+  let clockMin = dayStartMin();
+  let lastHour = -1;
+  activeEntries.forEach(({ task, idx }) => {
+    const thisHour = Math.floor(clockMin / 60);
+    // Draw an hour line when the hour changes, but never past 12 AM (midnight).
+    if (thisHour !== lastHour && thisHour * 60 <= MIDNIGHT) {
+      listHtml += hourBlockHtml(thisHour * 60);
+      lastHour = thisHour;
+    }
+    const isCurrent = cur && cur.idx === idx;
+    listHtml += renderTaskRow(task, idx, isCurrent, false);
+    const durMin = (task && Number(task.duration) > 0) ? Number(task.duration) : 5;
+    clockMin += durMin;
+  });
+  // Fill the rest of the day with empty hour lines, up to and including 12 AM.
+  let fillHour = (lastHour >= 0 ? lastHour + 1 : Math.floor(dayStartMin() / 60));
+  for (let h = fillHour; h * 60 <= MIDNIGHT; h++) {
+    listHtml += hourBlockHtml(h * 60);
+  }
+  doneEntries.forEach(({ task, idx }) => {
+    listHtml += renderTaskRow(task, idx, false, true);
+  });
+  listHtml += `</div>`;
+
+  // Tab bar (table of contents)
+  const tabsHtml = `<div class="tabs">` + TABS.map(t =>
+    `<button class="tab ${state.activeTab === t.id ? 'active' : ''}" data-action="switch-tab" data-tab="${t.id}">${escapeHtml(t.label)}</button>`
+  ).join('') + `</div>`;
+
+  let bodyHtml;
+  if (state.activeTab === 'time') {
+    bodyHtml = `
+    <div class="header">
+      <div class="header-title">TUNETASK</div>
+      <div class="header-count">${completedCount} / ${totalCount}</div>
+    </div>
+    <div class="circle-row">
+      <button class="nav-arrow" data-action="prev-task" ${!canPrev ? 'aria-disabled="true"' : ''} title="Previous task (←)">
+        <svg width="20" height="20" aria-hidden="true"><use href="#i-chev-left"/></svg>
+      </button>
+      <div class="circle-wrap">
+        <svg class="ring" width="300" height="300">
+          <circle cx="150" cy="150" r="${radius}" fill="none" stroke="rgba(232,228,216,0.08)" stroke-width="3"/>
+          <circle cx="150" cy="150" r="${radius}" fill="none" stroke="${state.timeLeft < 30 ? '#d4a574' : '#d4a574'}" stroke-width="3" stroke-linecap="round" stroke-dasharray="${circumference}" stroke-dashoffset="${dashOffset}" style="transition:stroke-dashoffset 0.9s linear" class="${state.isRunning ? 'ring-active' : ''}"/>
+        </svg>
+        <div class="circle-center">${centerHtml}</div>
+      </div>
+      <button class="nav-arrow" data-action="next-task" ${!canNext ? 'aria-disabled="true"' : ''} title="Skip (send to bottom) (→)">
+        <svg width="20" height="20" aria-hidden="true"><use href="#i-chev-right"/></svg>
+      </button>
+    </div>
+    <div class="controls">${controlsHtml}</div>
+    ${actionsHtml}
+    ${listHtml}
+    ${renderUnfurnished()}
+    <div class="footer-hint">TAP ANY TEXT TO EDIT &nbsp;·&nbsp; DRAG ROWS TO REORDER &nbsp;·&nbsp; <span class="reset-link" data-action="export-tasks">EXPORT MY TASKS</span> &nbsp;·&nbsp; <span class="reset-link" data-action="import-tasks">IMPORT</span> &nbsp;·&nbsp; <span class="reset-link" data-action="reset-all">RESET TO DEFAULTS</span></div>
+    `;
+  } else {
+    const tab = TABS.find(t => t.id === state.activeTab) || { label: '' };
+    const notes = (state.tabNotes && state.tabNotes[state.activeTab]) || '';
+    const extra = state.activeTab === 'groceries'
+      ? `<a class="instacart-link" href="https://www.instacart.com/store/account/orders" target="_blank" rel="noopener">${icon('cart') || '🛒'} Open Instacart orders</a>`
+      : '';
+    bodyHtml = `
+    <div class="tab-panel">
+      <div class="tab-panel-title">${escapeHtml(tab.label)}</div>
+      <div class="tab-panel-sub">Notes &amp; plans</div>
+      ${extra}
+      <textarea class="tab-notes" id="tab-notes" data-action="edit-tab-notes" placeholder="Write your ${escapeHtml(tab.label.toLowerCase())} notes here…">${escapeHtml(notes)}</textarea>
+    </div>
+    `;
+  }
+
+  document.getElementById('app').innerHTML = tabsHtml + volumeHtml + bodyHtml;
+
+  // Focus inputs that just appeared
+  if (state.editingNameIdx !== null) {
+    const el = document.querySelector(`input.task-name-input[data-idx="${state.editingNameIdx}"]`);
+    if (el) { el.focus(); el.select(); }
+  }
+  if (state.editingLocationIdx !== null) {
+    const el = document.querySelector(`input.location-input[data-idx="${state.editingLocationIdx}"]`);
+    if (el) { el.focus(); el.select(); }
+  }
+  if (state.editingTimeIdx !== null) {
+    const el = document.querySelector(`input.time-input[data-idx="${state.editingTimeIdx}"]`);
+    if (el) { el.focus(); el.select(); }
+  }
+  if (state.editingDurationIdx !== null) {
+    const el = document.querySelector(`input.dur-input[data-idx="${state.editingDurationIdx}"]`);
+    if (el) { el.focus(); el.select(); }
+  }
+  if (state.editingSub.taskIdx !== null) {
+    const el = document.querySelector(`input.sub-item-input[data-idx="${state.editingSub.taskIdx}"][data-sub="${state.editingSub.subIdx}"]`);
+    if (el) { el.focus(); el.select(); }
+  }
+  if (state.editingSuitcaseRow) {
+    const { rowIdx, itemIdx } = state.editingSuitcaseRow;
+    let el;
+    if (itemIdx === -1) {
+      el = document.querySelector(`input.sc-row-name-input[data-row="${rowIdx}"]`);
+    } else {
+      el = document.querySelector(`input.sc-item-input[data-row="${rowIdx}"][data-item="${itemIdx}"]`);
+    }
+    if (el) { el.focus(); el.select(); }
+  }
+
+  // Restore quick-add input state
+  const qa = document.getElementById('quick-add');
+  if (qa) {
+    qa.value = qaValue;
+    if (qaHadFocus) {
+      qa.focus();
+      try { qa.setSelectionRange(qaSelStart, qaSelEnd); } catch {}
+    }
+  }
+
+  const ql = document.getElementById('quick-add-location');
+  if (ql) {
+    ql.value = qlValue;
+    if (qlHadFocus) ql.focus();
+  }
+
+  const uf = document.getElementById('unfurnished-quick-add');
+  if (uf) {
+    uf.value = ufValue;
+    if (ufHadFocus) uf.focus();
+  }
+
+  // Initialize volume slider visual fill
+  updateVolumeUI();
+}
+
+// ---- Event delegation ----
+document.addEventListener('click', (e) => {
+  // Find closest element with data-action
+  const target = e.target.closest('[data-action]');
+  if (!target) return;
+  const action = target.dataset.action;
+  const idx = target.dataset.idx !== undefined ? parseInt(target.dataset.idx, 10) : null;
+  const sub = target.dataset.sub !== undefined ? parseInt(target.dataset.sub, 10) : null;
+
+  switch (action) {
+    case 'start': handleStart(); break;
+    case 'pause': handlePause(); break;
+    case 'mark-done': handleMarkDone(); break;
+    case 'did-it': handleMarkDone(); break;
+    case 'did-repeat': handleDidRepeat(); break;
+    case 'did-delete': handleDidDelete(); break;
+    case 'later-today': goToNextTask(); break;
+    case 'later-tomorrow': handleLaterTomorrow(); break;
+    case 'skip-today': handleSkipToday(); break;
+    case 'delete-forever': handleDeleteForever(); break;
+    case 'failed': handleFailed(); break;
+    case 'reset': handleReset(); break;
+    case 'uncheck-all': uncheckAll(); break;
+    case 'repeat': handleRepeat(); break;
+    case 'mute': toggleMute(); break;
+    case 'toggle-task': toggleTaskDone(state.ids[idx]); break;
+    case 'toggle-sub': toggleSub(idx, sub); break;
+    case 'start-edit-name':
+      pushUndo();
+      state.editingNameIdx = idx;
+      state.editingLocationIdx = null;
+      state.editingTimeIdx = null;
+      state.editingSub = { taskIdx: null, subIdx: null };
+      render();
+      break;
+    case 'toggle-location-edit':
+      if (state.editingLocationIdx !== idx) pushUndo();
+      state.editingLocationIdx = state.editingLocationIdx === idx ? null : idx;
+      state.editingNameIdx = null;
+      state.editingTimeIdx = null;
+      state.editingSub = { taskIdx: null, subIdx: null };
+      render();
+      break;
+    case 'toggle-time-edit':
+      if (state.editingTimeIdx !== idx) pushUndo();
+      state.editingTimeIdx = state.editingTimeIdx === idx ? null : idx;
+      state.editingNameIdx = null;
+      state.editingLocationIdx = null;
+      state.editingSub = { taskIdx: null, subIdx: null };
+      render();
+      break;
+    case 'toggle-duration-edit':
+      if (state.editingDurationIdx !== idx) pushUndo();
+      state.editingDurationIdx = state.editingDurationIdx === idx ? null : idx;
+      state.editingNameIdx = null;
+      state.editingLocationIdx = null;
+      state.editingTimeIdx = null;
+      state.editingSub = { taskIdx: null, subIdx: null };
+      render();
+      break;
+    case 'switch-tab':
+      state.activeTab = target.dataset.tab || 'time';
+      state.editingNameIdx = null;
+      state.editingLocationIdx = null;
+      state.editingTimeIdx = null;
+      state.editingDurationIdx = null;
+      render();
+      break;
+    case 'start-edit-sub':
+      pushUndo();
+      state.editingSub = { taskIdx: idx, subIdx: sub };
+      state.editingNameIdx = null;
+      state.editingLocationIdx = null;
+      state.editingTimeIdx = null;
+      render();
+      break;
+    case 'add-task': addTask(); break;
+    case 'remove-task': removeTask(idx); break;
+    case 'add-sub': addSubItem(idx); break;
+    case 'remove-sub': removeSubItem(idx, sub); break;
+    case 'prev-task':
+      if (target.getAttribute('aria-disabled') !== 'true') goToPrevTask();
+      break;
+    case 'next-task':
+      if (target.getAttribute('aria-disabled') !== 'true') goToNextTask();
+      break;
+    case 'play-from':
+      playFromTask(idx);
+      break;
+    case 'reset-all':
+      if (confirm('Wipe ALL saved tasks, locations, and unfurnished items? This will restore the default starter list. This cannot be undone with ⌘Z.')) {
+        try { localStorage.removeItem(STORAGE_KEY); } catch {}
+        location.reload();
+      }
+      break;
+    case 'export-tasks': exportTasks(); break;
+    case 'import-tasks': importTasks(); break;
+    case 'add-sc-row': addSuitcaseRow(); break;
+    case 'remove-sc-row':
+      e.stopPropagation();
+      removeSuitcaseRow(parseInt(target.dataset.row, 10));
+      break;
+    case 'add-sc-item': addSuitcaseItem(parseInt(target.dataset.row, 10)); break;
+    case 'remove-sc-item':
+      e.stopPropagation();
+      removeSuitcaseItem(parseInt(target.dataset.row, 10), parseInt(target.dataset.item, 10));
+      break;
+    case 'start-edit-sc-row-name':
+      pushUndo();
+      state.editingSuitcaseRow = { rowIdx: parseInt(target.dataset.row, 10), itemIdx: -1 };
+      render();
+      break;
+    case 'start-edit-sc-item':
+      pushUndo();
+      state.editingSuitcaseRow = {
+        rowIdx: parseInt(target.dataset.row, 10),
+        itemIdx: parseInt(target.dataset.item, 10),
+      };
+      render();
+      break;
+    // ---- Unfurnished list ----
+    case 'add-unfurnished':
+      pushUndo();
+      state.unfurnished.push('');
+      state.editingUnfurnished = state.unfurnished.length - 1;
+      render();
+      break;
+    case 'remove-unfurnished': {
+      e.stopPropagation();
+      pushUndo();
+      const ui = parseInt(target.dataset.uf, 10);
+      state.unfurnished.splice(ui, 1);
+      // Re-index completion set: drop removed, shift higher ones down
+      state.unfurnishedDone = state.unfurnishedDone
+        .filter(x => x !== ui)
+        .map(x => (x > ui ? x - 1 : x));
+      state.editingUnfurnished = null;
+      render();
+      break;
+    }
+    case 'toggle-unfurnished': {
+      pushUndo();
+      const ui = parseInt(target.dataset.uf, 10);
+      if (state.unfurnishedDone.includes(ui)) {
+        state.unfurnishedDone = state.unfurnishedDone.filter(x => x !== ui);
+      } else {
+        state.unfurnishedDone.push(ui);
+        playCashSound();
+      }
+      render();
+      break;
+    }
+    case 'start-edit-unfurnished':
+      pushUndo();
+      state.editingUnfurnished = parseInt(target.dataset.uf, 10);
+      render();
+      break;
+  }
+});
+
+// Input handlers (using `input` for live updates, `blur`/`keydown` to commit)
+// Volume slider — live updates
+document.addEventListener('input', (e) => {
+  if (e.target && e.target.id === 'volume-slider') {
+    const v = parseInt(e.target.value, 10) / 100;
+    state.volume = v;
+    // Auto-unmute if user moves slider above 0
+    if (v > 0 && state.muted) state.muted = false;
+    // If currently speaking, restart utterance at new volume so change is heard live
+    if ('speechSynthesis' in window && window.speechSynthesis.speaking && currentSpeechText) {
+      // cancel current and replay last text at new volume
+      const txt = currentSpeechText;
+      window.speechSynthesis.cancel();
+      if (state.volume > 0 && !state.muted) {
+        const u = new SpeechSynthesisUtterance(txt);
+        u.rate = 0.95; u.pitch = 1.0; u.volume = state.volume;
+        window.speechSynthesis.speak(u);
+      }
+    }
+    // Update slider fill visually + label without full re-render (preserves focus)
+    updateVolumeUI();
+    return;
+  }
+});
+
+function updateVolumeUI() {
+  const slider = document.getElementById('volume-slider');
+  if (!slider) return;
+  const v = state.muted ? 0 : state.volume;
+  const pct = Math.round(v * 100);
+  // Update fill via background gradient
+  slider.style.background =
+    `linear-gradient(to right, var(--accent) 0%, var(--accent) ${pct}%, rgba(232,228,216,0.18) ${pct}%, rgba(232,228,216,0.18) 100%)`;
+  // Update label
+  const label = slider.parentElement && slider.parentElement.querySelector('.volume-pct');
+  if (label) label.textContent = String(pct);
+  // Update speaker icon
+  const btn = slider.parentElement && slider.parentElement.querySelector('.volume-icon-btn');
+  if (btn) {
+    btn.title = state.muted ? 'Unmute' : 'Mute';
+    const isOff = state.muted || state.volume === 0;
+    btn.innerHTML = `<svg class="icon" style="width:16px;height:16px" aria-hidden="true"><use href="#i-${isOff ? 'volume-mute' : 'volume'}"/></svg>`;
+  }
+}
+
+document.addEventListener('input', (e) => {
+  const target = e.target;
+  if (!target.dataset.action) return;
+  const idx = parseInt(target.dataset.idx, 10);
+  const sub = target.dataset.sub !== undefined ? parseInt(target.dataset.sub, 10) : null;
+  const val = target.value;
+
+  if (target.dataset.action === 'edit-name') {
+    // Split leading emoji (if any) from the typed text.
+    // If the user removed the emoji entirely, clear it — don't preserve the old one.
+    const split = splitLeadingEmoji(val);
+    state.tasks[idx].emoji = split.emoji; // may be '' — that's allowed
+    state.tasks[idx].name = split.emoji ? split.rest : val;
+  } else if (target.dataset.action === 'edit-location') {
+    state.tasks[idx].location = val;
+  } else if (target.dataset.action === 'edit-time') {
+    state.tasks[idx].time = val;
+  } else if (target.dataset.action === 'edit-duration') {
+    const n = parseInt(val, 10);
+    state.tasks[idx].duration = (Number.isFinite(n) && n > 0) ? n : 5;
+  } else if (target.dataset.action === 'edit-tab-notes') {
+    if (!state.tabNotes) state.tabNotes = {};
+    state.tabNotes[state.activeTab] = val;
+  } else if (target.dataset.action === 'edit-sub') {
+    const split = splitLeadingEmoji(val);
+    state.tasks[idx].items[sub].emoji = split.emoji;
+    state.tasks[idx].items[sub].name = split.emoji ? split.rest : val;
+  } else if (target.dataset.action === 'edit-sc-row-name') {
+    const ri = parseInt(target.dataset.row, 10);
+    state.suitcaseRows[ri].name = val;
+  } else if (target.dataset.action === 'edit-sc-item') {
+    const ri = parseInt(target.dataset.row, 10);
+    const ii = parseInt(target.dataset.item, 10);
+    state.suitcaseRows[ri].items[ii] = val;
+  } else if (target.dataset.action === 'edit-unfurnished') {
+    const ui = parseInt(target.dataset.uf, 10);
+    state.unfurnished[ui] = val;
+  }
+  // Don't re-render on every keystroke — preserves focus/cursor.
+  // But DO save so the typed text isn't lost on reload.
+  savePersistedState();
+});
+
+document.addEventListener('blur', (e) => {
+  const target = e.target;
+  if (!target.dataset || !target.dataset.action) return;
+  if (target.dataset.action === 'edit-name') {
+    // If the user tagged this task #unfurnished, move it into the unfurnished list.
+    const idx = parseInt(target.dataset.idx, 10);
+    // If focus has already moved to a DIFFERENT task's name editor (e.g. pressing
+    // Enter just created a new row below), don't clobber that editor.
+    if (state.editingNameIdx !== null && state.editingNameIdx !== idx) return;
+    state.editingNameIdx = null;
+    moveUnfurnishedTaggedToList();
+    render();
+  } else if (target.dataset.action === 'edit-location') {
+    state.editingLocationIdx = null;
+    render();
+  } else if (target.dataset.action === 'edit-time') {
+    state.editingTimeIdx = null;
+    render();
+  } else if (target.dataset.action === 'edit-duration') {
+    const idx = parseInt(target.dataset.idx, 10);
+    const n = parseInt(target.value, 10);
+    state.tasks[idx].duration = (Number.isFinite(n) && n > 0) ? n : 5;
+    state.editingDurationIdx = null;
+    // If this is the current task, refresh the live countdown to the new length.
+    const cur = getCurrent();
+    if (cur && cur.idx === idx && !state.isRunning) {
+      state.timeLeft = curDurationSec();
+      lastReminderTime = curDurationSec();
+    }
+    render();
+  } else if (target.dataset.action === 'edit-sub') {
+    // No auto-pick on blur for sub-items either.
+    state.editingSub = { taskIdx: null, subIdx: null };
+    render();
+  } else if (target.dataset.action === 'edit-sc-row-name' || target.dataset.action === 'edit-sc-item') {
+    state.editingSuitcaseRow = null;
+    render();
+  } else if (target.dataset.action === 'edit-unfurnished') {
+    state.editingUnfurnished = null;
+    render();
+  }
+}, true);
+
+document.addEventListener('keydown', (e) => {
+  if (e.key !== 'Enter' && e.key !== 'Escape') return;
+  const target = e.target;
+  if (!target.dataset || !target.dataset.action) return;
+  const action = target.dataset.action;
+
+  // Enter while editing a task NAME: commit it and drop a new empty task right
+  // below, ready to type (Shift+Enter still just commits/blurs).
+  if (action === 'edit-name' && e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    const idx = parseInt(target.dataset.idx, 10);
+    // The live `input` handler has already written the typed text into state.
+    // If the user tagged the task #unfurnished, fall back to the old behavior
+    // (commit + move it to the unfurnished list) instead of adding a row.
+    const curName = (state.tasks[idx] && state.tasks[idx].name) || '';
+    if (extractTags(curName).map(t => t.toLowerCase()).includes('unfurnished')) {
+      target.blur();
+      return;
+    }
+    addTaskAfter(idx);
+    return;
+  }
+
+  if (['edit-name','edit-location','edit-time','edit-duration','edit-sub','edit-sc-row-name','edit-sc-item'].includes(action)) {
+    target.blur();
+  }
+});
+
+// Global undo — Cmd/Ctrl+Z works everywhere, even inside inputs
+document.addEventListener('keydown', (e) => {
+  if ((e.metaKey || e.ctrlKey) && (e.key === 'z' || e.key === 'Z') && !e.shiftKey) {
+    // Don't fight the browser inside the quick-add input if it has unsaved typing
+    // (browser native undo for the textfield itself is also acceptable, but we override).
+    e.preventDefault();
+    undo();
+  }
+});
+
+// Global keyboard shortcuts — ignored while editing
+document.addEventListener('keydown', (e) => {
+  // If user is typing in an input, ignore all shortcuts
+  const t = e.target;
+  const tag = t && t.tagName;
+  if (tag === 'INPUT' || tag === 'TEXTAREA' || (t && t.isContentEditable)) return;
+
+  if (e.key === 'ArrowLeft') {
+    e.preventDefault();
+    goToPrevTask();
+  } else if (e.key === 'ArrowRight') {
+    e.preventDefault();
+    goToNextTask();
+  } else if (e.key === ' ' || e.code === 'Space') {
+    e.preventDefault();
+    if (getCurrent()) {
+      if (state.isRunning) handlePause();
+      else handleStart();
+    }
+  } else if (e.key === 'Enter') {
+    e.preventDefault();
+    handleMarkDone();
+  } else if (e.key === 'm' || e.key === 'M') {
+    e.preventDefault();
+    toggleMute();
+  } else if (e.key === 'r' || e.key === 'R') {
+    e.preventDefault();
+    handleRepeat();
+  }
+});
+
+// Quick-add input — submit on Enter
+document.addEventListener('keydown', (e) => {
+  if (e.key !== 'Enter') return;
+  if (e.target && (e.target.id === 'quick-add' || e.target.id === 'quick-add-location')) {
+    e.preventDefault();
+    const nameEl = document.getElementById('quick-add');
+    const locEl = document.getElementById('quick-add-location');
+    const val = nameEl ? nameEl.value : '';
+    const loc = locEl ? locEl.value : '';
+    if (nameEl) nameEl.value = '';
+    if (locEl) locEl.value = '';
+    quickAddTask(val, loc);
+  } else if (e.target && e.target.id === 'unfurnished-quick-add') {
+    e.preventDefault();
+    const val = (e.target.value || '').trim();
+    e.target.value = '';
+    if (val) {
+      pushUndo();
+      state.unfurnished.push(val);
+      render();
+      setTimeout(() => {
+        const el = document.getElementById('unfurnished-quick-add');
+        if (el) el.focus();
+      }, 0);
+    }
+  }
+});
+
+// ---- Drag and drop ----
+let dragSrcIdx = null;
+
+// Whole task row is draggable. But don't initiate drag from inputs.
+document.addEventListener('mousedown', (e) => {
+  const item = e.target.closest && e.target.closest('.task-item');
+  if (!item) return;
+  // If clicking on an input, disable dragging so text selection works
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+    item.setAttribute('draggable', 'false');
+  } else {
+    item.setAttribute('draggable', 'true');
+  }
+});
+
+document.addEventListener('dragstart', (e) => {
+  const item = e.target.closest && e.target.closest('.task-item');
+  if (!item) return;
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+    e.preventDefault();
+    return;
+  }
+  if (item.getAttribute('draggable') !== 'true') { e.preventDefault(); return; }
+  dragSrcIdx = parseInt(item.dataset.idx, 10);
+  item.classList.add('dragging');
+  e.dataTransfer.effectAllowed = 'move';
+  try { e.dataTransfer.setData('text/plain', String(dragSrcIdx)); } catch {}
+});
+
+document.addEventListener('dragend', (e) => {
+  document.querySelectorAll('.task-item').forEach(el => {
+    el.classList.remove('dragging', 'drag-over-top', 'drag-over-bottom');
+  });
+  dragSrcIdx = null;
+});
+
+document.addEventListener('dragover', (e) => {
+  const item = e.target.closest && e.target.closest('.task-item');
+  if (!item) return;
+  if (dragSrcIdx === null) return;
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  // Visual indicator on hover position (top or bottom half)
+  document.querySelectorAll('.task-item').forEach(el => {
+    el.classList.remove('drag-over-top', 'drag-over-bottom');
+  });
+  const rect = item.getBoundingClientRect();
+  const after = (e.clientY - rect.top) > rect.height / 2;
+  item.classList.add(after ? 'drag-over-bottom' : 'drag-over-top');
+});
+
+document.addEventListener('drop', (e) => {
+  const item = e.target.closest && e.target.closest('.task-item');
+  if (!item || dragSrcIdx === null) return;
+  e.preventDefault();
+  const targetIdx = parseInt(item.dataset.idx, 10);
+  const rect = item.getBoundingClientRect();
+  const after = (e.clientY - rect.top) > rect.height / 2;
+  // Calculate insertion target: after = insert at targetIdx + 1
+  let toIdx = after ? targetIdx + 1 : targetIdx;
+  reorderTask(dragSrcIdx, toIdx);
+  dragSrcIdx = null;
+});
+
+// Start the countdown at the first task's own duration.
+state.timeLeft = curDurationSec();
+// initial render
+render();
+// Persist immediately under the current key. This "claims" any data that was
+// adopted from a legacy key or normalized on load, so it survives future updates.
+savePersistedState();
+</script>
+</body>
+</html>
