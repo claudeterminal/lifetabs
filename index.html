@@ -1095,7 +1095,9 @@
   .lg-pct { font-size: 16px; font-weight: 800; color: #f4c544; font-variant-numeric: tabular-nums; flex-shrink: 0; }
   .lg-pct.done { color: #5fd07f; }
   .lg-bar { position: relative; height: 16px; border-radius: 999px; background: rgba(232,228,216,0.12); overflow: hidden; }
-  .lg-barlabel { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); font-size: 10.5px; font-weight: 800; color: #fff; letter-spacing: 0.02em; text-shadow: 0 1px 2px rgba(0,0,0,0.55); pointer-events: none; }
+  .lg-barlabel { position: absolute; top: 50%; left: 8px; transform: translateY(-50%); font-size: 10px; font-weight: 800; color: #fff; letter-spacing: 0.02em; text-shadow: 0 1px 2px rgba(0,0,0,0.6); pointer-events: none; }
+  .lg-gain { position: absolute; top: 0; bottom: 0; box-sizing: border-box; display: flex; align-items: center; justify-content: center; border-left: 1.5px dashed rgba(255,255,255,0.9); border-right: 1.5px dashed rgba(255,255,255,0.9); background: rgba(255,255,255,0.16); pointer-events: none; }
+  .lg-gain span { font-size: 8px; font-weight: 800; color: #fff; letter-spacing: 0.02em; text-shadow: 0 1px 2px rgba(0,0,0,0.75); white-space: nowrap; }
   .goal-bars { margin: 8px 0 20px; max-width: 560px; }
   .lg-emoji { display: inline-block; font-size: 16px; line-height: 1; }
   .lg-chaingroup { position: relative; margin: 0 0 14px; padding-left: 14px; }
@@ -1104,11 +1106,15 @@
     width: 3px; border-radius: 3px;
     background: linear-gradient(180deg, #ff8ec2, #ff2e88);
   }
+  .lg-chaingroup.teal::before {
+    background: linear-gradient(180deg, #5fd0c0, #22a58f);
+  }
   .lg-chaingroup .lg-row:last-child { margin-bottom: 0; }
   .lg-fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, #f4c544, #f0a93a); transition: width 0.9s cubic-bezier(0.4,0,0.2,1); }
   .lg-fill.full { background: linear-gradient(90deg, #5fd07f, #36b85f); }
   .lg-fill.pink { background: linear-gradient(90deg, #ff8ec2, #ff2e88); box-shadow: 0 0 8px rgba(255,46,136,0.45); }
   .lg-fill.redflash { background: linear-gradient(90deg, #ff5a5a, #d61f1f); animation: lg-redflash 0.85s ease-in-out infinite; }
+  .lg-fill.yellowgreen { background: linear-gradient(90deg, #d4e157, #8bc34a); }
   @keyframes lg-redflash {
     0%, 100% { opacity: 1; box-shadow: 0 0 10px rgba(255,60,60,0.7); }
     50% { opacity: 0.4; box-shadow: 0 0 0 rgba(255,60,60,0); }
@@ -5594,15 +5600,26 @@ function render() {
       { label: '2 mil dollars saved', pct: 5, emoji: '💰' },
       { label: 'find her house 🇺🇸', pct: 100, emoji: '🏠' },
       { label: 'find her job 🇺🇸', pct: 100, emoji: '💼' },
+      { label: 'secured exchanged work rent until income flows', pct: 100, emoji: '🤝' },
       { label: 'claude packet 🇺🇸', pct: 9, emoji: '📋' },
       { label: 'Find yourself a job', pct: 10, emoji: '🧑‍💻' },
       { label: 'Find yourself an affordable home (even temporary, but renewable)', pct: 8, emoji: '🏡' },
-      { label: 'Get back to 115 lbs', pct: 50, barLabel: '125 lb', emoji: '⚖️' },
-      { label: 'leahs projects', pct: 33, cls: 'redflash', emoji: '🚨' },
-      { label: 'Start Dating Again', pct: 6, cls: 'pink', emoji: '💘', chain: 'start' },
+      { label: 'Get back to 115 lbs', pct: 60, barLabel: '125 lb', emoji: '⚖️', gain: { from: 50, to: 60, label: 'june 16' } },
+      { label: 'leahs projects', pct: 67, barLabel: '2/3', cls: 'yellowgreen', emoji: '🛠️', gain: { from: 33.3, to: 66.7, label: 'june 15' } },
+      // Dating chain (pink line)
+      { label: 'finish dating website', pct: 30, cls: 'pink', emoji: '🌐', chain: 'start', sortKey: 6 },
+      { label: 'Start Dating Again', pct: 6, cls: 'pink', emoji: '💘', chain: 'mid' },
       { label: 'Get a partner', pct: 1, cls: 'pink', emoji: '💑', chain: 'mid' },
       { label: 'Get married', pct: 1, cls: 'pink', emoji: '💍', chain: 'mid' },
       { label: 'Decide on kids', pct: 1, cls: 'pink', emoji: '👶', chain: 'end' },
+      // Gut / health chain (teal line) — sits directly under the dating chain
+      { label: 'get blue shield reimbursement', pct: 0, emoji: '🧾', chain: 'start', sortKey: 5.5, chainCls: 'teal' },
+      { label: 'get gut doctor', pct: 0, emoji: '🩺', chain: 'mid' },
+      { label: 'stabilize diet', pct: 0, emoji: '🥗', chain: 'mid' },
+      { label: 'try supplements', pct: 0, emoji: '💊', chain: 'mid' },
+      { label: 'get good gut 0/10 gut scores', pct: 0, barLabel: '0/10', emoji: '🦠', chain: 'mid' },
+      { label: 'heal panic', pct: 0, emoji: '🧘', chain: 'mid' },
+      { label: 'get off xanax', pct: 0, emoji: '🚫', chain: 'end' },
     ];
     // Group chain items with their start; every other goal is its own group.
     const goalGroups = [];
@@ -5610,22 +5627,23 @@ function render() {
       if (g.chain === 'mid' || g.chain === 'end') {
         goalGroups[goalGroups.length - 1].items.push(g);
       } else {
-        goalGroups.push({ pct: g.pct, items: [g] });
+        goalGroups.push({ sortVal: (g.sortKey != null ? g.sortKey : g.pct), cls: g.chainCls || '', items: [g] });
       }
     });
-    goalGroups.sort((a, b) => b.pct - a.pct);
+    goalGroups.sort((a, b) => b.sortVal - a.sortVal);
     const goalRowHtml = (g) => {
       const full = g.pct >= 100;
       const bl = g.barLabel ? `<span class="lg-barlabel">${escapeHtml(g.barLabel)}</span>` : '';
+      const gn = g.gain ? `<span class="lg-gain" style="left:${g.gain.from}%;width:${g.gain.to - g.gain.from}%"><span>${escapeHtml(g.gain.label)}</span></span>` : '';
       const em = g.emoji ? `<span class="lg-emoji">${g.emoji}</span> ` : '';
       return `<div class="lg-row">
         <div class="lg-row-head"><span class="lg-label">${full ? '<span class="lg-check">✓</span> ' : ''}${em}${escapeHtml(g.label)}</span><span class="lg-pct${full ? ' done' : ''}">${g.pct}%</span></div>
-        <div class="lg-bar"><div class="lg-fill ${full ? 'full' : ''}${g.cls ? ' ' + g.cls : ''}" style="width:${g.pct}%"></div>${bl}</div>
+        <div class="lg-bar"><div class="lg-fill ${full ? 'full' : ''}${g.cls ? ' ' + g.cls : ''}" style="width:${g.pct}%"></div>${bl}${gn}</div>
       </div>`;
     };
     const goalBarsHtml = `<div class="goal-bars">` + goalGroups.map(gr => {
       const inner = gr.items.map(goalRowHtml).join('');
-      return gr.items.length > 1 ? `<div class="lg-chaingroup">${inner}</div>` : inner;
+      return gr.items.length > 1 ? `<div class="lg-chaingroup ${gr.cls}">${inner}</div>` : inner;
     }).join('') + `</div>`;
     bodyHtml = `
     <div class="tab-panel goals-panel">
