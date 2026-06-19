@@ -1103,7 +1103,7 @@
   .lg-row { margin-bottom: 14px; }
   .lg-row:last-child { margin-bottom: 0; }
   .lg-row-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin-bottom: 6px; }
-  .lg-label { font-size: 17px; font-weight: 700; color: var(--fg); letter-spacing: -0.01em; }
+  .lg-label { font-size: 17px; font-weight: 700; color: var(--fg); letter-spacing: -0.01em; overflow-wrap: anywhere; min-width: 0; }
   .lg-check { color: #36b85f; font-weight: 900; }
   .lg-pct { font-size: 16px; font-weight: 800; color: #f4c544; font-variant-numeric: tabular-nums; flex-shrink: 0; }
   .lg-pct.done { color: #5fd07f; }
@@ -5615,18 +5615,18 @@ function render() {
     // together and are wrapped in a vertical-line group to show they're joined.
     const rawGoals = [
       { label: '2 mil dollars saved', pct: 5, emoji: '💰' },
-      { label: 'find her house 🇺🇸', pct: 100, emoji: '🏠' },
+      { label: 'house 🇺🇸', pct: 100, emoji: '🏠' },
       { label: 'find her job 🇺🇸', pct: 100, emoji: '💼' },
       { label: 'secured exchanged work rent until income flows', pct: 100, emoji: '🤝' },
       { label: 'claude packet 🇺🇸', pct: 9, emoji: '📋' },
-      { label: 'automate life with claude', pct: 10, emoji: '🤖' },
+      { label: 'automate', pct: 10, emoji: '🤖' },
       { label: 'Find yourself a job', pct: 10, emoji: '🧑‍💻' },
-      { label: 'Find yourself an affordable home (even temporary, but renewable)', pct: 8, emoji: '🏡' },
+      { label: 'affordable home', pct: 8, emoji: '🏡' },
       { label: 'Get back to 115 lbs', pct: 60, barLabel: '125 lb', emoji: '⚖️', gain: { from: 50, to: 60, label: 'june 16' } },
       { label: 'leahs projects', pct: 99, barLabel: '99%', cls: 'yellowgreen', emoji: '🛠️', gain: { from: 66.7, to: 99, label: 'june 19' } },
       // Dating chain (pink line)
       { label: 'finish dating website', pct: 30, cls: 'pink', emoji: '🌐', chain: 'start', sortKey: 6 },
-      { label: 'Start Dating Again', pct: 6, cls: 'pink', emoji: '💘', chain: 'mid' },
+      { label: 'date', pct: 6, cls: 'pink', emoji: '💘', chain: 'mid' },
       { label: 'Get a partner', pct: 1, cls: 'pink', emoji: '💑', chain: 'mid' },
       { label: 'Get married', pct: 1, cls: 'pink', emoji: '💍', chain: 'mid' },
       { label: 'Decide on kids', pct: 1, cls: 'pink', emoji: '👶', chain: 'end' },
