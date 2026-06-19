@@ -1134,6 +1134,9 @@
   .lg-chaingroup.teal::before {
     background: linear-gradient(180deg, #5fd0c0, #22a58f);
   }
+  .lg-chaingroup.ai::before {
+    background: linear-gradient(180deg, #9aa7c7, #5a6b8c);
+  }
   .lg-chaingroup .lg-row:last-child { margin-bottom: 0; }
   .lg-fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, #f4c544, #f0a93a); transition: width 0.9s cubic-bezier(0.4,0,0.2,1); }
   .lg-fill.full { background: linear-gradient(90deg, #5fd07f, #36b85f); }
@@ -5632,8 +5635,8 @@ function render() {
       { label: 'find her job 🇺🇸', pct: 100, emoji: '💼' },
       { label: 'secured exchanged work rent until income flows', pct: 100, emoji: '🤝' },
       { label: 'claude packet 🇺🇸', pct: 9, emoji: '📋' },
-      { label: 'ai agents automating life', pct: 10, emoji: '🤖', sortKey: 94 },
-      { label: 'ai agents automating income', pct: 5, emoji: '🤖', sortKey: 93 },
+      { label: 'ai agents automating life', pct: 10, emoji: '🤖', sortKey: 94, chain: 'start', chainCls: 'ai' },
+      { label: 'ai agents automating income', pct: 5, emoji: '🤖', chain: 'end' },
       { label: 'Find yourself a job', pct: 10, emoji: '🧑‍💻' },
       { label: 'affordable home', pct: 8, emoji: '🏡' },
       { label: 'Get back to 115 lbs', pct: 60, barLabel: '125 lb', emoji: '⚖️', gain: { from: 50, to: 60, label: 'june 16' } },
