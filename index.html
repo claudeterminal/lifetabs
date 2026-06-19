@@ -173,6 +173,12 @@
     color: #0a0d14; background: var(--accent); border-color: var(--accent);
   }
   .tab-sep { align-self: center; color: rgba(236,232,221,0.5); font-size: 16.5px; font-weight: 300; user-select: none; pointer-events: none; margin: 0 1px; }
+  /* Desktop: keep every tab on a single line */
+  @media (min-width: 721px) {
+    .tabs { flex-wrap: nowrap; max-width: 100%; gap: 2px; overflow-x: auto; }
+    .tab { font-size: 11px; padding: 6px 8px; }
+    .tabs .volume-control { flex-shrink: 0; }
+  }
   .btn-export { opacity: 0.4; font-weight: 400; background: transparent; border-color: transparent; }
   .btn-export:hover { opacity: 0.85; background: rgba(255,255,255,0.05); border-color: transparent; }
   .house-search-grid { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin: 14px 0 8px; }
