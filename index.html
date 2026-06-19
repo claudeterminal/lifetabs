@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>TuneTask</title>
+<title>Taskit</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:ital,wght@0,300..800;1,400..600&display=swap" rel="stylesheet">
@@ -6947,7 +6947,7 @@ function showReminder(emoji, msg, speakText) {
   reminderShowing = true;
   try {
     if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
-      new Notification('TuneTask', { body: stripHtml(msg) });
+      new Notification('Taskit', { body: stripHtml(msg) });
     }
   } catch (e) {}
   // No spoken audio for reminder alerts — pop-up only.
