@@ -2468,13 +2468,14 @@ if (Array.isArray(state.consumablesBag)) {
 state.groceries = Array.isArray(state.groceries) ? state.groceries : [];
 if (typeof state.grNextId !== 'number') state.grNextId = state.groceries.length + 1;
 [
+  ['nonfood', ['💧 Glass water (always order more. Endless)', '🦷 Tooth paste', '✅ Zicam cold candies (try once)', 'Compostable forks']],
   ['seasonings', ['Dried chives', 'Dried parsley', 'Dried basil', 'Dried thyme', 'Dried dill', 'Dried rosemary', 'Dried oregano', 'Dried marjoram', 'Dried sage', 'Dried lemon zest', 'Smoked sea salt', 'Saffron', 'Ground sumac berries', 'Tajin (mild)', 'Pink peppercorn', 'Tarragon', 'Nutritional yeast', 'Coconut aminos', 'Fresh lemon juice', 'Fresh lime juice', 'Olive oil', 'Avocado oil', 'Maple syrup', 'Shredded cheese', 'Precut watermelon', 'Organic fresh chives', 'Organic fresh scallions', 'Zyrtec melts', 'Glass water', 'Organic chicken', 'Good clean love']],
   ['protein', ['1 salmon', 'Pre-cooked eggs or regular organic eggs', 'True story chicken prepackaged - 2 bags']],
   ['containers', ['⛔️ Thick natural paper cups for hot beverages', 'Glass bottled water', 'Peppermint tea', 'Frozen cranberries', 'Lime', '88 acres protein bars', 'Compostable bowls or amazon', 'Lemon', 'Organic mayo', 'Chicken true story', 'Chicken true turkey', 'Zinc candies ✅']],
-  ['grain', ['Organic rice noodles', 'Organic buckwheat or quinoa', 'Organic buckwheat noodles', 'Organic quinoa', 'Organic jasmine rice ✅']],
+  ['grain', ['Buckwheat groat (bread)', 'Organic rice noodles', 'Organic buckwheat or quinoa', 'Organic buckwheat noodles', 'Organic quinoa', 'Organic jasmine rice ✅']],
   ['crackers', ['⛔️ Organic rice crackers (no other ingredients)']],
   ['seasoning2', ['2 lime', 'Ginger', 'Organic pink Himalayan fine salt', 'Organic olive oil', 'Organic parsley', 'Organic shredded cheddar cheese or just normal', '⛔️ Organic fresh chives', '⛔️ Organic fresh scallions', 'Organic dried basil 🌿']],
-  ['veggies', ['Pre-washed organic arugula', 'Carrots']],
+  ['veggies', ['Edamame (one thing at a time)', 'Peas', 'Organic microgreens', 'Pre-washed organic arugula', 'Carrots', 'Organic potatoes']],
   ['fruit', ['3 bananas', '⛔️ Watermelon', 'Blueberries', 'Dragonfruit', '⛔️ Mandarin oranges']],
   ['other', ['Ziplock bags', '5 glass still waters']],
   ['future', ['Toilet paper', '⛔️ Paper towel', 'Laundry pods / liquid', 'Dishwashing liquid']],
@@ -4772,6 +4773,7 @@ function pbDelete(id) {
 }
 // Groceries shopping list (grouped)
 const GROCERY_GROUPS = [
+  ['nonfood', 'Other non-food'],
   ['seasonings', 'Seasonings'], ['protein', 'Protein'], ['containers', 'Containers'],
   ['grain', 'Grain'], ['crackers', 'Crackers'], ['seasoning2', 'Seasoning'],
   ['veggies', 'Veggies'], ['fruit', 'Fruit'], ['other', 'Other'],
