@@ -188,6 +188,7 @@
 
   /* Placeholder panel for the not-yet-built tabs */
   .tab-panel { width: 100%; max-width: 640px; margin: 24px auto 0; }
+  .tab-panel.goals-panel { max-width: 1040px; }
   .tab-panel-title {
     font-family: var(--sf-display); font-size: 26.5px; font-weight: 700;
     letter-spacing: -0.02em; margin-bottom: 6px; text-align: center;
@@ -1098,7 +1099,10 @@
   .lg-barlabel { position: absolute; top: 50%; left: 8px; transform: translateY(-50%); font-size: 10px; font-weight: 800; color: #fff; letter-spacing: 0.02em; text-shadow: 0 1px 2px rgba(0,0,0,0.6); pointer-events: none; }
   .lg-gain { position: absolute; top: 0; bottom: 0; box-sizing: border-box; display: flex; align-items: center; justify-content: center; border-left: 1.5px dashed rgba(255,255,255,0.9); border-right: 1.5px dashed rgba(255,255,255,0.9); background: rgba(255,255,255,0.16); pointer-events: none; }
   .lg-gain span { font-size: 8px; font-weight: 800; color: #fff; letter-spacing: 0.02em; text-shadow: 0 1px 2px rgba(0,0,0,0.75); white-space: nowrap; }
-  .goal-bars { margin: 8px 0 20px; max-width: 560px; }
+  .goal-bars { margin: 8px 0 20px; max-width: 100%; column-count: 2; column-gap: 36px; }
+  .goal-bars > * { break-inside: avoid; -webkit-column-break-inside: avoid; }
+  .lg-row { break-inside: avoid; -webkit-column-break-inside: avoid; }
+  @media (max-width: 720px) { .goal-bars { column-count: 1; } }
   .lg-emoji { display: inline-block; font-size: 16px; line-height: 1; }
   .lg-chaingroup { position: relative; margin: 0 0 14px; padding-left: 14px; }
   .lg-chaingroup::before {
