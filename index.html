@@ -181,9 +181,9 @@
   .tab-sep { align-self: center; color: rgba(236,232,221,0.5); font-size: 16.5px; font-weight: 300; user-select: none; pointer-events: none; margin: 0 1px; }
   /* Desktop: keep every tab on a single line */
   @media (min-width: 721px) {
-    .tabs { flex-wrap: nowrap; max-width: 100%; gap: 2px; overflow-x: auto; }
-    .tab { font-size: 11px; padding: 6px 8px; }
-    .tabs .volume-control { flex-shrink: 0; }
+    .tabs { flex-wrap: nowrap; max-width: 100%; gap: 1px; overflow: hidden; }
+    .tab { font-size: 10px; padding: 5px 6px; }
+    .tabs .tab-sep { display: none; }
   }
   .btn-export { opacity: 0.4; font-weight: 400; background: transparent; border-color: transparent; }
   .btn-export:hover { opacity: 0.85; background: rgba(255,255,255,0.05); border-color: transparent; }
@@ -2017,15 +2017,15 @@ const MEAL_TIMER_B64 = "PCFET0NUWVBFIGh0bWw+CjxodG1sIGxhbmc9ImVuIj4KPGhlYWQ+Cjxt
 const TABS = [
   { id: 'goals', label: 'Life goals' },
   { id: 'time', label: 'Time' },
-  { id: 'fivemin', label: '5 min grid' },
-  { id: 'meal', label: 'Meal timer' },
+  { id: 'fivemin', label: '5min' },
+  { id: 'meal', label: 'Meal' },
   { id: 'housing', label: 'Housing' },
   { id: 'income', label: 'Income' },
   { id: 'clean', label: 'Clean' },
   { id: 'automated', label: 'Automated' },
   { id: 'groceries', label: 'Groceries' },
   { id: 'health', label: 'Health' },
-  { id: 'appts', label: 'Appointments' },
+  { id: 'appts', label: 'Appts' },
   { id: 'expenses', label: 'Expenses' },
   { id: 'finances', label: 'Finances' },
   { id: 'projects', label: 'Projects' },
@@ -2034,7 +2034,7 @@ const TABS = [
   { id: 'papers', label: 'Papers' },
   { id: 'exercise', label: 'Exercise' },
   { id: 'beauty', label: 'Beauty' },
-  { id: 'social', label: 'Social media' },
+  { id: 'social', label: 'Social' },
   { id: 'inventory', label: 'Inventory' },
   { id: 'pack', label: 'Pack' },
   { id: 'family', label: 'Family' },
@@ -5632,8 +5632,8 @@ function render() {
       { label: 'find her job 🇺🇸', pct: 100, emoji: '💼' },
       { label: 'secured exchanged work rent until income flows', pct: 100, emoji: '🤝' },
       { label: 'claude packet 🇺🇸', pct: 9, emoji: '📋' },
-      { label: 'ai agents automating life', pct: 10, emoji: '🤖' },
-      { label: 'ai agents automating income', pct: 5, emoji: '🤖' },
+      { label: 'ai agents automating life', pct: 10, emoji: '🤖', sortKey: 94 },
+      { label: 'ai agents automating income', pct: 5, emoji: '🤖', sortKey: 93 },
       { label: 'Find yourself a job', pct: 10, emoji: '🧑‍💻' },
       { label: 'affordable home', pct: 8, emoji: '🏡' },
       { label: 'Get back to 115 lbs', pct: 60, barLabel: '125 lb', emoji: '⚖️', gain: { from: 50, to: 60, label: 'june 16' } },
