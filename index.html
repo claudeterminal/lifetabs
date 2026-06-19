@@ -2017,7 +2017,8 @@ const TABS = [
 // If a returning user was on a tab that no longer exists (e.g. the removed
 // "Not alone" tab), drop them back on the Time tab.
 if (!TABS.some(t => t.id === state.activeTab)) state.activeTab = 'goals';
-// Otherwise stay on whatever tab you were last on when the page reloads.
+// Always open on the Life goals tab by default, regardless of last tab used.
+state.activeTab = 'goals';
 
 // One-time: make sure "take 0.03 mg xanax" sits at the very top of the list,
 // even for returning users (added without resetting their other tasks).
@@ -5606,7 +5607,7 @@ function render() {
       { label: 'Find yourself a job', pct: 10, emoji: '🧑‍💻' },
       { label: 'Find yourself an affordable home (even temporary, but renewable)', pct: 8, emoji: '🏡' },
       { label: 'Get back to 115 lbs', pct: 60, barLabel: '125 lb', emoji: '⚖️', gain: { from: 50, to: 60, label: 'june 16' } },
-      { label: 'leahs projects', pct: 67, barLabel: '2/3', cls: 'yellowgreen', emoji: '🛠️', gain: { from: 33.3, to: 66.7, label: 'june 15' } },
+      { label: 'leahs projects', pct: 99, barLabel: '99%', cls: 'yellowgreen', emoji: '🛠️', gain: { from: 66.7, to: 99, label: 'june 19' } },
       // Dating chain (pink line)
       { label: 'finish dating website', pct: 30, cls: 'pink', emoji: '🌐', chain: 'start', sortKey: 6 },
       { label: 'Start Dating Again', pct: 6, cls: 'pink', emoji: '💘', chain: 'mid' },
