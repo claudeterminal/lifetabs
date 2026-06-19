@@ -114,6 +114,12 @@
     height: 44px;
     transition: all 0.2s ease;
   }
+  .volume-fixed {
+    position: fixed; bottom: 16px; right: 16px; z-index: 100;
+    background: rgba(16, 20, 30, 0.94);
+    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+    box-shadow: 0 4px 18px rgba(0,0,0,0.4);
+  }
   .volume-control:hover {
     background: rgba(255,255,255,0.08);
     border-color: rgba(232,228,216,0.25);
@@ -1870,7 +1876,7 @@ const state = {
   timeLeft: DEFAULT_DURATION,
   isRunning: false,
   hasStarted: false,
-  muted: false,
+  muted: true,
   volume: 1.0,
   manualIdx: null,
   editingNameIdx: null,
@@ -5442,7 +5448,7 @@ function render() {
   const effectiveVol = state.muted ? 0 : state.volume;
   const volPct = Math.round(effectiveVol * 100);
   const volumeHtml = `
-    <div class="volume-control" title="Volume: ${volPct}%">
+    <div class="volume-control volume-fixed" title="Volume: ${volPct}%">
       <button class="volume-icon-btn" data-action="mute" title="${state.muted ? 'Unmute' : 'Mute'}">
         ${state.muted || state.volume === 0 ? icon('volume-mute') : icon('volume')}
       </button>
@@ -5568,7 +5574,7 @@ function render() {
   // Tab bar (table of contents) — volume control sits at the end, next to Life goals.
   const tabsHtml = `<div class="tabs">` + TABS.map(t =>
     `<button class="tab ${state.activeTab === t.id ? 'active' : ''}" data-action="switch-tab" data-tab="${t.id}">${escapeHtml(t.label)}</button>`
-  ).join('<span class="tab-sep">|</span>') + volumeHtml + `</div>`;
+  ).join('<span class="tab-sep">|</span>') + `</div>` + volumeHtml;
 
   let bodyHtml;
   if (state.activeTab === 'time') {
