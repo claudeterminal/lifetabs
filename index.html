@@ -5593,9 +5593,36 @@ function render() {
     `<button class="tab ${state.activeTab === t.id ? 'active' : ''}" data-action="switch-tab" data-tab="${t.id}">${escapeHtml(t.label)}</button>`
   ).join('<span class="tab-sep">|</span>') + `</div>` + volumeHtml;
 
+  // ---- Home top: supplements I'm taking today + action items (moved out of popups) ----
+  const suppToday = ['L-glutamine', 'Zinc carnosine', 'Quercetin', 'PHGG fiber'];
+  const suppPills = suppToday.map(s =>
+    `<span style="display:inline-block;background:#2a2a31;border:1px solid #3a3a44;border-radius:999px;padding:4px 11px;margin:3px 4px 0 0;font-size:13px;color:#f2f2f5;">${escapeHtml(s)}</span>`
+  ).join('');
+  const autoRaw = (state.tabNotes && state.tabNotes.automated) || '';
+  const actionLines = autoRaw.split('\n').map(l => l.trim())
+    .filter(l => l.startsWith('•') || /^💆/.test(l))
+    .map(l => l.replace(/^•\s*/, ''));
+  const actionItemsHtml = actionLines.length
+    ? `<ul style="margin:6px 0 0;padding-left:18px;">` +
+        actionLines.map(l => `<li style="font-size:13px;line-height:1.5;color:#cfcfd6;margin:2px 0;">${escapeHtml(l)}</li>`).join('') +
+      `</ul>`
+    : '';
+  const homeTopHtml = `
+    <div class="home-top" style="margin:4px 4px 10px;">
+      <div style="background:#23232a;border:1px solid #3a3a44;border-radius:12px;padding:11px 13px;margin-bottom:8px;">
+        <div style="font-weight:800;font-size:14px;color:#7dd3a8;">💊 Supplements I'm taking today</div>
+        <div style="margin-top:6px;">${suppPills}</div>
+      </div>
+      ${actionItemsHtml ? `<div style="background:#23232a;border:1px solid #3a3a44;border-radius:12px;padding:11px 13px;">
+        <div style="font-weight:800;font-size:14px;color:#f4c544;">📋 Today's action items</div>
+        ${actionItemsHtml}
+      </div>` : ''}
+    </div>`;
+
   let bodyHtml;
   if (state.activeTab === 'time') {
     bodyHtml = `
+    ${homeTopHtml}
     <div class="time-sticky">
     <div class="circle-row">
       <div class="circle-wrap">
@@ -7110,15 +7137,18 @@ const HOUR_MS = 60 * 60 * 1000;
 function checkReminders() {
   if (reminderShowing) return; // don't stack popups
   const now = new Date();
+  // Action-item reminders (Mom's birthday, HeyGen email) no longer pop up —
+  // they now live at the top of the home page. Set true to re-enable popups.
+  const SHOW_ACTION_ITEM_POPUPS = false;
   // 1) Mom's birthday — once per session on June 14, 2026
-  if (now.getFullYear() === 2026 && now.getMonth() === 5 && now.getDate() === 14 && !momBdayShownSession) {
+  if (SHOW_ACTION_ITEM_POPUPS && now.getFullYear() === 2026 && now.getMonth() === 5 && now.getDate() === 14 && !momBdayShownSession) {
     if (showReminder('🎂', "Today is <b>Mom's birthday</b> (June 14)! 🎉 Give her a call.", "Today is your mom's birthday, June fourteenth. Give her a call.")) {
       momBdayShownSession = true;
     }
     return;
   }
   // 2) HeyGen affiliate email follow-up — Monday, June 1, 2026 at 12 PM and 6 PM.
-  if (now.getFullYear() === 2026 && now.getMonth() === 5 && now.getDate() === 1) {
+  if (SHOW_ACTION_ITEM_POPUPS && now.getFullYear() === 2026 && now.getMonth() === 5 && now.getDate() === 1) {
     const h = now.getHours();
     if (h >= 12 && h < 18 && !heygenNoonShown) {
       if (showReminder('📧', "It's <b>noon Monday</b> — check your email for a reply on the <b>HeyGen affiliate link</b>.", "It's noon Monday. Check your email for a reply on the HeyGen affiliate link.")) {
