@@ -5106,6 +5106,7 @@ function supplementsHtml() {
   const opts = SUPP_GROUPS.map(([id, label]) => `<option value="${id}">${escapeHtml(label)}</option>`).join('');
   return `<div class="supp-section">
     <div class="pb-head"><span class="pb-title">${PILL_SVG} Supplements <span class="pb-count">(${(state.supplementsBag || []).length})</span></span></div>
+    <div style="color:#ff3b30;font-weight:600;font-size:12.5px;line-height:1.4;border:1px solid rgba(255,59,48,0.45);background:rgba(255,59,48,0.08);border-radius:8px;padding:8px 10px;margin:6px 0 10px;">⚠️ Caution: you have GERD, and in some people ginger can worsen reflux. At tea-bag strength it's usually fine and even soothing, but if you notice more heartburn, drop it.</div>
     ${body}
     <div class="pb-add sp-add">
       <input id="sp-name" class="pb-input" type="text" placeholder="Add a supplement…" autocomplete="off">
