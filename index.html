@@ -5709,9 +5709,9 @@ function render() {
       { label: 'finish dating website', pct: 30, cls: 'pink', emoji: '🌐', chain: 'mid' },
       { label: 'create my Hinge profile + link my date-me page (meetjen.vercel.app)', pct: 100, cls: 'green', emoji: '💘', chain: 'mid' },
       { label: 'go on 10 first dates', pct: 6, cls: 'pink', emoji: '💘', chain: 'mid' },
-      { label: 'Get a partner', pct: 1, cls: 'pink', emoji: '💑', chain: 'mid' },
-      { label: 'Get married', pct: 1, cls: 'pink', emoji: '💍', chain: 'mid' },
-      { label: 'Decide on kids', pct: 1, cls: 'pink', emoji: '👶', chain: 'end' },
+      { label: 'Get a partner', pct: 1, cls: 'pink', emoji: '💑', chain: 'mid', locked: true },
+      { label: 'Get married', pct: 1, cls: 'pink', emoji: '💍', chain: 'mid', locked: true },
+      { label: 'Decide on kids', pct: 1, cls: 'pink', emoji: '👶', chain: 'end', locked: true },
       // Gut / health chain (teal line) — sits directly under the dating chain
       { label: 'first delicious noodle meal — chicken drumstick broth, dried ginger, dried chives & salt — actually tasted good', pct: 100, emoji: '🍜', chain: 'start', sortKey: 5.5, chainCls: 'teal' },
       { label: 'get blue shield reimbursement', pct: 0, emoji: '🧾', chain: 'mid' },
@@ -5739,8 +5739,8 @@ function render() {
       const bl = g.barLabel ? `<span class="lg-barlabel">${escapeHtml(g.barLabel)}</span>` : '';
       const gn = g.gain ? `<span class="lg-gain" style="left:${g.gain.from}%;width:${g.gain.to - g.gain.from}%"><span>${escapeHtml(g.gain.label)}</span></span>` : '';
       const em = g.emoji ? `<span class="lg-emoji">${g.emoji}</span> ` : '';
-      return `<div class="lg-row">
-        <div class="lg-row-head"><span class="lg-label">${full ? '<span class="lg-check">✓</span> ' : ''}${em}${escapeHtml(g.label)}</span><span class="lg-pct${full ? ' done' : ''}">${g.pct}%</span></div>
+      return `<div class="lg-row${g.locked ? ' locked' : ''}">
+        <div class="lg-row-head"><span class="lg-label">${full ? '<span class="lg-check">✓</span> ' : ''}${g.locked ? '🔒 ' : ''}${em}${escapeHtml(g.label)}</span><span class="lg-pct${full ? ' done' : ''}">${g.pct}%</span></div>
         <div class="lg-bar"><div class="lg-fill ${full ? 'full' : ''}${g.cls ? ' ' + g.cls : ''}" style="width:${g.pct}%"></div>${bl}${gn}</div>
       </div>`;
     };
