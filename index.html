@@ -6,7 +6,7 @@
 <title>Taskit</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:ital,wght@0,300..800;1,400..600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
   :root {
     --sf-display: "Hanken Grotesk", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
@@ -200,7 +200,7 @@
 
   /* Placeholder panel for the not-yet-built tabs */
   .tab-panel { width: 100%; max-width: 640px; margin: 24px auto 0; }
-  .tab-panel.goals-panel { max-width: 1040px; margin-top: 6px; }
+  .tab-panel.goals-panel { max-width: 96vw; margin-top: 6px; }
   .goals-title { font-size: 15px !important; margin-bottom: 6px !important; }
   .goals-panel .goal-bars { margin: 4px 0 10px; column-gap: 28px; }
   .goals-panel .lg-row { margin-bottom: 9px; }
@@ -1541,6 +1541,7 @@
   .icon { width: 16px; height: 16px; flex-shrink: 0; }
   .icon-sm { width: 12px; height: 12px; }
 </style>
+<style id="inter-override">*{font-family:'Inter',-apple-system,BlinkMacSystemFont,system-ui,sans-serif !important;letter-spacing:-0.03em !important}h1,h2,h3,h4{letter-spacing:-0.045em !important}</style>
 </head>
 <body>
 <div id="lotus-banner">
@@ -5713,6 +5714,8 @@ function render() {
       { label: 'affordable home', pct: 8, emoji: '🏡' },
       { label: 'Get back to 115 lbs', pct: 60, barLabel: '125 lb', emoji: '⚖️', gain: { from: 50, to: 60, label: 'june 16' } },
       { label: 'healthtech projects', pct: 99, barLabel: '99%', cls: 'green', emoji: '🛠️', gain: { from: 66.7, to: 99, label: 'june 19' } },
+      { label: 'build a short form video editor resume', pct: 0, emoji: '🎬', sortKey: 98.92 },
+      { label: 'build portfolio website', pct: 0, emoji: '🌐', sortKey: 98.91 },
       { label: 'find yourself consistent jobs', pct: 0, emoji: '💼', sortKey: 98.9 },
       // Dating chain (pink line)
       { label: 'uploaded dating site to dateme.directory', pct: 100, cls: 'green', emoji: '🌐', chain: 'start', sortKey: 6 },
