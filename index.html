@@ -1161,11 +1161,13 @@
     background: linear-gradient(180deg, #9aa7c7, #5a6b8c);
   }
   /* Dating chain parked at the bottom + faded out as "not currently relevant" */
-  .lg-chaingroup.faded { opacity: 0.38; filter: grayscale(1); margin-top: 22px; padding-top: 14px; border-top: 1px dashed rgba(232,228,216,0.18); }
+  .lg-chaingroup.faded { opacity: 0.2; filter: grayscale(1); margin-top: 22px; padding-top: 14px; border-top: 1px dashed rgba(232,228,216,0.18); }
   .lg-chaingroup.faded::before { background: linear-gradient(180deg, #9a9a9a, #6a6a6a); }
   .lg-chaingroup .lg-row:last-child { margin-bottom: 0; }
   /* Completed / green goals greyed out as "done, not the current focus" */
-  .lg-row.lg-faded { opacity: 0.4; filter: grayscale(1); }
+  .lg-row.lg-faded { opacity: 0.22; filter: grayscale(1); }
+  /* 0% goals show a tiny green starter sliver (not counted as "done") */
+  .lg-fill.startgreen { background: linear-gradient(90deg, #5fd07f, #36b85f); min-width: 5px; box-shadow: 0 0 5px rgba(54,184,95,0.55); }
   .lg-fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, #f4c544, #f0a93a); transition: width 0.9s cubic-bezier(0.4,0,0.2,1); }
   .lg-fill.full { background: linear-gradient(90deg, #5fd07f, #36b85f); }
   .lg-fill.pink { background: linear-gradient(90deg, #ff8ec2, #ff2e88); box-shadow: 0 0 8px rgba(255,46,136,0.45); }
@@ -5780,12 +5782,15 @@ function render() {
     const goalRowHtml = (g) => {
       const full = g.pct >= 100;
       const greenish = full || g.cls === 'green';
+      const zero = g.pct === 0;
+      const dispPct = zero ? 1 : g.pct;
+      const fillCls = full ? 'full' : (zero ? 'startgreen' : (g.cls || ''));
       const bl = g.barLabel ? `<span class="lg-barlabel">${escapeHtml(g.barLabel)}</span>` : '';
       const gn = g.gain ? `<span class="lg-gain" style="left:${g.gain.from}%;width:${g.gain.to - g.gain.from}%"><span>${escapeHtml(g.gain.label)}</span></span>` : '';
       const em = g.emoji ? `<span class="lg-emoji">${g.emoji}</span> ` : '';
       return `<div class="lg-row${g.locked ? ' locked' : ''}${greenish ? ' lg-faded' : ''}">
-        <div class="lg-row-head"><span class="lg-label">${full ? '<span class="lg-check">✓</span> ' : ''}${g.locked ? '🔒 ' : ''}${em}${escapeHtml(g.label)}</span><span class="lg-pct${full ? ' done' : ''}">${g.pct}%</span></div>
-        <div class="lg-bar${g.greyTrack ? ' lg-bar-grey' : ''}"><div class="lg-fill ${full ? 'full' : ''}${g.cls ? ' ' + g.cls : ''}" style="width:${g.pct}%"></div>${bl}${gn}</div>
+        <div class="lg-row-head"><span class="lg-label">${full ? '<span class="lg-check">✓</span> ' : ''}${g.locked ? '🔒 ' : ''}${em}${escapeHtml(g.label)}</span><span class="lg-pct${full ? ' done' : ''}">${dispPct}%</span></div>
+        <div class="lg-bar${g.greyTrack ? ' lg-bar-grey' : ''}"><div class="lg-fill ${fillCls}" style="width:${dispPct}%"></div>${bl}${gn}</div>
       </div>`;
     };
     const goalBarsHtml = `<div class="goal-bars">` + goalGroups.map(gr => {
