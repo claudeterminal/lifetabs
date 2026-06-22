@@ -1160,6 +1160,9 @@
   .lg-chaingroup.ai::before {
     background: linear-gradient(180deg, #9aa7c7, #5a6b8c);
   }
+  /* Dating chain parked at the bottom + faded out as "not currently relevant" */
+  .lg-chaingroup.faded { opacity: 0.38; filter: grayscale(1); margin-top: 22px; padding-top: 14px; border-top: 1px dashed rgba(232,228,216,0.18); }
+  .lg-chaingroup.faded::before { background: linear-gradient(180deg, #9a9a9a, #6a6a6a); }
   .lg-chaingroup .lg-row:last-child { margin-bottom: 0; }
   .lg-fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, #f4c544, #f0a93a); transition: width 0.9s cubic-bezier(0.4,0,0.2,1); }
   .lg-fill.full { background: linear-gradient(90deg, #5fd07f, #36b85f); }
@@ -5734,7 +5737,7 @@ function render() {
       { label: 'build portfolio website', pct: 0, emoji: '🌐', sortKey: 98.91 },
       { label: 'find yourself consistent jobs', pct: 0, emoji: '💼', sortKey: 98.9 },
       // Dating chain (pink line)
-      { label: 'uploaded dating site to dateme.directory', pct: 100, cls: 'green', emoji: '🌐', chain: 'start', sortKey: 6 },
+      { label: 'uploaded dating site to dateme.directory', pct: 100, cls: 'green', emoji: '🌐', chain: 'start', sortKey: -100, chainCls: 'faded' },
       { label: 'finish dating website', pct: 30, cls: 'pink', emoji: '🌐', chain: 'mid' },
       { label: 'create my Hinge profile + link my date-me page (meetjen.vercel.app)', pct: 100, cls: 'green', emoji: '💘', chain: 'mid' },
       { label: 'go on 10 first dates', pct: 10, cls: 'green', barLabel: 'MD', emoji: '💘', chain: 'mid', greyTrack: true },
