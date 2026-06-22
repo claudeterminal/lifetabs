@@ -270,6 +270,11 @@
     min-height: 540px; border: none; border-radius: 12px;
     background: #FBF1DD; display: block;
   }
+  .supp-today { background: rgba(95,208,127,0.10); border: 1px solid rgba(54,184,95,0.35); border-radius: 12px; padding: 11px 15px; margin: 4px 0 12px; }
+  .supp-today-head { font-size: 13px; font-weight: 800; letter-spacing: 0.02em; color: #2f9d57; margin-bottom: 7px; }
+  .supp-today-list { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px 9px; }
+  .supp-today-list li { font-size: 13.5px; color: var(--fg); background: rgba(255,255,255,0.04); border: 1px solid rgba(232,228,216,0.12); border-radius: 999px; padding: 3px 11px; }
+  .supp-today-list li.supp-empty { background: none; border: none; color: var(--fg-faint); font-style: italic; }
   .expense-area:focus { border-color: var(--accent); }
   .expense-area::placeholder { color: rgba(232,228,216,0.28); white-space: normal; }
   @media (max-width: 640px) {
@@ -1161,11 +1166,13 @@
     background: linear-gradient(180deg, #9aa7c7, #5a6b8c);
   }
   /* Dating chain parked at the bottom + faded out as "not currently relevant" */
-  .lg-chaingroup.faded { opacity: 0.2; filter: grayscale(1); margin-top: 22px; padding-top: 14px; border-top: 1px dashed rgba(232,228,216,0.18); }
+  .lg-chaingroup.faded { opacity: 0.12; filter: grayscale(1); margin-top: 22px; padding-top: 14px; border-top: 1px dashed rgba(232,228,216,0.18); }
+  /* Don't double-fade green rows that already sit inside the faded dating chain */
+  .lg-chaingroup.faded .lg-row.lg-faded { opacity: 1; filter: none; }
   .lg-chaingroup.faded::before { background: linear-gradient(180deg, #9a9a9a, #6a6a6a); }
   .lg-chaingroup .lg-row:last-child { margin-bottom: 0; }
   /* Completed / green goals greyed out as "done, not the current focus" */
-  .lg-row.lg-faded { opacity: 0.22; filter: grayscale(1); }
+  .lg-row.lg-faded { opacity: 0.12; filter: grayscale(1); }
   /* 0% goals show a tiny green starter sliver (not counted as "done") */
   .lg-fill.startgreen { background: linear-gradient(90deg, #5fd07f, #36b85f); min-width: 5px; box-shadow: 0 0 5px rgba(54,184,95,0.55); }
   .lg-fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, #f4c544, #f0a93a); transition: width 0.9s cubic-bezier(0.4,0,0.2,1); }
@@ -5999,8 +6006,16 @@ function render() {
       ${total ? groupsHtml : '<div class="inv-empty">No things yet — add your first one above and Sorty will help you sort each into keep, donate, or toss.</div>'}
     </div>`;
   } else if (state.activeTab === 'meal') {
+    const takeSupps = (state.supplementsBag || []).filter(s => s.group === 'take');
+    const suppItems = takeSupps.length
+      ? takeSupps.map(s => `<li>💊 ${escapeHtml(s.text)}</li>`).join('')
+      : '<li class="supp-empty">None set</li>';
     bodyHtml = `
     <div class="tab-panel meal-timer-panel">
+      <div class="supp-today">
+        <div class="supp-today-head">💊 Supplements — taking today</div>
+        <ul class="supp-today-list">${suppItems}</ul>
+      </div>
       <iframe id="meal-timer-frame" class="meal-timer-frame" title="Meal timer"></iframe>
     </div>
     `;
