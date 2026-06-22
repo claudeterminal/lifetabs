@@ -1165,9 +1165,9 @@
   .lg-chaingroup.ai::before {
     background: linear-gradient(180deg, #9aa7c7, #5a6b8c);
   }
-  .lg-chaingroup.donewins::before {
-    background: linear-gradient(180deg, #5fd07f, #36b85f);
-  }
+  /* Done-wins cluster: no vertical bar, items aligned to the left edge */
+  .lg-chaingroup.donewins { padding-left: 0; }
+  .lg-chaingroup.donewins::before { display: none; }
   /* Dating chain parked at the bottom + faded out as "not currently relevant" */
   .lg-chaingroup.faded { opacity: 0.12; filter: grayscale(1); margin-top: 22px; padding-top: 14px; border-top: 1px dashed rgba(232,228,216,0.18); }
   /* Don't double-fade green rows that already sit inside the faded dating chain */
