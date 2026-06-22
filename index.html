@@ -551,6 +551,10 @@
   .pb-item.pb-checked .pb-text { color: var(--fg-faint); text-decoration: line-through; }
   .pb-del { flex: 0 0 auto; background: none; border: none; color: var(--fg-faint); cursor: pointer; font-size: 11.5px; padding: 1px 3px; }
   .pb-del:hover { color: var(--coral); }
+  .pb-item.gr-hasextra { flex-wrap: wrap; padding: 7px 4px; }
+  .gr-deal { order: -1; flex: 0 0 100%; display: flex; align-items: center; gap: 8px; margin-bottom: 6px; padding: 5px 9px; background: rgba(45,90,160,0.12); border: 1px solid rgba(45,90,160,0.32); border-radius: 8px; font-size: 11px; font-weight: 700; color: #2d5aa0; }
+  .gr-deal-logo { width: 28px; height: 28px; object-fit: contain; border-radius: 50%; background: #fff; flex: 0 0 auto; }
+  .gr-itemimg { flex: 0 0 auto; width: 48px; height: 40px; object-fit: contain; border-radius: 6px; background: #fff; margin-left: 6px; }
   .pb-empty { color: var(--fg-soft); font-size: 13.5px; padding: 8px 2px; }
   .pb-add { display: flex; gap: 6px; margin-top: 10px; }
   .pb-input { flex: 1 1 auto; min-width: 0; background: rgba(255,255,255,0.05); border: 1px solid rgba(232,228,216,0.16); border-radius: 8px; color: var(--fg); font-family: var(--sf-text); font-size: 14.5px; padding: 8px 10px; }
@@ -2492,7 +2496,7 @@ if (typeof state.grNextId !== 'number') state.grNextId = state.groceries.length 
   ['nonfood', ['💧 Glass water (always order more. Endless)', '🦷 Tooth paste', '✅ Zicam cold candies (try once)', 'Compostable forks']],
   ['seasonings', ['Dried chives', 'Dried parsley', 'Dried basil', 'Dried thyme', 'Dried dill', 'Dried rosemary', 'Dried oregano', 'Dried marjoram', 'Dried sage', 'Dried lemon zest', 'Smoked sea salt', 'Saffron', 'Ground sumac berries', 'Tajin (mild)', 'Pink peppercorn', 'Tarragon', 'Nutritional yeast', 'Coconut aminos', 'Fresh lemon juice', 'Fresh lime juice', 'Olive oil', 'Avocado oil', 'Maple syrup', 'Shredded cheese', 'Precut watermelon', 'Organic fresh chives', 'Organic fresh scallions', 'Zyrtec melts', 'Glass water', 'Organic chicken', 'Good clean love']],
   ['protein', ['1 salmon', 'Pre-cooked eggs or regular organic eggs', 'True story chicken prepackaged - 2 bags']],
-  ['containers', ['⛔️ Thick natural paper cups for hot beverages', 'Glass bottled water', 'Peppermint tea', 'Frozen cranberries', 'Lime', '88 acres protein bars', 'Compostable bowls or amazon', 'Lemon', 'Organic mayo', 'Chicken true story', 'Chicken true turkey', 'Zinc candies ✅']],
+  ['containers', ['Acqua Panna Natural Spring Water — 12×750 ml glass bottles', '⛔️ Thick natural paper cups for hot beverages', 'Glass bottled water', 'Peppermint tea', 'Frozen cranberries', 'Lime', '88 acres protein bars', 'Compostable bowls or amazon', 'Lemon', 'Organic mayo', 'Chicken true story', 'Chicken true turkey', 'Zinc candies ✅']],
   ['grain', ['Buckwheat groat (bread)', 'Organic rice noodles', 'Organic buckwheat or quinoa', 'Organic buckwheat noodles', 'Organic quinoa', 'Organic jasmine rice ✅']],
   ['crackers', ['⛔️ Organic rice crackers (no other ingredients)']],
   ['seasoning2', ['2 lime', 'Ginger', 'Organic pink Himalayan fine salt', 'Organic olive oil', 'Organic parsley', 'Organic shredded cheddar cheese or just normal', '⛔️ Organic fresh chives', '⛔️ Organic fresh scallions', 'Organic dried basil 🌿']],
@@ -4815,13 +4819,32 @@ function grAdd() {
 }
 function grToggle(id) { const it = (state.groceries || []).find(x => String(x.id) === String(id)); if (it) { it.done = !it.done; render(); } }
 function grDelete(id) { state.groceries = (state.groceries || []).filter(x => String(x.id) !== String(id)); render(); }
+// Per-item extras: product photo (shown on the right) + a store "best deal" badge (shown on top).
+const GROCERY_EXTRAS = {
+  'acqua panna': {
+    img: 'acqua-panna.png',
+    deal: { logo: 'restaurant-depot-logo.png', store: 'Restaurant Depot', text: 'Best water deal · Restaurant Depot · $24.99 (12×750 ml)' }
+  }
+};
+function grExtra(text) {
+  const t = (text || '').toLowerCase();
+  for (const k in GROCERY_EXTRAS) { if (t.indexOf(k) >= 0) return GROCERY_EXTRAS[k]; }
+  return null;
+}
 function groceryRows(group) {
-  return (state.groceries || []).filter(i => (i.group || 'other') === group).map(it => `<div class="pb-item ${it.done ? 'pb-checked' : ''}">
+  return (state.groceries || []).filter(i => (i.group || 'other') === group).map(it => {
+    const ex = grExtra(it.text);
+    const deal = (ex && ex.deal) ? `<div class="gr-deal"><img class="gr-deal-logo" src="${ex.deal.logo}" alt="${escapeHtml(ex.deal.store)} logo"><span>${escapeHtml(ex.deal.text)}</span></div>` : '';
+    const img = (ex && ex.img) ? `<img class="gr-itemimg" src="${ex.img}" alt="${escapeHtml(it.text)}">` : '';
+    return `<div class="pb-item ${it.done ? 'pb-checked' : ''}${ex ? ' gr-hasextra' : ''}">
+      ${deal}
       <button class="pb-box" data-action="gr-toggle" data-id="${it.id}" role="checkbox" aria-checked="${it.done ? 'true' : 'false'}">${it.done ? '✓' : ''}</button>
       <span class="pb-emoji">${pbEmoji(it.text)}</span>
       <span class="pb-text">${escapeHtml(it.text)}</span>
+      ${img}
       <button class="pb-del" data-action="gr-del" data-id="${it.id}" title="Remove">✕</button>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 }
 function groceriesHtml() {
   let body = '';
