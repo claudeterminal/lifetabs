@@ -1134,6 +1134,7 @@
   .lg-pct { font-size: 16px; font-weight: 800; color: #f4c544; font-variant-numeric: tabular-nums; flex-shrink: 0; }
   .lg-pct.done { color: #5fd07f; }
   .lg-bar { position: relative; height: 16px; border-radius: 999px; background: rgba(232,228,216,0.12); overflow: hidden; }
+  .lg-bar.lg-bar-grey { background: rgba(140,140,140,0.45); }
   .lg-barlabel { position: absolute; top: 50%; left: 8px; transform: translateY(-50%); font-size: 10px; font-weight: 800; color: #fff; letter-spacing: 0.02em; text-shadow: 0 1px 2px rgba(0,0,0,0.6); pointer-events: none; }
   .lg-gain { position: absolute; top: 0; bottom: 0; box-sizing: border-box; display: flex; align-items: center; justify-content: center; border-left: 1.5px dashed rgba(255,255,255,0.9); border-right: 1.5px dashed rgba(255,255,255,0.9); background: rgba(255,255,255,0.16); pointer-events: none; }
   .lg-gain span { font-size: 8px; font-weight: 800; color: #fff; letter-spacing: 0.02em; text-shadow: 0 1px 2px rgba(0,0,0,0.75); white-space: nowrap; }
@@ -5713,7 +5714,7 @@ function render() {
       { label: 'uploaded dating site to dateme.directory', pct: 100, cls: 'green', emoji: '🌐', chain: 'start', sortKey: 6 },
       { label: 'finish dating website', pct: 30, cls: 'pink', emoji: '🌐', chain: 'mid' },
       { label: 'create my Hinge profile + link my date-me page (meetjen.vercel.app)', pct: 100, cls: 'green', emoji: '💘', chain: 'mid' },
-      { label: 'go on 10 first dates', pct: 6, cls: 'pink', emoji: '💘', chain: 'mid' },
+      { label: 'go on 10 first dates', pct: 10, cls: 'green', barLabel: 'MD', emoji: '💘', chain: 'mid', greyTrack: true },
       { label: 'Get a partner', pct: 1, cls: 'pink', emoji: '💑', chain: 'mid', locked: true },
       { label: 'Get married', pct: 1, cls: 'pink', emoji: '💍', chain: 'mid', locked: true },
       { label: 'Decide on kids', pct: 1, cls: 'pink', emoji: '👶', chain: 'end', locked: true },
@@ -5755,7 +5756,7 @@ function render() {
       const em = g.emoji ? `<span class="lg-emoji">${g.emoji}</span> ` : '';
       return `<div class="lg-row${g.locked ? ' locked' : ''}">
         <div class="lg-row-head"><span class="lg-label">${full ? '<span class="lg-check">✓</span> ' : ''}${g.locked ? '🔒 ' : ''}${em}${escapeHtml(g.label)}</span><span class="lg-pct${full ? ' done' : ''}">${g.pct}%</span></div>
-        <div class="lg-bar"><div class="lg-fill ${full ? 'full' : ''}${g.cls ? ' ' + g.cls : ''}" style="width:${g.pct}%"></div>${bl}${gn}</div>
+        <div class="lg-bar${g.greyTrack ? ' lg-bar-grey' : ''}"><div class="lg-fill ${full ? 'full' : ''}${g.cls ? ' ' + g.cls : ''}" style="width:${g.pct}%"></div>${bl}${gn}</div>
       </div>`;
     };
     const goalBarsHtml = `<div class="goal-bars">` + goalGroups.map(gr => {
