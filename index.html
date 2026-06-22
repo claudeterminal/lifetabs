@@ -2487,6 +2487,7 @@ if (Array.isArray(state.consumablesBag)) {
 state.groceries = Array.isArray(state.groceries) ? state.groceries : [];
 if (typeof state.grNextId !== 'number') state.grNextId = state.groceries.length + 1;
 [
+  ['lastcart', ['MALK Organic Original Oat Malk (28 fl oz)', 'Applegate Organic Oven Roasted Turkey Breast (6 oz)', 'Sprouts Farm-Raised Fresh Atlantic Salmon Portion (6 oz)', 'Sprouts Organic Silken Tofu (16 oz)', 'Sprouts Shredded Carrots (8 oz)', 'Earthbound Farm Organic Snap Peas Bag (6 oz)', 'Sprouts Organic Romaine Hearts (7 oz)', 'Sprouts Watermelon Chunks (32 oz)', 'Applegate Oven Roasted Turkey Breast (7 oz)', 'Pasture Bird Pasture Raised Chicken Drumsticks No Antibiotics Ever (1 lb)', "Nature's Path Original Instant Oatmeal (8 ct)", 'Vital Farms Organic Pasture-Raised Large Grade A Eggs (18 ct)']],
   ['nonfood', ['💧 Glass water (always order more. Endless)', '🦷 Tooth paste', '✅ Zicam cold candies (try once)', 'Compostable forks']],
   ['seasonings', ['Dried chives', 'Dried parsley', 'Dried basil', 'Dried thyme', 'Dried dill', 'Dried rosemary', 'Dried oregano', 'Dried marjoram', 'Dried sage', 'Dried lemon zest', 'Smoked sea salt', 'Saffron', 'Ground sumac berries', 'Tajin (mild)', 'Pink peppercorn', 'Tarragon', 'Nutritional yeast', 'Coconut aminos', 'Fresh lemon juice', 'Fresh lime juice', 'Olive oil', 'Avocado oil', 'Maple syrup', 'Shredded cheese', 'Precut watermelon', 'Organic fresh chives', 'Organic fresh scallions', 'Zyrtec melts', 'Glass water', 'Organic chicken', 'Good clean love']],
   ['protein', ['1 salmon', 'Pre-cooked eggs or regular organic eggs', 'True story chicken prepackaged - 2 bags']],
@@ -4792,6 +4793,7 @@ function pbDelete(id) {
 }
 // Groceries shopping list (grouped)
 const GROCERY_GROUPS = [
+  ['lastcart', '🛒 Last Sprouts Cart'],
   ['nonfood', 'Other non-food'],
   ['seasonings', 'Seasonings'], ['protein', 'Protein'], ['containers', 'Containers'],
   ['grain', 'Grain'], ['crackers', 'Crackers'], ['seasoning2', 'Seasoning'],
