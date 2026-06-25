@@ -5771,6 +5771,8 @@ function render() {
       { label: 'build a short form video editor resume', pct: 0, emoji: '🎬', sortKey: 98.92 },
       { label: 'build portfolio website', pct: 0, emoji: '🌐', sortKey: 98.91 },
       { label: 'find yourself consistent jobs', pct: 0, emoji: '💼', sortKey: 98.9 },
+      // Osher — called, full right now; pulled out of the gut chain to sit at the top of the right column
+      { label: 'called Osher / UCSF functional medicine 📞 415-353-7716 — FULL right now (retry monthly for urgent referral)', pct: 100, emoji: '🌿', sortKey: 12, breakCol: true, noFade: true },
       // Dating chain (pink line)
       { label: 'uploaded dating site to dateme.directory', pct: 100, cls: 'green', emoji: '🌐', chain: 'start', sortKey: -100, chainCls: 'faded' },
       { label: 'finish dating website', pct: 30, cls: 'pink', emoji: '🌐', chain: 'mid' },
@@ -5785,7 +5787,6 @@ function render() {
       { label: 'get gut doctor', pct: 0, emoji: '🩺', chain: 'mid' },
       { label: 'enroll Sutter concierge 📞 415-600-0811', pct: 0, emoji: '🏥', chain: 'mid' },
       { label: 'enroll Sutter functional medicine 📞 415-600-3503 — waiting Stephanie A. Webb, N.P. 650-853-2250', pct: 50, emoji: '🌿', chain: 'mid' },
-      { label: 'UCSF functional medicine 📞 415-353-7716', pct: 0, emoji: '🌿', chain: 'mid' },
       { label: 'scrape Blue Shield doctors for functional/integrative', pct: 0, emoji: '🔎', chain: 'mid' },
       { label: 'enroll Blue Shield provider portal (PIE) 📞 800-541-6652 — needs TIN, NPI, recent claim/check #, practice name+addr, your email (Account Mgr)', pct: 0, emoji: '🛡️', chain: 'mid' },
       { label: 'Blue Shield find-a-doctor help 📞 866-346-7198 (provider directory / find in-network doctors)', pct: 0, emoji: '🔎', chain: 'mid' },
@@ -5821,7 +5822,7 @@ function render() {
       const bl = g.barLabel ? `<span class="lg-barlabel">${escapeHtml(g.barLabel)}</span>` : '';
       const gn = g.gain ? `<span class="lg-gain" style="left:${g.gain.from}%;width:${g.gain.to - g.gain.from}%"><span>${escapeHtml(g.gain.label)}</span></span>` : '';
       const em = g.emoji ? `<span class="lg-emoji">${g.emoji}</span> ` : '';
-      return `<div class="lg-row${g.locked ? ' locked' : ''}${greenish ? ' lg-faded' : ''}">
+      return `<div class="lg-row${g.locked ? ' locked' : ''}${greenish && !g.noFade ? ' lg-faded' : ''}"${g.breakCol ? ' style="break-before:column;-webkit-column-break-before:always"' : ''}>
         <div class="lg-row-head"><span class="lg-label">${full ? '<span class="lg-check">✓</span> ' : ''}${g.locked ? '🔒 ' : ''}${em}${escapeHtml(g.label)}</span><span class="lg-pct${full ? ' done' : ''}">${dispPct}%</span></div>
         <div class="lg-bar${g.greyTrack ? ' lg-bar-grey' : ''}"><div class="lg-fill ${fillCls}" style="width:${dispPct}%"></div>${bl}${gn}</div>
       </div>`;
@@ -7456,6 +7457,26 @@ function setupHourlyNotifs() {
   }, msToTop);
 }
 setupHourlyNotifs();
+
+// Monthly nudge: Osher Center was full on 2026-06-25 — retry ~once a month for an urgent referral spot.
+function maybeShowOsherReminder() {
+  try {
+    const KEY = 'osher_referral_last';
+    const MONTH = 30 * 24 * 60 * 60 * 1000;
+    const now = Date.now();
+    let last = parseInt(localStorage.getItem(KEY) || '0', 10);
+    if (!last) { last = Date.parse('2026-06-25T12:00:00'); localStorage.setItem(KEY, String(last)); }
+    if (now - last >= MONTH) {
+      const shown = showReminder(
+        '🌿',
+        "Call <b>Osher Center for Integrative Health</b> again — they were full last time. Ask the New Patient Navigator <b>📞 415-353-7716</b> if any <b>urgent / cancellation referral</b> spot opened up.",
+        ""
+      );
+      if (shown) localStorage.setItem(KEY, String(now));
+    }
+  } catch (e) {}
+}
+setTimeout(maybeShowOsherReminder, 1500);
 
 </script>
 </body>
