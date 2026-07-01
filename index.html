@@ -6124,7 +6124,7 @@ function render() {
   } else if (state.activeTab === 'dating') {
     const dNotes = (state.tabNotes && state.tabNotes['dating']) || '';
     const user = 'jenn_pei';
-    const sites = ['OkCupid','Hinge','Bumble','Tinder','Coffee Meets Bagel','dateme.directory'];
+    const sites = ['OkCupid','Hinge','Bumble','Tinder','Coffee Meets Bagel','DateADoc','dateme.directory'];
     const rows = sites.map(s => `<div class="dat-row"><span class="dat-site">${escapeHtml(s)}</span><span class="dat-user">${escapeHtml(user)}</span><span class="dat-pw">•••••••••</span></div>`).join('');
     const seen = [
       ['MTN', 'too alpha; inconsistent in replying and following through with plans'],
