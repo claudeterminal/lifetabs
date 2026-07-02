@@ -1155,6 +1155,11 @@
     color: #ffffff; opacity: 1; margin: 0 0 14px; padding-bottom: 8px;
     border-bottom: 1px solid rgba(255,255,255,0.22); }
   .goal-bars { margin: 8px 0 4px; max-width: 100%; column-count: 3; column-gap: 36px; }
+  /* Three goal areas laid out side by side: Health | Income | Dating. */
+  .goals-columns { display: grid; grid-template-columns: repeat(3, 1fr); gap: 40px; align-items: start; }
+  .goals-columns .goal-cat { margin: 0; }
+  .goals-columns .goal-bars { column-count: 1; }
+  @media (max-width: 900px) { .goals-columns { grid-template-columns: 1fr; gap: 20px; } }
   /* Let long chains flow across columns so items pack densely (no giant gaps);
      only keep each individual row (label + bar) together. */
   .goal-bars > * { break-inside: auto; }
@@ -5836,7 +5841,7 @@ function render() {
       { key: 'misc', title: '🗂️ Miscellaneous' },
     ];
     const isDoneGroup = (gr) => gr.cls === 'faded' || gr.items.every(it => it.pct >= 100);
-    const goalBarsHtml = CATS.map(catDef => {
+    const catHtml = (catDef) => {
       const catGoals = rawGoals.filter(g => (g.cat || 'misc') === catDef.key);
       if (!catGoals.length) return '';
       const groups = [];
@@ -5857,7 +5862,12 @@ function render() {
         return gr.items.length > 1 ? `<div class="lg-chaingroup ${gr.cls}">${inner}</div>` : inner;
       }).join('');
       return `<div class="goal-cat"><div class="goal-cat-title">${catDef.title}</div><div class="goal-bars">${bars}</div></div>`;
-    }).join('');
+    };
+    // Three side-by-side columns: Health | Income | Dating. Misc flows full-width below.
+    const findCat = (k) => CATS.find(c => c.key === k);
+    const mainCols = ['health', 'income', 'dating'].map(k => catHtml(findCat(k))).join('');
+    const miscHtml = catHtml(findCat('misc'));
+    const goalBarsHtml = `<div class="goals-columns">${mainCols}</div>${miscHtml}`;
     bodyHtml = `
     <div class="tab-panel goals-panel">
       <div class="tab-panel-title goals-title">Goals</div>
