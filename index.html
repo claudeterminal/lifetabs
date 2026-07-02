@@ -205,7 +205,7 @@
   .goals-panel .goal-bars { margin: 4px 0 10px; column-gap: 28px; }
   .goals-panel .lg-row { margin-bottom: 17px; }
   .goals-panel .lg-row-head { margin-bottom: 1px; gap: 6px; }
-  .goals-panel .lg-label { font-size: 18px; }
+  .goals-panel .lg-label { font-size: 20px; font-weight: 500; }
   .goals-panel .lg-pct { font-size: 14px; }
   .goals-panel .lg-emoji { font-size: 15px; }
   .goals-panel .lg-bar { height: 13px; }
@@ -1138,7 +1138,7 @@
   .lg-row { margin-bottom: 24px; }
   .lg-row:last-child { margin-bottom: 0; }
   .lg-row-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin-bottom: 6px; }
-  .lg-label { font-size: 24px; font-weight: 800; color: var(--fg); letter-spacing: -0.01em; overflow-wrap: anywhere; min-width: 0; }
+  .lg-label { font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; font-size: 22px; font-weight: 500; color: var(--fg); letter-spacing: -0.015em; overflow-wrap: anywhere; min-width: 0; }
   .lg-check { color: #36b85f; font-weight: 900; }
   .lg-pct { font-size: 18px; font-weight: 800; color: #f4c544; font-variant-numeric: tabular-nums; flex-shrink: 0; }
   .lg-pct.done { color: #5fd07f; }
@@ -1150,16 +1150,17 @@
   /* Category sections stack down the page; each fills the full screen width and
      flows its goals into as many columns as fit (masonry) so they spread out. */
   .goal-cat { margin: 0 0 26px; }
-  .goal-cat-title { font-size: 15px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase;
-    color: var(--fg-soft); opacity: 0.85; margin: 0 0 10px; padding-bottom: 6px;
-    border-bottom: 1px solid rgba(232,228,216,0.14); }
-  .goal-bars { margin: 8px 0 4px; max-width: 100%; column-width: 240px; column-gap: 36px; }
+  .goal-cat-title { font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    font-size: 27px; font-weight: 800; letter-spacing: 0.02em; text-transform: uppercase;
+    color: #ffffff; opacity: 1; margin: 0 0 14px; padding-bottom: 8px;
+    border-bottom: 1px solid rgba(255,255,255,0.22); }
+  .goal-bars { margin: 8px 0 4px; max-width: 100%; column-count: 3; column-gap: 36px; }
   /* Let long chains flow across columns so items pack densely (no giant gaps);
      only keep each individual row (label + bar) together. */
   .goal-bars > * { break-inside: auto; }
   .lg-chaingroup { break-inside: auto; }
   .lg-row { break-inside: avoid; -webkit-column-break-inside: avoid; }
-  @media (max-width: 980px) { .goal-bars { column-width: 220px; } }
+  @media (max-width: 980px) { .goal-bars { column-count: 2; } }
   @media (max-width: 640px) { .goal-bars { column-count: 1; } }
   .lg-emoji { display: inline-block; font-size: 19px; line-height: 1; }
   .lg-chaingroup { position: relative; margin: 0 0 22px; padding-left: 14px; }
