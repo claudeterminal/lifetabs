@@ -1983,10 +1983,16 @@ if (state.tabNotes && typeof state.tabNotes.automated === 'string') {
       "$1• 💸 Text Mohan a daily \"?\" at 6 PM until he replies — 🎯 goal: get back the $8,000 he owes me (paused this week, auto-resumes Jul 10)\n"
     );
   }
-  // One-time: append the Amazon-return playbook (paste-to-Claude instructions with code).
-  if (!/AMAZON RETURN/i.test(state.tabNotes.automated)) {
-    state.tabNotes.automated = state.tabNotes.automated.replace(/\s+$/, '') + "\n\n" + `━━━━━━━━━━━━━━━━━━━━
-📋 CLAUDE — HOW TO DO A FULL AMAZON RETURN (paste this to me anytime)
+  // One-time (v2): (re)write the Amazon-return playbook — no-box/no-label scan-QR is now the FIRST return-method choice, refund to gift balance.
+  if (!/AMAZON RETURN PLAYBOOK v2/i.test(state.tabNotes.automated)) {
+    state.tabNotes.automated = state.tabNotes.automated
+      .replace(/━{5,}[\s\S]*?📋 CLAUDE — HOW TO DO A FULL AMAZON RETURN[\s\S]*?━{5,}/g, '')
+      .replace(/\s+$/, '') + "\n\n" + `━━━━━━━━━━━━━━━━━━━━
+📋 CLAUDE — HOW TO DO A FULL AMAZON RETURN (paste this to me) [PLAYBOOK v2]
+
+⭐ DEFAULTS FOR JEN:
+• RETURN METHOD — FIRST CHOICE = NO BOX, NO LABEL, SCAN A QR AT THE STORE. Always pick a "no box or label needed" drop-off (Kohl's / FedEx Office / Whole Foods / Lucky Stores / Amazon Hub) so she just shows/scans a QR — no printer, no box. ONLY use "UPS Dropoff — box and label needed" / USPS (a PRINTED label w/ QR+barcode she must box up) if there is NO no-box option OR she explicitly asks for UPS.
+• REFUND → "Advance refund to your Amazon account balance" (gift-card balance), NOT the card.
 
 WHY IT'S HARD: Amazon buttons/dropdowns need TRUSTED OS events. JS dispatchEvent/.click() and JS-set <select>.value are IGNORED by their React (Continue stays a-button-disabled). Fix = REAL clicks via cliclick (/opt/homebrew/bin/cliclick) + real keystrokes (System Events), and OPEN dropdowns to click options for real.
 
@@ -2019,13 +2025,13 @@ end tell
 
 5) COMMENT box: cliclick it, then: osascript -e 'tell application "System Events" to keystroke "..."'
 
-6) FLOW: reason → (detail if shown) → comment → Continue → condition Qs (packaging/used/signs/accessories, real clicks) → Continue → "How can we make it right?" (non-defective deflects to support: scroll down, cliclick "Continue to return options", then "Refund to your original payment method" → Continue) → return method (UPS drop-off=3P seller label w/ QR+barcode; Kohl's drop-off=Amazon QR, no box) → "Confirm your return".
+6) FLOW: reason → (detail if shown) → comment → Continue → condition Qs (packaging/used/signs/accessories, real clicks) → Continue → "How can we make it right?" (deflects to support: scroll down, cliclick "Continue to return options") → pick REFUND (Amazon account balance) → RETURN METHOD: expand "OTHER RETURN OPTIONS" and pick a NO-BOX / NO-LABEL scan-QR drop-off (Kohl's/FedEx/Whole Foods/Lucky) — NOT the "box and label needed" ones — → "Confirm your return".
 
-7) GET CODE: confirmation → cliclick "Return code" (Kohl's QR) or open "Print label & instructions" href (UPS) → screencapture -R x,y,w,h -x /tmp/qr.png.
+7) GET CODE: confirmation → cliclick "Return code" (no-box QR to scan at store) or, only for label-based methods, open "Print label & instructions" href → screencapture -R x,y,w,h -x /tmp/qr.png.
 
 8) SEND: curl -s -F "chat_id=$TGC" -F "photo=@/tmp/qr.png" -F "caption=..." ".../sendPhoto"  +  /Users/dj/bin/send_alert.sh "msg" /tmp/qr.png
 
-Proven 2026-07-03: Zojirushi inner pot (UPS) + Comfee air fryer (Kohl's QR). Returns are cancelable.
+Proven 2026-07-03: Zojirushi inner pot, Comfee air fryer (Kohl's QR), Chefman air fryer. Returns are cancelable.
 ━━━━━━━━━━━━━━━━━━━━`;
   }
 } else {
