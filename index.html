@@ -1983,6 +1983,51 @@ if (state.tabNotes && typeof state.tabNotes.automated === 'string') {
       "$1• 💸 Text Mohan a daily \"?\" at 6 PM until he replies — 🎯 goal: get back the $8,000 he owes me (paused this week, auto-resumes Jul 10)\n"
     );
   }
+  // One-time: append the Amazon-return playbook (paste-to-Claude instructions with code).
+  if (!/AMAZON RETURN/i.test(state.tabNotes.automated)) {
+    state.tabNotes.automated = state.tabNotes.automated.replace(/\s+$/, '') + "\n\n" + `━━━━━━━━━━━━━━━━━━━━
+📋 CLAUDE — HOW TO DO A FULL AMAZON RETURN (paste this to me anytime)
+
+WHY IT'S HARD: Amazon buttons/dropdowns need TRUSTED OS events. JS dispatchEvent/.click() and JS-set <select>.value are IGNORED by their React (Continue stays a-button-disabled). Fix = REAL clicks via cliclick (/opt/homebrew/bin/cliclick) + real keystrokes (System Events), and OPEN dropdowns to click options for real.
+
+COORDS: screencapture -x → Read the png → LOGICAL click point = displayed_coord × 0.735. cliclick uses logical points. Prefer screenshot coords over JS getBoundingClientRect (the cart flyout shifts layout).
+
+1) ORDER ID: open amazon.com/gp/css/order-history?search=<item>; pull orderIDs from <a> hrefs matching /order(?:ID|Id|id)=([0-9-]+)/.
+
+2) OWN WINDOW (so nothing steals the front tab):
+tell application "Google Chrome"
+  make new window
+  set URL of active tab of front window to "https://www.amazon.com/spr/returns/cart?orderId=<ID>"
+  set bounds of front window to {300,25,1700,1000}
+end tell
+
+3) ATOMIC front-verify + REAL click (use for EVERY click):
+tell application "Google Chrome"
+  activate
+  set rw to missing value
+  repeat with w in windows
+    repeat with t in tabs of w
+      if (URL of t) contains "spr/returns" then set rw to w
+    end repeat
+  end repeat
+  set index of rw to 1
+  delay 0.15
+  if (URL of active tab of front window) contains "spr/returns" then do shell script "/opt/homebrew/bin/cliclick c:X,Y"
+end tell
+
+4) REASON dropdown: cliclick the <select> to open the native popup → screenshot → cliclick the option. Defective/rusted → "Item defective or doesn't work" → "Poor quality" = FREE. Don't like it → "No longer needed" → "Item is fine but no longer needed".
+
+5) COMMENT box: cliclick it, then: osascript -e 'tell application "System Events" to keystroke "..."'
+
+6) FLOW: reason → (detail if shown) → comment → Continue → condition Qs (packaging/used/signs/accessories, real clicks) → Continue → "How can we make it right?" (non-defective deflects to support: scroll down, cliclick "Continue to return options", then "Refund to your original payment method" → Continue) → return method (UPS drop-off=3P seller label w/ QR+barcode; Kohl's drop-off=Amazon QR, no box) → "Confirm your return".
+
+7) GET CODE: confirmation → cliclick "Return code" (Kohl's QR) or open "Print label & instructions" href (UPS) → screencapture -R x,y,w,h -x /tmp/qr.png.
+
+8) SEND: curl -s -F "chat_id=$TGC" -F "photo=@/tmp/qr.png" -F "caption=..." ".../sendPhoto"  +  /Users/dj/bin/send_alert.sh "msg" /tmp/qr.png
+
+Proven 2026-07-03: Zojirushi inner pot (UPS) + Comfee air fryer (Kohl's QR). Returns are cancelable.
+━━━━━━━━━━━━━━━━━━━━`;
+  }
 } else {
   state.tabNotes = state.tabNotes || {};
   if (!state.tabNotes.automated) {
