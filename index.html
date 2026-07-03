@@ -1846,7 +1846,7 @@ function buildDefaultState() {
     seedVersion: SEED_VERSION,
     tabNotes: {
       events: "🎂 June 14 — Mom's birthday 🎉",
-      automated: "⏰ AUTOMATIONS\n\n• 🛒 Order groceries automatically — Instacart (Sprouts) cart auto-refills Mon 9:00 AM & Thu 4:00 PM, then texts me the checkout link to tap Pay\n• Remind me of Mom's birthday — June 14 🎂\n• Every hour: copy & paste my tasks and hard-code them, so they're never lost 💾\n• Hourly until May 31: find someone (Not alone) 🤝\n\n💆 Book in-home massage therapists — treat it as an investment: offer to do their marketing & business stuff for free in exchange for free massages.",
+      automated: "⏰ AUTOMATIONS\n\n• 🛒 Order groceries automatically — Instacart (Sprouts) cart auto-refills Mon 9:00 AM & Thu 4:00 PM, then texts me the checkout link to tap Pay\n• 💸 Text Mohan a daily \"?\" at 6 PM until he replies — 🎯 goal: get back the $8,000 he owes me (paused this week, auto-resumes Jul 10)\n• Remind me of Mom's birthday — June 14 🎂\n• Every hour: copy & paste my tasks and hard-code them, so they're never lost 💾\n• Hourly until May 31: find someone (Not alone) 🤝\n\n💆 Book in-home massage therapists — treat it as an investment: offer to do their marketing & business stuff for free in exchange for free massages.",
     },
     suitcaseRows: [
       { name: "Row 1", items: ["Contact lenses"] },
@@ -1976,10 +1976,17 @@ if (state.tabNotes && typeof state.tabNotes.automated === 'string') {
       "$1• 🛒 Order groceries automatically — Instacart (Sprouts) cart auto-refills Mon 9:00 AM & Thu 4:00 PM, then texts me the checkout link to tap Pay\n"
     );
   }
+  // Ensure the daily Mohan "?" automation shows for returning users too.
+  if (!/Mohan/i.test(state.tabNotes.automated)) {
+    state.tabNotes.automated = state.tabNotes.automated.replace(
+      /(⏰ AUTOMATIONS[^\n]*\n\n)/,
+      "$1• 💸 Text Mohan a daily \"?\" at 6 PM until he replies — 🎯 goal: get back the $8,000 he owes me (paused this week, auto-resumes Jul 10)\n"
+    );
+  }
 } else {
   state.tabNotes = state.tabNotes || {};
   if (!state.tabNotes.automated) {
-    state.tabNotes.automated = "⏰ AUTOMATIONS\n\n• 🛒 Order groceries automatically — Instacart (Sprouts) cart auto-refills Mon 9:00 AM & Thu 4:00 PM, then texts me the checkout link to tap Pay\n• Remind me of Mom's birthday — June 14 🎂\n• Every hour: copy & paste my tasks and hard-code them, so they're never lost 💾\n• Hourly until May 31: find someone (Not alone) 🤝\n\n💆 Book in-home massage therapists — treat it as an investment: offer to do their marketing & business stuff for free in exchange for free massages.";
+    state.tabNotes.automated = "⏰ AUTOMATIONS\n\n• 🛒 Order groceries automatically — Instacart (Sprouts) cart auto-refills Mon 9:00 AM & Thu 4:00 PM, then texts me the checkout link to tap Pay\n• 💸 Text Mohan a daily \"?\" at 6 PM until he replies — 🎯 goal: get back the $8,000 he owes me (paused this week, auto-resumes Jul 10)\n• Remind me of Mom's birthday — June 14 🎂\n• Every hour: copy & paste my tasks and hard-code them, so they're never lost 💾\n• Hourly until May 31: find someone (Not alone) 🤝\n\n💆 Book in-home massage therapists — treat it as an investment: offer to do their marketing & business stuff for free in exchange for free massages.";
   }
 }
 
