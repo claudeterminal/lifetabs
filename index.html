@@ -1944,6 +1944,8 @@ const state = {
   clNextId: base.clNextId || 1,
   // Bedroom (grouped room view: furniture + bags)
   bedroomBag: Array.isArray(base.bedroomBag) ? base.bedroomBag : [],
+  // Room Layout — visual floor plan: where each object physically sits in the room
+  roomLayout: (base.roomLayout && Array.isArray(base.roomLayout.objects)) ? base.roomLayout : null,
   bdNextId: base.bdNextId || 1,
   // Water-ladder scheduler: tracks the current day + last hour processed.
   water: base.water || { day: null, hourDone: null },
@@ -2189,6 +2191,7 @@ const TABS = [
   { id: 'beauty', label: 'Beauty' },
   { id: 'social', label: 'Social' },
   { id: 'inventory', label: 'Inventory' },
+  { id: 'roomlayout', label: 'Room Layout' },
   { id: 'pack', label: 'Pack' },
   { id: 'family', label: 'Family' },
 ];
@@ -2713,6 +2716,29 @@ state.bedroomBag = Array.isArray(state.bedroomBag) ? state.bedroomBag : [];
 if (typeof state.bdNextId !== 'number') state.bdNextId = 1;
 const bdSeed = (group, arr) => { arr.forEach(t => { if (!state.bedroomBag.some(i => i.group === group && (i.text || '').trim().toLowerCase() === t.toLowerCase())) state.bedroomBag.push({ id: state.bdNextId++, text: t, done: false, group: group }); }); };
 bdSeed('furniture', ['Double bed', 'double bed frame', 'USB Light', 'Red Suitcase', 'Rolling Laundry Basket', 'Fridge', 'Microwave', 'Kettle', 'TV', 'Coat Rack', 'White', 'Brown Desk (Not mine)', 'White Shelves (Not Mine) - try not to store', 'Cubbies (Not Mine) - try not to store']);
+
+// Room Layout — a starting visual floor plan built from the real bedroom furniture.
+function defaultRoomLayout() {
+  return {
+    nextId: 1,
+    objects: [
+      { id: 'bed',      label: 'Double Bed',     emoji: '🛏️', x: 6,  y: 48, w: 130, h: 200, color: '#3b6690' },
+      { id: 'desk',     label: 'Brown Desk',     emoji: '🖥️', x: 60, y: 6,  w: 150, h: 58,  color: '#6b4f2a' },
+      { id: 'shelves',  label: 'White Shelves',  emoji: '🗄️', x: 6,  y: 6,  w: 72,  h: 40,  color: '#8a8f96' },
+      { id: 'tv',       label: 'TV',             emoji: '📺', x: 74, y: 34, w: 96,  h: 42,  color: '#232831' },
+      { id: 'fridge',   label: 'Fridge',         emoji: '🧊', x: 80, y: 70, w: 60,  h: 74,  color: '#4a6b8a' },
+      { id: 'micro',    label: 'Microwave',      emoji: '📦', x: 78, y: 56, w: 62,  h: 34,  color: '#555b63' },
+      { id: 'kettle',   label: 'Kettle',         emoji: '🫖', x: 66, y: 56, w: 34,  h: 34,  color: '#7a5b3a' },
+      { id: 'suitcase', label: 'Red Suitcase',   emoji: '🧳', x: 40, y: 82, w: 60,  h: 48,  color: '#a83232' },
+      { id: 'laundry',  label: 'Laundry Basket', emoji: '🧺', x: 54, y: 60, w: 50,  h: 50,  color: '#6b6b4a' },
+      { id: 'coat',     label: 'Coat Rack',      emoji: '🧥', x: 4,  y: 84, w: 40,  h: 44,  color: '#3a5a3a' },
+      { id: 'light',    label: 'USB Light',      emoji: '💡', x: 40, y: 4,  w: 34,  h: 34,  color: '#b8971f' },
+    ],
+  };
+}
+if (!state.roomLayout || !Array.isArray(state.roomLayout.objects)) {
+  state.roomLayout = defaultRoomLayout();
+}
 bdSeed('bagsbig', ['red suitcase shelf', 'blue kenneth cole suitcase', 'black pull up suitcase', 'clear backpack']);
 bdSeed('bagssmall', ['fanny pack✕', 'A4M backpack✕', 'michael kors backpack', 'kenneth cole backpack']);
 
@@ -5472,6 +5498,63 @@ function paramedicBagHtml() {
   </div>`;
 }
 
+// ---- Room Layout helpers ----
+function roomEnsure() {
+  if (!state.roomLayout || !Array.isArray(state.roomLayout.objects)) state.roomLayout = defaultRoomLayout();
+  return state.roomLayout;
+}
+function roomAddObject(emoji, label) {
+  const rl = roomEnsure();
+  const id = 'o' + (rl.nextId = (rl.nextId || 1) + 1);
+  rl.objects.push({ id, label: label || 'Item', emoji: emoji || '📦', x: 44, y: 44, w: 60, h: 60, color: '#5a7a9a' });
+  savePersistedState(); render();
+}
+function roomDeleteObject(id) {
+  const rl = roomEnsure();
+  rl.objects = rl.objects.filter(o => o.id !== id);
+  savePersistedState(); render();
+}
+function roomRotateObject(id) {
+  const rl = roomEnsure();
+  const o = rl.objects.find(x => x.id === id);
+  if (o) { const w = o.w; o.w = o.h; o.h = w; }
+  savePersistedState(); render();
+}
+function setupRoomDrag() {
+  const canvas = document.getElementById('roomCanvas');
+  if (!canvas) return;
+  canvas.querySelectorAll('.room-obj').forEach(el => {
+    el.addEventListener('pointerdown', e => {
+      if (e.target.closest('.room-ctl')) return; // let ×/⟳ buttons work
+      e.preventDefault();
+      const rl = roomEnsure();
+      const o = rl.objects.find(x => x.id === el.dataset.id);
+      if (!o) return;
+      const rect = canvas.getBoundingClientRect();
+      const startX = e.clientX, startY = e.clientY, ox = o.x, oy = o.y;
+      let moved = false;
+      try { el.setPointerCapture(e.pointerId); } catch {}
+      el.style.cursor = 'grabbing'; el.style.zIndex = 999;
+      const mv = ev => {
+        const dx = (ev.clientX - startX) / rect.width * 100;
+        const dy = (ev.clientY - startY) / rect.height * 100;
+        if (Math.abs(ev.clientX - startX) + Math.abs(ev.clientY - startY) > 3) moved = true;
+        o.x = Math.max(0, Math.min(97, ox + dx));
+        o.y = Math.max(0, Math.min(97, oy + dy));
+        el.style.left = o.x + '%'; el.style.top = o.y + '%';
+      };
+      const up = () => {
+        el.removeEventListener('pointermove', mv);
+        el.removeEventListener('pointerup', up);
+        el.style.cursor = 'grab'; el.style.zIndex = '';
+        if (moved) savePersistedState();
+      };
+      el.addEventListener('pointermove', mv);
+      el.addEventListener('pointerup', up);
+    });
+  });
+}
+
 function render() {
   // Persist current state so changes survive reloads / future code updates.
   savePersistedState();
@@ -6275,6 +6358,41 @@ function render() {
       <textarea class="tab-notes" id="tab-notes" data-action="edit-tab-notes" placeholder="More dating notes…">${escapeHtml(dNotes)}</textarea>
     </div>
     `;
+  } else if (state.activeTab === 'roomlayout') {
+    const rl = (state.roomLayout && Array.isArray(state.roomLayout.objects)) ? state.roomLayout : defaultRoomLayout();
+    const objs = rl.objects;
+    const palette = [
+      ['🛏️','Bed'],['🖥️','Desk'],['🪑','Chair'],['🗄️','Shelf'],['📺','TV'],['🧊','Fridge'],
+      ['📦','Microwave'],['🫖','Kettle'],['🧳','Suitcase'],['🧺','Laundry'],['🧥','Coat rack'],
+      ['💡','Light'],['🪴','Plant'],['🪞','Mirror'],['🪟','Window'],['🚪','Door'],['🟫','Rug'],['📦','Box'],
+    ];
+    const paletteHtml = palette.map(p =>
+      `<button data-action="room-add" data-emoji="${p[0]}" data-label="${escapeHtml(p[1])}" title="Add ${escapeHtml(p[1])}" style="background:#23232a;border:1px solid #3a3a44;border-radius:8px;padding:4px 9px;font-size:12px;color:#e8e8ee;cursor:pointer;white-space:nowrap;">${p[0]} ${escapeHtml(p[1])}</button>`
+    ).join('');
+    const objsHtml = objs.map(o =>
+      `<div class="room-obj" data-id="${escapeHtml(o.id)}" style="position:absolute;left:${o.x}%;top:${o.y}%;width:${o.w}px;height:${o.h}px;background:${o.color}33;border:2px solid ${o.color};border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:grab;touch-action:none;user-select:none;box-shadow:0 2px 7px rgba(0,0,0,.35);overflow:hidden;box-sizing:border-box;">
+         <div style="font-size:22px;line-height:1;pointer-events:none;">${o.emoji}</div>
+         <div style="font-size:10px;color:#f4f4f7;font-weight:600;text-align:center;line-height:1.05;pointer-events:none;padding:0 2px;">${escapeHtml(o.label)}</div>
+         <button class="room-ctl" data-action="room-del" data-id="${escapeHtml(o.id)}" title="Remove" style="position:absolute;top:1px;right:2px;background:rgba(0,0,0,.55);color:#fff;border:none;border-radius:50%;width:16px;height:16px;font-size:12px;line-height:14px;padding:0;cursor:pointer;">×</button>
+         <button class="room-ctl" data-action="room-rot" data-id="${escapeHtml(o.id)}" title="Rotate 90°" style="position:absolute;bottom:1px;right:2px;background:rgba(0,0,0,.55);color:#fff;border:none;border-radius:50%;width:16px;height:16px;font-size:10px;line-height:14px;padding:0;cursor:pointer;">⟳</button>
+       </div>`
+    ).join('');
+    bodyHtml = `
+    <div class="tab-panel">
+      <div class="tab-panel-title">Room Layout</div>
+      <div class="tab-panel-sub">Drag each object to where it goes · tap a palette item to add · × removes · ⟳ rotates</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin:6px 4px 10px;">${paletteHtml}</div>
+      <div id="roomCanvas" style="position:relative;width:100%;max-width:520px;aspect-ratio:4/5;margin:0 auto;background-color:#2a2a31;background-image:repeating-linear-gradient(0deg,transparent,transparent 24px,rgba(255,255,255,.04) 24px,rgba(255,255,255,.04) 25px),repeating-linear-gradient(90deg,transparent,transparent 24px,rgba(255,255,255,.04) 24px,rgba(255,255,255,.04) 25px);border:3px solid #55555f;border-radius:6px;overflow:hidden;">
+        <div style="position:absolute;top:0;left:40%;width:64px;height:5px;background:#f4c544;"></div>
+        <div style="position:absolute;top:6px;left:40%;width:64px;text-align:center;font-size:9px;color:#f4c544;letter-spacing:.5px;">DOOR</div>
+        ${objsHtml}
+      </div>
+      <div style="text-align:center;margin-top:9px;">
+        <button data-action="room-reset" style="background:#3a3a44;color:#cfcfd6;border:1px solid #55555f;border-radius:8px;padding:5px 12px;font-size:12px;cursor:pointer;">↺ Reset to my furniture</button>
+      </div>
+      <div style="font-size:11px;color:#8e8e98;text-align:center;margin-top:8px;padding:0 14px;line-height:1.5;">This is the start of your room map — drag things around until it matches real life, then we can plan the best spot for everything.</div>
+    </div>
+    `;
   } else {
     const tab = TABS.find(t => t.id === state.activeTab) || { label: '' };
     const notes = (state.tabNotes && state.tabNotes[state.activeTab]) || '';
@@ -6292,6 +6410,9 @@ function render() {
   }
 
   document.getElementById('app').innerHTML = tabsHtml + bodyHtml;
+
+  // Room Layout: wire up drag-to-place after the DOM is rebuilt.
+  if (state.activeTab === 'roomlayout') setupRoomDrag();
 
   // Keep the big top-right clock's visibility in sync with the active tab.
   if (typeof tickTopClock === 'function') tickTopClock();
@@ -6700,6 +6821,10 @@ document.addEventListener('click', (e) => {
     case 'delete-forever': handleDeleteForever(); break;
     case 'failed': handleFailed(); break;
     case 'reset': handleReset(); break;
+    case 'room-add': roomAddObject(target.dataset.emoji, target.dataset.label); break;
+    case 'room-del': roomDeleteObject(target.dataset.id); break;
+    case 'room-rot': roomRotateObject(target.dataset.id); break;
+    case 'room-reset': state.roomLayout = defaultRoomLayout(); savePersistedState(); render(); break;
     case 'uncheck-all': uncheckAll(); break;
     case 'repeat': handleRepeat(); break;
     case 'mute': toggleMute(); break;
