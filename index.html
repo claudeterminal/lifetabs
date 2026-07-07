@@ -1999,6 +1999,13 @@ if (state.tabNotes && typeof state.tabNotes.automated === 'string') {
       "$1• 🧊 YoLink T&H Sensor (essential app) — monitors my fridge temperature 24/7 and alerts my phone if it rises above safe range, so food never spoils (alert interval 10 min)\n"
     );
   }
+  // Ensure the Ava-voice terminal readout automation shows for returning users too.
+  if (!/reads my Claude terminal/i.test(state.tabNotes.automated)) {
+    state.tabNotes.automated = state.tabNotes.automated.replace(
+      /(⏰ AUTOMATIONS[^\n]*\n\n)/,
+      "$1• 🗣️ Ava reads my Claude terminal answers aloud — every answer in my Claude terminal is spoken out loud in Microsoft Ava's voice (edge-tts, 1.5×), automatically, until I say stop\n"
+    );
+  }
   // One-time (v2): (re)write the Amazon-return playbook — no-box/no-label scan-QR is now the FIRST return-method choice, refund to gift balance.
   if (!/AMAZON RETURN PLAYBOOK v2/i.test(state.tabNotes.automated)) {
     state.tabNotes.automated = state.tabNotes.automated
