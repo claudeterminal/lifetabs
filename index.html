@@ -1990,6 +1990,13 @@ if (state.tabNotes && typeof state.tabNotes.automated === 'string') {
       "$1• 💸 Text Mohan a daily \"?\" at 6 PM until he replies — 🎯 goal: get back the $8,000 he owes me (paused this week, auto-resumes Jul 10)\n"
     );
   }
+  // Ensure the YoLink fridge-temperature sensor app shows for returning users too.
+  if (!/fridge temperature/i.test(state.tabNotes.automated)) {
+    state.tabNotes.automated = state.tabNotes.automated.replace(
+      /(⏰ AUTOMATIONS[^\n]*\n\n)/,
+      "$1• 🧊 YoLink T&H Sensor (essential app) — monitors my fridge temperature 24/7 and alerts my phone if it rises above safe range, so food never spoils (alert interval 10 min)\n"
+    );
+  }
   // One-time (v2): (re)write the Amazon-return playbook — no-box/no-label scan-QR is now the FIRST return-method choice, refund to gift balance.
   if (!/AMAZON RETURN PLAYBOOK v2/i.test(state.tabNotes.automated)) {
     state.tabNotes.automated = state.tabNotes.automated
