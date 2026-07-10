@@ -2675,7 +2675,7 @@ if (Array.isArray(state.consumablesBag)) {
   });
 }
 state.simpleLists = state.simpleLists || {};
-['bathroom', 'neveruse', 'cooking', 'storage', 'bags', 'shoes', 'daily', 'health', 'medications', 'tools', 'electronics', 'videochat', 'misc', 'papers', 'sun', 'clothes', 'earthquake', 'sleep', 'treatments', 'homeemergency', 'makeup', 'garage'].forEach(k => { if (!Array.isArray(state.simpleLists[k])) state.simpleLists[k] = []; });
+['bathroom', 'neveruse', 'cooking', 'storage', 'bags', 'shoes', 'daily', 'health', 'medications', 'tools', 'electronics', 'videochat', 'misc', 'papers', 'sun', 'clothes', 'earthquake', 'sleep', 'treatments', 'homeemergency', 'makeup', 'garage', 'nightstand'].forEach(k => { if (!Array.isArray(state.simpleLists[k])) state.simpleLists[k] = []; });
 if (typeof state.simpleNextId !== 'number') state.simpleNextId = 1;
 const seedSL2 = (k, arr) => { arr.forEach(t => { if (!state.simpleLists[k].some(i => (i.text || '').trim().toLowerCase() === t.toLowerCase())) state.simpleLists[k].push({ id: state.simpleNextId++, text: t, done: false }); }); };
 seedSL2('bathroom', ['brown holding rack', 'hair dryer bang curler', 'eyeliner', 'face creams', 'towel', 'squatty potty', 'walker (big)', 'scale', 'hair serum', 'tweezers', 'razor', 'bath scrub', 'water gel sunscreen', 'small sunscreen stick']);
@@ -2693,6 +2693,7 @@ seedSL2('misc', ['dog with heart']);
 seedSL2('papers', ['binder (1)', 'mail (100)']);
 seedSL2('sun', ['sunscreen (10)', 'white bay hat', 'blue bay hat', 'army cap', 'straw hat']);
 seedSL2('garage', ['filming light $80']);
+seedSL2('nightstand', ['spit cup']);
 // Clothes is a grouped category (tops / socks / hats / shoes). Migrate the old
 // flat "clothes" and "shoes" lists into it, then retire those flat lists.
 state.clothesBag = Array.isArray(state.clothesBag) ? state.clothesBag : [];
@@ -6169,7 +6170,7 @@ function render() {
       });
       groupsHtml += `</div>`;
     });
-    const invSel = ['all', 'bedroom', 'groceries', 'consumables', 'cooking', 'paramedic', 'fanny', 'furniture', 'massagers', 'supplements', 'bathroom', 'bedding', 'cleaning', 'tools', 'storage', 'bags', 'neveruse', 'daily', 'health', 'medications', 'electronics', 'videochat', 'misc', 'papers', 'sun', 'clothes', 'earthquake', 'sleep', 'treatments', 'homeemergency', 'makeup', 'garage'].indexOf(state.invList) >= 0 ? state.invList : 'paramedic';
+    const invSel = ['all', 'bedroom', 'groceries', 'consumables', 'cooking', 'paramedic', 'fanny', 'furniture', 'massagers', 'supplements', 'bathroom', 'bedding', 'cleaning', 'tools', 'storage', 'bags', 'neveruse', 'daily', 'health', 'medications', 'electronics', 'videochat', 'misc', 'papers', 'sun', 'clothes', 'earthquake', 'sleep', 'treatments', 'homeemergency', 'makeup', 'garage', 'nightstand'].indexOf(state.invList) >= 0 ? state.invList : 'paramedic';
     const navBtn = (id, ico, lbl) => `<button class="inv-nav-btn ${invSel === id ? 'active' : ''}" data-action="inv-select" data-list="${id}">
       <span class="nav-ico">${ico}</span><span class="nav-lbl">${lbl}</span></button>`;
     const emo = (e) => `<span class="nav-emoji">${e}</span>`;
@@ -6186,6 +6187,7 @@ function render() {
       ${navBtn('bathroom', emo('🛁'), 'Bathroom')}
       ${navBtn('makeup', emo('💄'), 'Makeup')}
       ${navBtn('bedding', emo('🛏️'), 'Bedding')}
+      ${navBtn('nightstand', emo('🌙'), 'Nightstand')}
       ${navBtn('sleep', emo('😴'), 'Sleep')}
       ${navBtn('cleaning', emo('🧹'), 'Cleaning')}
       ${navBtn('tools', emo('🛠️'), 'Tools')}
@@ -6210,6 +6212,7 @@ function render() {
     const allHtml = bedroomHtml() + groceriesHtml() + consumablesBagHtml() + simpleListHtml('cooking', 'Cooking', '🍳') + paramedicBagHtml() + fannyBagHtml() + furnitureBagHtml()
       + simpleListHtml('bathroom', 'Bathroom', '🛁') + simpleListHtml('makeup', 'Makeup', '💄') + simpleListHtml('bedding', 'Bedding', '🛏️')
       + simpleListHtml('cleaning', 'Cleaning', '🧹') + simpleListHtml('tools', 'Tools', '🛠️') + garageHtml()
+      + simpleListHtml('nightstand', 'Nightstand', '🌙')
       + simpleListHtml('sleep', 'Sleep', '😴')
       + simpleListHtml('storage', 'Storage/Containers', '📦') + simpleListHtml('bags', 'Bags/Luggage', '🧳')
       + clothesHtml() + simpleListHtml('sun', 'Sun', '☀️')
@@ -6234,6 +6237,7 @@ function render() {
       : invSel === 'makeup' ? simpleListHtml('makeup', 'Makeup', '💄')
       : invSel === 'bedding' ? simpleListHtml('bedding', 'Bedding', '🛏️')
       : invSel === 'cleaning' ? simpleListHtml('cleaning', 'Cleaning', '🧹')
+      : invSel === 'nightstand' ? simpleListHtml('nightstand', 'Nightstand', '🌙')
       : invSel === 'sleep' ? simpleListHtml('sleep', 'Sleep', '😴')
       : invSel === 'tools' ? simpleListHtml('tools', 'Tools', '🛠️')
       : invSel === 'garage' ? garageHtml()
