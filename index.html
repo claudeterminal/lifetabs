@@ -1846,7 +1846,7 @@ function buildDefaultState() {
     seedVersion: SEED_VERSION,
     tabNotes: {
       events: "🎂 June 14 — Mom's birthday 🎉",
-      automated: "⏰ AUTOMATIONS\n\n• 🍽 Auto macros + micros on every meal — I send a food photo or say I ate something, and I get that meal's macros PLUS the whole day's running total macros AND micros (food-day resets 7:00 AM PST)\n• 🛒 Order groceries automatically — Instacart (Sprouts) cart auto-refills Mon 9:00 AM & Thu 4:00 PM, then texts me the checkout link to tap Pay\n• 💸 Text Mohan a daily \"?\" at 6 PM until he replies — 🎯 goal: get back the $8,000 he owes me (paused this week, auto-resumes Jul 10)\n• Remind me of Mom's birthday — June 14 🎂\n• Every hour: copy & paste my tasks and hard-code them, so they're never lost 💾\n• Hourly until May 31: find someone (Not alone) 🤝\n\n💆 Book in-home massage therapists — treat it as an investment: offer to do their marketing & business stuff for free in exchange for free massages.",
+      automated: "⏰ AUTOMATIONS\n\n• 💊 Xanax running daily total — every time I log a Xanax dose, I instantly get a text listing every dose I've had since 12:01 AM today (each time + mg) and the running total, so I always know exactly how much I've taken\n• 🍽 Auto macros + micros on every meal — I send a food photo or say I ate something, and I get that meal's macros PLUS the whole day's running total macros AND micros (food-day resets 7:00 AM PST)\n• 🛒 Order groceries automatically — Instacart (Sprouts) cart auto-refills Mon 9:00 AM & Thu 4:00 PM, then texts me the checkout link to tap Pay\n• 💸 Text Mohan a daily \"?\" at 6 PM until he replies — 🎯 goal: get back the $8,000 he owes me (paused this week, auto-resumes Jul 10)\n• Remind me of Mom's birthday — June 14 🎂\n• Every hour: copy & paste my tasks and hard-code them, so they're never lost 💾\n• Hourly until May 31: find someone (Not alone) 🤝\n\n💆 Book in-home massage therapists — treat it as an investment: offer to do their marketing & business stuff for free in exchange for free massages.",
     },
     suitcaseRows: [
       { name: "Row 1", items: ["Contact lenses"] },
@@ -2004,6 +2004,13 @@ if (state.tabNotes && typeof state.tabNotes.automated === 'string') {
     state.tabNotes.automated = state.tabNotes.automated.replace(
       /(⏰ AUTOMATIONS[^\n]*\n\n)/,
       "$1• 🗣️ Ava reads my Claude terminal answers aloud — every answer in my Claude terminal is spoken out loud in Microsoft Ava's voice (edge-tts, 1.5×), automatically, until I say stop\n"
+    );
+  }
+  // Ensure the Xanax running-daily-total automation shows for returning users too.
+  if (!/Xanax running/i.test(state.tabNotes.automated)) {
+    state.tabNotes.automated = state.tabNotes.automated.replace(
+      /(⏰ AUTOMATIONS[^\n]*\n\n)/,
+      "$1• 💊 Xanax running daily total — every time I log a Xanax dose, I instantly get a text listing every dose I've had since 12:01 AM today (each time + mg) and the running total, so I always know exactly how much I've taken\n"
     );
   }
   // One-time (v2): (re)write the Amazon-return playbook — no-box/no-label scan-QR is now the FIRST return-method choice, refund to gift balance.
@@ -2570,7 +2577,7 @@ if (typeof state.cnNextId !== 'number') state.cnNextId = state.consumablesBag.le
 // Seed the Massagers list (append each if missing).
 state.massagers = Array.isArray(state.massagers) ? state.massagers : [];
 if (typeof state.msNextId !== 'number') state.msNextId = state.massagers.length + 1;
-['theragun', 'pink talking massager ($50 spent)', 'large grey massager', 'chair massager ($150 can return)', 'small black massager', 'small foot massager (free)', 'larger foot massager ($50 spent, sell it) 📍garage', 'blue exercise band', 'other exercise bands (6)'].forEach(t => {
+['acupressure spike ⭐ (my go-to for facial/jaw tension relief)', 'theragun', 'pink talking massager ($50 spent)', 'large grey massager', 'chair massager ($150 can return)', 'small black massager', 'small foot massager (free)', 'larger foot massager ($50 spent, sell it) 📍garage', 'blue exercise band', 'other exercise bands (6)'].forEach(t => {
   if (!state.massagers.some(i => (i.text || '').trim().toLowerCase() === t.toLowerCase())) {
     state.massagers.push({ id: state.msNextId++, text: t, done: false });
   }
