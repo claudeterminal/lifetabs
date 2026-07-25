@@ -551,7 +551,8 @@
     color: #0c1a12; font-weight: 900; font-size: 11.5px; line-height: 1; display: flex; align-items: center; justify-content: center;
   }
   .pb-item.pb-checked .pb-box { background: var(--green); border-color: var(--green); }
-  .pb-emoji { flex: 0 0 auto; font-size: 13.5px; line-height: 1; width: 18px; text-align: center; }
+  .pb-emoji { flex: 0 0 auto; font-size: 13.5px; line-height: 1; width: 22px; text-align: center; }
+  .pb-emoji-img { width: 22px; height: 22px; object-fit: contain; vertical-align: middle; display: inline-block; border-radius: 5px; }
   .pb-text { flex: 1 1 auto; min-width: 0; font-size: 13.5px; line-height: 1.25; color: var(--fg); }
   .pb-item.pb-checked .pb-text { color: var(--fg-faint); text-decoration: line-through; }
   .pb-del { flex: 0 0 auto; background: none; border: none; color: var(--fg-faint); cursor: pointer; font-size: 11.5px; padding: 1px 3px; }
@@ -4942,6 +4943,21 @@ function pbEmoji(text) {
   if (/water/.test(t)) return '💧';
   return '📦';
 }
+// Turn any emoji into a real image-file URL (Twemoji PNG) so every inventory item
+// shows a crisp picture thumbnail instead of a plain text glyph.
+function twemojiUrl(emoji) {
+  const cps = [...emoji].map(c => c.codePointAt(0));
+  const hasZwj = cps.indexOf(0x200d) >= 0;                 // keep FE0F only inside ZWJ sequences (twemoji rule)
+  const code = (hasZwj ? cps : cps.filter(c => c !== 0xfe0f)).map(c => c.toString(16)).join('-');
+  return `https://cdn.jsdelivr.net/gh/jdecked/twemoji@15.1.0/assets/72x72/${code}.png`;
+}
+// Image thumbnail for an inventory item — a picture for everything, with the
+// emoji glyph itself as an instant fallback if the image can't load.
+function pbThumb(text) {
+  const e = pbEmoji(text);
+  const url = twemojiUrl(e);
+  return `<span class="pb-emoji"><img class="pb-emoji-img" src="${url}" alt="" loading="lazy" decoding="async" onerror="this.parentNode.textContent='${e}'"></span>`;
+}
 function pbAdd() {
   const el = document.getElementById('pb-name');
   const text = ((el && el.value) || '').trim();
@@ -5006,7 +5022,7 @@ function groceryRows(group) {
     return `<div class="pb-item ${it.done ? 'pb-checked' : ''}${ex ? ' gr-hasextra' : ''}">
       ${deal}
       <button class="pb-box" data-action="gr-toggle" data-id="${it.id}" role="checkbox" aria-checked="${it.done ? 'true' : 'false'}">${it.done ? '✓' : ''}</button>
-      <span class="pb-emoji">${pbEmoji(it.text)}</span>
+      ${pbThumb(it.text)}
       <span class="pb-text">${escapeHtml(it.text)}</span>
       ${img}
       <button class="pb-del" data-action="gr-del" data-id="${it.id}" title="Remove">✕</button>
@@ -5062,7 +5078,7 @@ function bdDelete(id) { state.bedroomBag = (state.bedroomBag || []).filter(x => 
 function bedroomRows(group) {
   return (state.bedroomBag || []).filter(i => (i.group || 'furniture') === group).map(it => `<div class="pb-item ${it.done ? 'pb-checked' : ''}">
       <button class="pb-box" data-action="bd-toggle" data-id="${it.id}" role="checkbox" aria-checked="${it.done ? 'true' : 'false'}">${it.done ? '✓' : ''}</button>
-      <span class="pb-emoji">${pbEmoji(it.text)}</span>
+      ${pbThumb(it.text)}
       <span class="pb-text">${escapeHtml(it.text)}</span>
       <button class="pb-del" data-action="bd-del" data-id="${it.id}" title="Remove">✕</button>
     </div>`).join('');
@@ -5161,7 +5177,7 @@ function clDelete(id) { state.clothesBag = (state.clothesBag || []).filter(x => 
 function clothesRows(group) {
   return (state.clothesBag || []).filter(i => (i.group || 'tops') === group).map(it => `<div class="pb-item ${it.done ? 'pb-checked' : ''}">
       <button class="pb-box" data-action="cl-toggle" data-id="${it.id}" role="checkbox" aria-checked="${it.done ? 'true' : 'false'}">${it.done ? '✓' : ''}</button>
-      <span class="pb-emoji">${pbEmoji(it.text)}</span>
+      ${pbThumb(it.text)}
       <span class="pb-text">${escapeHtml(it.text)}</span>
       <button class="pb-del" data-action="cl-del" data-id="${it.id}" title="Remove">✕</button>
     </div>`).join('');
@@ -5206,7 +5222,7 @@ function simpleListHtml(listId, title, icon) {
   items.forEach(it => {
     rows += `<div class="pb-item ${it.done ? 'pb-checked' : ''}">
       <button class="pb-box" data-action="sl-toggle" data-list="${listId}" data-id="${it.id}" role="checkbox" aria-checked="${it.done ? 'true' : 'false'}">${it.done ? '✓' : ''}</button>
-      <span class="pb-emoji">${pbEmoji(it.text)}</span>
+      ${pbThumb(it.text)}
       <span class="pb-text">${escapeHtml(it.text)}</span>
       <button class="pb-del" data-action="sl-del" data-list="${listId}" data-id="${it.id}" title="Remove">✕</button>
     </div>`;
@@ -5264,7 +5280,7 @@ function massagersHtml() {
   items.forEach(it => {
     rows += `<div class="pb-item ${it.done ? 'pb-checked' : ''}">
       <button class="pb-box" data-action="ms-toggle" data-id="${it.id}" role="checkbox" aria-checked="${it.done ? 'true' : 'false'}">${it.done ? '✓' : ''}</button>
-      <span class="pb-emoji">${pbEmoji(it.text)}</span>
+      ${pbThumb(it.text)}
       <span class="pb-text">${escapeHtml(it.text)}</span>
       <button class="pb-del" data-action="ms-del" data-id="${it.id}" title="Remove">✕</button>
     </div>`;
@@ -5305,7 +5321,7 @@ function spDelete(id) { state.supplementsBag = (state.supplementsBag || []).filt
 function supplementRows(group) {
   return (state.supplementsBag || []).filter(i => (i.group || 'take') === group).map(it => `<div class="pb-item ${it.done ? 'pb-checked' : ''}">
       <button class="pb-box" data-action="sp-toggle" data-id="${it.id}" role="checkbox" aria-checked="${it.done ? 'true' : 'false'}">${it.done ? '✓' : ''}</button>
-      <span class="pb-emoji">${pbEmoji(it.text)}</span>
+      ${pbThumb(it.text)}
       <span class="pb-text">${escapeHtml(it.text)}</span>
       <button class="pb-del" data-action="sp-del" data-id="${it.id}" title="Remove">✕</button>
     </div>`).join('');
@@ -5357,7 +5373,7 @@ function consumablesBagHtml() {
   items.forEach(it => {
     rows += `<div class="pb-item ${it.done ? 'pb-checked' : ''}">
       <button class="pb-box" data-action="cn-toggle" data-id="${it.id}" role="checkbox" aria-checked="${it.done ? 'true' : 'false'}">${it.done ? '✓' : ''}</button>
-      <span class="pb-emoji">${pbEmoji(it.text)}</span>
+      ${pbThumb(it.text)}
       <span class="pb-text">${escapeHtml(it.text)}</span>
       <button class="pb-del" data-action="cn-del" data-id="${it.id}" title="Remove">✕</button>
     </div>`;
@@ -5410,7 +5426,7 @@ function fnDelete(id) {
 function furnitureRowsHtml(group) {
   return (state.furnitureBag || []).filter(i => (i.group || 'main') === group).map(it => `<div class="pb-item ${it.done ? 'pb-checked' : ''}">
       <button class="pb-box" data-action="fn-toggle" data-id="${it.id}" role="checkbox" aria-checked="${it.done ? 'true' : 'false'}">${it.done ? '✓' : ''}</button>
-      <span class="pb-emoji">${pbEmoji(it.text)}</span>
+      ${pbThumb(it.text)}
       <span class="pb-text">${escapeHtml(it.text)}</span>
       <button class="pb-del" data-action="fn-del" data-id="${it.id}" title="Remove">✕</button>
     </div>`).join('');
@@ -5464,7 +5480,7 @@ function fannyBagHtml() {
   items.forEach(it => {
     rows += `<div class="pb-item ${it.done ? 'pb-checked' : ''}">
       <button class="pb-box" data-action="fb-toggle" data-id="${it.id}" role="checkbox" aria-checked="${it.done ? 'true' : 'false'}">${it.done ? '✓' : ''}</button>
-      <span class="pb-emoji">${pbEmoji(it.text)}</span>
+      ${pbThumb(it.text)}
       <span class="pb-text">${escapeHtml(it.text)}</span>
       <button class="pb-del" data-action="fb-del" data-id="${it.id}" title="Remove">✕</button>
     </div>`;
@@ -5492,7 +5508,7 @@ function paramedicBagHtml() {
   items.forEach(it => {
     rows += `<div class="pb-item ${it.done ? 'pb-checked' : ''}">
       <button class="pb-box" data-action="pb-toggle" data-id="${it.id}" role="checkbox" aria-checked="${it.done ? 'true' : 'false'}">${it.done ? '✓' : ''}</button>
-      <span class="pb-emoji">${pbEmoji(it.text)}</span>
+      ${pbThumb(it.text)}
       <span class="pb-text">${escapeHtml(it.text)}</span>
       <button class="pb-del" data-action="pb-del" data-id="${it.id}" title="Remove">✕</button>
     </div>`;
@@ -6110,7 +6126,7 @@ function render() {
 <div style="display:grid;grid-template-columns:118px 1fr 96px;gap:0 8px;align-items:baseline;font-size:12px;padding:6px 0;border-top:1px solid rgba(212,165,116,.14)"><div style="opacity:.85">Coinbase</div><div style="opacity:.75">Agentic <b>predictions</b> — my key trades crypto only, not the prediction markets</div><div style="text-align:right;opacity:.7;font-weight:700">⏳ WAIT</div></div>
 <div style="display:grid;grid-template-columns:118px 1fr 96px;gap:0 8px;align-items:baseline;font-size:12px;padding:6px 0;border-top:1px solid rgba(212,165,116,.14)"><div style="opacity:.85">Kalshi</div><div style="opacity:.75">Official "connect Claude" agentic betting — not announced</div><div style="text-align:right;opacity:.7;font-weight:700">⏳ WAIT</div></div>
 <div style="display:grid;grid-template-columns:118px 1fr 96px;gap:0 8px;align-items:baseline;font-size:12px;padding:6px 0;border-top:1px solid rgba(212,165,116,.14)"><div style="opacity:.85">Nadex</div><div style="opacity:.75">Binary options (US-legal, Crypto.com-owned) — legacy API only, no agent connector</div><div style="text-align:right;opacity:.7;font-weight:700">⏳ WAIT</div></div>
-<div style="margin-top:14px;padding:10px 12px;border:1px dashed rgba(212,165,116,.4);border-radius:10px;font-size:12px;line-height:1.5"><b>What trades on Kalshi:</b> event contracts (politics · Fed/CPI/jobs · <b>crypto prices</b> BTC/ETH/SOL/XRP 15-min→yearly · sports · weather · companies · entertainment) <b>+ crypto perpetual futures</b> (BTCPERP, ETHPERP — long/short w/ leverage). Both are API-accessible, so Claude can trade them. <span style="opacity:.7">Perps = the only regulated US way to short Bitcoin agentically — best fit for hedging any BTC/IBIT I hold.</span></div><div style="margin-top:10px;padding:10px 12px;border:1px dashed rgba(212,165,116,.4);border-radius:10px;font-size:12px;line-height:1.55"><b>💰 Idle-cash yield (APY)</b> — best return on uninvested cash: <b style="color:#2f9e63">Coinbase USDC ~4.0%</b> (4.7% in Wallet) › <b>SGOV</b> 0-3mo T-bill ETF <b>~3.6%</b> (Robinhood, commission-free, I can auto-buy) › Robinhood cash <b>3.35%</b> › OANDA <b>3%</b>. <span style="opacity:.75">My $155 USDC on Coinbase should already earn ~4% — beats all four. Park spare Robinhood cash in SGOV. (USDC lending via Morpho ~10% exists but that's DeFi risk, not treasury-safe.)</span></div><div style="margin-top:10px;padding:10px 12px;border:1px dashed rgba(47,158,99,.5);border-radius:10px;font-size:12px;line-height:1.55"><b>🔔 USDG 7% watch (always on)</b> — Robinhood's "estimated 7%" ≈ <b>~1.64% real Morpho lending</b> + <b>~5.36% temporary Robinhood subsidy</b>. Not guaranteed; the underlying rate falls as the vault fills. Claude tracks the Steakhouse-USDG Morpho vault + the $1 peg and alerts me on <b>iMessage, Telegram, email &amp; terminal</b> if the <b>rate changes</b> or USDG moves <b>1¢ off $1</b>.</div></div>
+<div style="margin-top:14px;padding:10px 12px;border:1px dashed rgba(212,165,116,.4);border-radius:10px;font-size:12px;line-height:1.5"><b>What trades on Kalshi:</b> event contracts (politics · Fed/CPI/jobs · <b>crypto prices</b> BTC/ETH/SOL/XRP 15-min→yearly · sports · weather · companies · entertainment) <b>+ crypto perpetual futures</b> (BTCPERP, ETHPERP — long/short w/ leverage). Both are API-accessible, so Claude can trade them. <span style="opacity:.7">Perps = the only regulated US way to short Bitcoin agentically — best fit for hedging any BTC/IBIT I hold.</span></div><div style="margin-top:10px;padding:10px 12px;border:1px dashed rgba(212,165,116,.4);border-radius:10px;font-size:12px;line-height:1.55"><b>💰 Idle-cash yield (APY)</b> — best return on uninvested cash: <b style="color:#2f9e63">Coinbase USDC ~4.0%</b> (4.7% in Wallet) › <b>SGOV</b> 0-3mo T-bill ETF <b>~3.6%</b> (Robinhood, commission-free, I can auto-buy) › Robinhood cash <b>3.35%</b> › OANDA <b>3%</b>. <span style="opacity:.75">My $155 USDC on Coinbase should already earn ~4% — beats all four. Park spare Robinhood cash in SGOV. (USDC lending via Morpho ~10% exists but that's DeFi risk, not treasury-safe.)</span></div><div style="margin-top:10px;padding:10px 12px;border:1px dashed rgba(47,158,99,.5);border-radius:10px;font-size:12px;line-height:1.55"><b>🔔 USDG 7% watch (always on)</b> — Robinhood's "estimated 7%" ≈ <b>~4.06% real Morpho lending</b> + <b>~2.94% temporary Robinhood subsidy</b>. Not guaranteed; the underlying rate falls as the vault fills. Claude tracks the Steakhouse-USDG Morpho vault + the $1 peg and alerts me on <b>iMessage, Telegram, email &amp; terminal</b> if the <b>rate changes</b> or USDG moves <b>1¢ off $1</b>.</div></div>
     </div>
     `;
   } else if (state.activeTab === 'expenses') {
