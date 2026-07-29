@@ -1847,7 +1847,7 @@ function buildDefaultState() {
     seedVersion: SEED_VERSION,
     tabNotes: {
       events: "🎂 June 14 — Mom's birthday 🎉",
-      automated: "⏰ AUTOMATIONS\n\n• 💊 Xanax running daily total — every time I log a Xanax dose, I instantly get a text listing every dose I've had since 12:01 AM today (each time + mg) and the running total, so I always know exactly how much I've taken\n• 🍽 Auto macros + micros on every meal — I send a food photo or say I ate something, and I get that meal's macros PLUS the whole day's running total macros AND micros (food-day resets 7:00 AM PST)\n• 🛒 Order groceries automatically — Instacart (Sprouts) cart auto-refills Mon 9:00 AM & Thu 4:00 PM, then texts me the checkout link to tap Pay\n• 💸 Text Mohan a daily \"?\" at 6 PM until he replies — 🎯 goal: get back the $8,000 he owes me (paused this week, auto-resumes Jul 10)\n• Remind me of Mom's birthday — June 14 🎂\n• Every hour: copy & paste my tasks and hard-code them, so they're never lost 💾\n• Hourly until May 31: find someone (Not alone) 🤝\n\n💆 Book in-home massage therapists — treat it as an investment: offer to do their marketing & business stuff for free in exchange for free massages.",
+      automated: "⏰ AUTOMATIONS\n\n• 📱 Talk to my Claude terminal from Telegram — 2026-07-28 — I text @proactive_makeup_bot (\"Claude Terminal\") and get real Claude answers back, ~20–30s each. It shares the same memory as my terminal, so it knows my labs, food rules and reminders. It can also CONTROL this Mac: open apps, click, type, edit files, deploy my sites, run my scripts. Photos work (meals, labs, water bottles). Messages sent while the Mac is asleep are queued and answered when it wakes. ⚠️ Needs the Mac awake + online — lid open, plugged in (a caffeinate keep-awake agent now stops it idle-sleeping). Lid closed = it sleeps; the only fix is moving the bridge to a free Oracle Cloud VM.\n• 💊 Xanax running daily total — every time I log a Xanax dose, I instantly get a text listing every dose I've had since 12:01 AM today (each time + mg) and the running total, so I always know exactly how much I've taken\n• 🍽 Auto macros + micros on every meal — I send a food photo or say I ate something, and I get that meal's macros PLUS the whole day's running total macros AND micros (food-day resets 7:00 AM PST)\n• 🛒 Order groceries automatically — Instacart (Sprouts) cart auto-refills Mon 9:00 AM & Thu 4:00 PM, then texts me the checkout link to tap Pay\n• 💸 Text Mohan a daily \"?\" at 6 PM until he replies — 🎯 goal: get back the $8,000 he owes me (paused this week, auto-resumes Jul 10)\n• Remind me of Mom's birthday — June 14 🎂\n• Every hour: copy & paste my tasks and hard-code them, so they're never lost 💾\n• Hourly until May 31: find someone (Not alone) 🤝\n\n💆 Book in-home massage therapists — treat it as an investment: offer to do their marketing & business stuff for free in exchange for free massages.",
     },
     suitcaseRows: [
       { name: "Row 1", items: ["Contact lenses"] },
@@ -2012,6 +2012,13 @@ if (state.tabNotes && typeof state.tabNotes.automated === 'string') {
     state.tabNotes.automated = state.tabNotes.automated.replace(
       /(⏰ AUTOMATIONS[^\n]*\n\n)/,
       "$1• 💊 Xanax running daily total — every time I log a Xanax dose, I instantly get a text listing every dose I've had since 12:01 AM today (each time + mg) and the running total, so I always know exactly how much I've taken\n"
+    );
+  }
+  // Ensure the Telegram → Claude terminal automation shows for returning users too.
+  if (!/Talk to my Claude terminal from Telegram/i.test(state.tabNotes.automated)) {
+    state.tabNotes.automated = state.tabNotes.automated.replace(
+      /(⏰ AUTOMATIONS[^\n]*\n\n)/,
+      "$1• 📱 Talk to my Claude terminal from Telegram — 2026-07-28 — I text @proactive_makeup_bot (\"Claude Terminal\") and get real Claude answers back, ~20–30s each. It shares the same memory as my terminal, so it knows my labs, food rules and reminders. It can also CONTROL this Mac: open apps, click, type, edit files, deploy my sites, run my scripts. Photos work (meals, labs, water bottles). Messages sent while the Mac is asleep are queued and answered when it wakes. ⚠️ Needs the Mac awake + online — lid open, plugged in (a caffeinate keep-awake agent now stops it idle-sleeping). Lid closed = it sleeps; the only fix is moving the bridge to a free Oracle Cloud VM.\n"
     );
   }
   // One-time (v2): (re)write the Amazon-return playbook — no-box/no-label scan-QR is now the FIRST return-method choice, refund to gift balance.
