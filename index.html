@@ -2021,6 +2021,36 @@ if (state.tabNotes && typeof state.tabNotes.automated === 'string') {
       "$1• 📱 Talk to my Claude terminal from Telegram — 2026-07-28 — I text @proactive_makeup_bot (\"Claude Terminal\") and get real Claude answers back, ~20–30s each. It shares the same memory as my terminal, so it knows my labs, food rules and reminders. It can also CONTROL this Mac: open apps, click, type, edit files, deploy my sites, run my scripts. Photos work (meals, labs, water bottles). Messages sent while the Mac is asleep are queued and answered when it wakes. ⚠️ Needs the Mac awake + online — lid open, plugged in (a caffeinate keep-awake agent now stops it idle-sleeping). Lid closed = it sleeps; the only fix is moving the bridge to a free Oracle Cloud VM.\n"
     );
   }
+  // Ensure the midnight reminder-list reset shows for returning users too.
+  if (!/Uncheck my daytime routine/i.test(state.tabNotes.automated)) {
+    state.tabNotes.automated = state.tabNotes.automated.replace(
+      /(⏰ AUTOMATIONS[^\n]*\n\n)/,
+      "$1• 🔄 Uncheck my daytime routine lists every midnight — 2026-07-31 — at 12:00 AM every night, all 15 of my Repeat hour lists in Apple Reminders get unchecked so the whole day starts fresh: 8 am Repeat (60m), 9 am Repeat, 10 am Repeat, 11am Repeat, 12 pm Repeat, 1–9 pm Repeat, and 10pm 😴Night. My 15 \"Once\" lists are NEVER touched, and neither is anything else (Master list, Groceries, Water💧, 7 Things Max…). It matches lists by the hour in the name, not the exact name, so renaming a list doesn't break it. If the Mac is asleep or off at midnight it catches up on wake, and a once-per-day lock means it can never wipe checkmarks I already earned that day. Runs as com.dj.daytimereset → ~/bin/uncheck_daytime_routines.sh; log at ~/Library/Logs/daytime_reset.log\n"
+    );
+  }
+  // One-time: save the exact wording that got Amazon to reopen a closed return.
+  if (!/AMAZON — REOPEN A CLOSED RETURN/i.test(state.tabNotes.automated)) {
+    state.tabNotes.automated = state.tabNotes.automated.replace(/\s+$/, '') + "\n\n" + `━━━━━━━━━━━━━━━━━━━━
+📋 AMAZON — REOPEN A CLOSED RETURN (the wording that works) — 2026-07-31
+
+✅ PROVEN TWICE: Zojirushi rice cooker $167 refunded (window had closed the day before) and Linenspa bed frame $369.99 free pickup + refund (window closed 4 MONTHS earlier, Apr 1).
+
+THE FLOW — do it in this exact order:
+1. amazon.com/hz/contact-us/foresight/hubgateway → scroll to the bottom "Something else" → "I need help with something else" → a chat window opens.
+2. FIRST MESSAGE — order # + item + price + delivery date + what went wrong + the ask. Do NOT mention the return method yet, it derails the bot:
+   "Hi - I need help with order <ORDER#>, the <ITEM>, $<PRICE>, delivered <DATE>. <WHAT WENT WRONG>. Can you please re-open the return option on this order so I can click Return items again today and get my refund? Thank you."
+3. Pick the item from the item picker (type a keyword + press Enter).
+4. "Yes, that's right" → pick the reason.
+5. The bot WILL say the return window closed. Click "I still need more help with this".
+6. THE KEY MESSAGE — this is the one that flips it from "window closed" to a real refund offer. It must ask for a REPRESENTATIVE and say COMPLETE IT AND GET MY REFUND:
+   "I did try before now. <WHY IT DIDN'T HAPPEN IN TIME>. The item is also <PROBLEM>. Please connect me with a representative who can manually re-open the return on order <ORDER#> today so I can complete it and get my refund."
+7. It then offers "Get a refund" / "Get a replacement" → Get a refund → choose the return method → choose where the refund goes.
+
+⚠️ IF IT DEFLECTS to a menu (Customer Service Home / Start over / Chat with an associate / Request a phone call) → "Chat with an associate now". A REAL HUMAN joins and they can approve things the bot can't — a human granted the free pickup 4 months past the window, no questions asked.
+
+⚠️ GOTCHA: only ever have ONE Amazon chat window open. With two open, a reply can land in the wrong session and the associate never sees it.
+━━━━━━━━━━━━━━━━━━━━`;
+  }
   // One-time (v2): (re)write the Amazon-return playbook — no-box/no-label scan-QR is now the FIRST return-method choice, refund to gift balance.
   if (!/AMAZON RETURN PLAYBOOK v2/i.test(state.tabNotes.automated)) {
     state.tabNotes.automated = state.tabNotes.automated
